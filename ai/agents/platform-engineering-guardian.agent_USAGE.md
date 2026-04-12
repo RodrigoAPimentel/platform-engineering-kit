@@ -1,102 +1,102 @@
-# Manual de Utilizacao do Platform Engineering Guardian
+# Platform Engineering Guardian Usage Manual
 
-Este manual explica como usar o agente Platform Engineering Guardian no repositorio para manter padrao, qualidade e evolucao continua.
+This manual explains how to use the Platform Engineering Guardian agent in this repository to maintain standards, quality, and continuous evolution.
 
-## Onde esta o agente
+## Where the agent is located
 
-- Arquivo de agente customizado: `.github/agents/platform-engineering-guardian.agent.md`
-- Arquivo de referencia conceitual: `ai/agents/platform-engineering-guardian.md`
+- Custom agent file: `.github/agents/platform-engineering-guardian.agent.md`
+- Conceptual reference file: `ai/agents/platform-engineering-guardian.md`
 
-Use o arquivo em `.github/agents` para execucao no seletor de agentes do Copilot.
+Use the file in `.github/agents` for execution in the Copilot agent selector.
 
-## O que este agente faz
+## What this agent does
 
-- Audita estrutura de pastas e aderencia ao proposito de cada diretorio.
-- Verifica cobertura e qualidade de READMEs.
-- Revisa padroes de IaC, CI/CD, scripts, seguranca e observabilidade.
-- Sugere e implementa melhorias com foco em reutilizacao e escalabilidade.
-- Prioriza recomendacoes por impacto em confiabilidade e DevEx.
+- Audits folder structure and alignment with each directory's purpose.
+- Verifies README coverage and quality.
+- Reviews IaC, CI/CD, scripts, security, and observability standards.
+- Suggests and implements improvements focused on reuse and scalability.
+- Prioritizes recommendations by impact on reliability and DevEx.
 
-## Como usar no dia a dia
+## How to use it daily
 
-1. Abra o chat do Copilot no VS Code.
-2. Selecione o agente Platform Engineering Guardian.
-3. Escreva um objetivo claro, com escopo e restricoes.
-4. Revise o resultado no formato padrao:
+1. Open Copilot Chat in VS Code.
+2. Select the Platform Engineering Guardian agent.
+3. Write a clear objective with scope and constraints.
+4. Review the result in the standard format:
    1. Findings
    2. Recommended actions
    3. Applied changes
    4. Next steps
 
-## Prompts prontos
+## Ready-to-use prompts
 
-### Auditoria geral do repositorio
-
-```text
-Faça um health check completo do repositório e priorize gaps por severidade.
-```
-
-### Padronizacao de CI/CD
+### General repository audit
 
 ```text
-Revise ci-cd e proponha padronização reutilizável entre github-actions e azure-devops.
+Run a full repository health check and prioritize gaps by severity.
 ```
 
-### Documentacao e READMEs
+### CI/CD standardization
 
 ```text
-Audite documentação e READMEs: identifique lacunas, melhore clareza e alinhe com a estrutura atual.
+Review ci-cd and propose reusable standardization between github-actions and azure-devops.
 ```
 
-### IaC e governanca
+### Documentation and READMEs
 
 ```text
-Avalie infrastructure e recomende melhorias de modularização, naming e governança.
+Audit documentation and READMEs: identify gaps, improve clarity, and align with the current structure.
 ```
 
-### Seguranca e observabilidade
+### IaC and governance
 
 ```text
-Revise security e observability e proponha melhorias práticas, padronizadas e automáveis.
+Evaluate infrastructure and recommend improvements for modularization, naming, and governance.
 ```
 
-## Quando usar este agente em vez do agente padrao
+### Security and observability
 
-Use Platform Engineering Guardian quando o foco for:
+```text
+Review security and observability and propose practical, standardized, and automatable improvements.
+```
 
-- Organizacao e consistencia do repositorio.
-- Governanca tecnica cross-cutting.
-- Padroes corporativos de plataforma.
-- Melhorias estruturais com rastreabilidade.
+## When to use this agent instead of the default agent
 
-Para tarefas puramente de feature de aplicacao, prefira o agente padrao.
+Use Platform Engineering Guardian when the focus is:
 
-## Nivel de autonomia
+- Repository organization and consistency.
+- Cross-cutting technical governance.
+- Enterprise platform standards.
+- Structural improvements with traceability.
 
-- Pode aplicar mudancas completas quando necessario.
-- Para mudancas estruturais de alto impacto, apresenta justificativa curta e impacto esperado antes de aplicar.
-- Nao remove conteudo sem explicar impacto e racional.
+For purely application feature tasks, prefer the default agent.
 
-## Boas praticas de uso
+## Autonomy level
 
-- Defina escopo por pasta para reduzir ruido.
-- Informe restricoes de prazo e risco no prompt.
-- Peça plano incremental quando a mudanca for ampla.
-- Execute revisao do agente antes de abrir PRs importantes.
+- It can apply complete changes when needed.
+- For high-impact structural changes, it presents a short rationale and expected impact before applying.
+- It does not remove content without explaining impact and rationale.
 
-## Fluxo recomendado para PR
+## Usage best practices
 
-1. Rodar auditoria de estrutura e docs.
-2. Aplicar melhorias de baixo risco.
-3. Solicitar revisao final de padroes (IaC, CI/CD, seguranca, observabilidade).
-4. Registrar decisoes relevantes em docs/decisions quando aplicavel.
+- Define scope by folder to reduce noise.
+- Include timeline and risk constraints in the prompt.
+- Ask for an incremental plan when changes are broad.
+- Run an agent review before opening important PRs.
 
-## Solucao de problemas
+## Recommended PR flow
 
-- Agente nao aparece no seletor:
-  - Verifique se o arquivo existe em `.github/agents/platform-engineering-guardian.agent.md`.
-  - Confira se o frontmatter YAML esta valido.
-- Resposta muito generica:
-  - Informe pasta-alvo, objetivo e criterio de sucesso no prompt.
-- Mudanca ampla demais:
-  - Peça explicitamente "execute em fases" ou "apenas propostas, sem aplicar".
+1. Run a structure and documentation audit.
+2. Apply low-risk improvements.
+3. Request a final standards review (IaC, CI/CD, security, observability).
+4. Record relevant decisions in docs/decisions when applicable.
+
+## Troubleshooting
+
+- Agent does not appear in the selector:
+  - Verify the file exists at `.github/agents/platform-engineering-guardian.agent.md`.
+  - Check whether the YAML frontmatter is valid.
+- Response is too generic:
+  - Provide target folder, objective, and success criteria in the prompt.
+- Change scope is too broad:
+  - Explicitly ask for "execute in phases" or "proposals only, do not apply".
