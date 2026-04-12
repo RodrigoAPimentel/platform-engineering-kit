@@ -8,6 +8,7 @@ This directory contains operational procedures.
 - Deployment procedures
 - Rollback instructions
 - Troubleshooting steps
+- [Minikube guide](minikube.md)
 
 ## Purpose
 
