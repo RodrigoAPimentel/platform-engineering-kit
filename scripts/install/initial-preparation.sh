@@ -12,7 +12,6 @@ source "${LIB_DIR}/logging.sh"
 source "${LIB_DIR}/system-functions.sh"
 
 TIMEZONE="America/Recife"
-INSTALL_NODEJS_HELPER=false
 REBOOT_AFTER=false
 
 usage() {
@@ -36,10 +35,6 @@ while [[ $# -gt 0 ]]; do
 			TIMEZONE="${2:-}"
 			shift 2
 			;;
-		--with-nodejs-helper)
-			INSTALL_NODEJS_HELPER=true
-			shift
-			;;
 		--reboot)
 			REBOOT_AFTER=true
 			shift
@@ -60,19 +55,6 @@ __verify_root
 __detect_package_manager
 __update_system
 __install_prerequisite_packages
-
-if [[ "${INSTALL_NODEJS_HELPER}" == true ]]; then
-	node_helper="${SCRIPT_DIR}/applications/nodejs.sh"
-	if [[ -x "${node_helper}" ]]; then
-		_step "Running optional Node.js helper"
-		"${node_helper}"
-	elif [[ -f "${node_helper}" ]]; then
-		_step "Running optional Node.js helper"
-		bash "${node_helper}"
-	else
-		_step_result_suggestion "Node.js helper not found at ${node_helper}. Skipping."
-	fi
-fi
 
 _step "Enabling qemu-guest-agent service when available"
 if systemctl list-unit-files | grep -q '^qemu-guest-agent.service'; then
