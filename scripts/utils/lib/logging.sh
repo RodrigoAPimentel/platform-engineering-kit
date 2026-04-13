@@ -51,7 +51,7 @@ _log() {
         stream=2
     fi
 
-    printf "%b[%s] [%s] %s%b\n" "$color" "$(_timestamp)" "$level" "$*" "$COLOR_OFF" >&${stream}
+    printf -- "%b[%s] [%s] %s%b\n" "$color" "$(_timestamp)" "$level" "$*" "$COLOR_OFF" >&${stream}
 }
 
 _debug() {
@@ -76,11 +76,11 @@ _step() {
 
 _section() {
     local title="${*:-SECTION}"
-    printf "\n%b========== %s ==========%b\n" "$COLOR_SECTION" "$title" "$COLOR_OFF"
+    printf -- "\n%b========== %s ==========%b\n" "$COLOR_SECTION" "$title" "$COLOR_OFF"
 }
 
 _section_end() {
-    printf "%b=================================%b\n" "$COLOR_SECTION" "$COLOR_OFF"
+    printf -- "%b=================================%b\n" "$COLOR_SECTION" "$COLOR_OFF"
 }
 
 _script_start() {
@@ -95,11 +95,11 @@ _cat_file() {
     local header="$1"
     local content="$2"
     local footer="$3"
-    printf "%b----- %s -----%b\n%s\n%b----- %s -----%b\n" "$COLOR_SECTION" "$header" "$COLOR_OFF" "$content" "$COLOR_SECTION" "$footer" "$COLOR_OFF"
+    printf -- "%b----- %s -----%b\n%s\n%b----- %s -----%b\n" "$COLOR_SECTION" "$header" "$COLOR_OFF" "$content" "$COLOR_SECTION" "$footer" "$COLOR_OFF"
 }
 
 _step_result() {
-    printf "%s\n" "$*"
+    printf -- "%s\n" "$*"
 }
 
 _step_result_success() {
@@ -131,5 +131,5 @@ _finish_information() {
     _section "Run Summary"
     _log_kv "start" "$(date -d "@${START_PROCESS}" "+%Y-%m-%d %H:%M:%S")"
     _log_kv "end" "$(date -d "@${end_process}" "+%Y-%m-%d %H:%M:%S")"
-    _log_kv "elapsed" "$(printf "%02d:%02d:%02d" "$hours" "$minutes" "$seconds")"
+    _log_kv "elapsed" "$(printf -- "%02d:%02d:%02d" "$hours" "$minutes" "$seconds")"
 }
