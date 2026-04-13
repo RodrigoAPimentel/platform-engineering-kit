@@ -121,9 +121,6 @@ _log_kv() {
 }
 
 _finish_information() {
-
-    printf "\n1111111111111111111111\n"
-    
     local end_process time_spent hours minutes seconds
     end_process="$(date +%s)"
     time_spent=4000
