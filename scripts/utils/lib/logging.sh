@@ -71,6 +71,7 @@ _error() {
 }
 
 _step() {
+    printf "\n"
     _info "$*"
 }
 
