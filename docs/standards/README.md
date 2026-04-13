@@ -8,6 +8,7 @@ This directory defines engineering standards and best practices.
 - Coding standards
 - Infrastructure guidelines
 - CI/CD standards
+- [Script naming convention](script-naming-convention.md)
 
 ## Purpose
 

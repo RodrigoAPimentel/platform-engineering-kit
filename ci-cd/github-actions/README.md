@@ -6,6 +6,7 @@ CI/CD workflows using GitHub Actions.
 
 - Workflow files
 - Automation pipelines
+- `validate-script-naming.yml` → Enforces kebab-case naming for shell scripts under `scripts/`.
 
 ## Purpose
 
