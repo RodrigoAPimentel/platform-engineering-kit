@@ -95,8 +95,9 @@ apt-get update -y
 apt-get install -y zsh git curl fontconfig
 
 _step "Installing Oh My Zsh for user ${TARGET_USER}"
-run_as_target "rm -rf ~/.oh-my-zsh ~/.zshrc"
-run_as_target "RUNZSH=no CHSH=no KEEP_ZSHRC=yes sh -c '\$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)' --unattended"
+run_as_target "rm -rf ~/.oh-my-zsh"
+run_as_target "if [[ -f ~/.zshrc ]]; then cp ~/.zshrc ~/.zshrc.pre-oh-my-zsh.bak; fi"
+run_as_target "RUNZSH=no CHSH=no KEEP_ZSHRC=yes curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | bash -s -- --unattended"
 
 _step "Installing Oh My Zsh plugins"
 run_as_target "git clone --depth 1 https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting || true"
