@@ -303,7 +303,7 @@ http {
     auth_basic_user_file /etc/nginx/.htpasswd;
 
     server {
-        listen 443;
+        listen 8080;
         server_name _;
 
         location / {
@@ -343,8 +343,7 @@ docker run -d \
         --memory-reservation "256m" \
         --cpus "0.25" \
         --restart always \
-        -p 443:443 \
-        -p 80:80 \
+        -p 8080:8080 \
         --network "${network_name}" \
         "${PROXY_CONTAINER_NAME}" >/dev/null
 
@@ -353,7 +352,7 @@ if [[ "${NGINX_ONLY}" == false ]]; then
     run_as_target "cp -f ~/.kube/config '${KUBECONFIG_EXTERNAL}'"
     host_ip="$(hostname -I | awk '{print $1}')"
     if command -v yq >/dev/null 2>&1; then
-        _yq_inplace ".clusters[0].cluster.server = \"https://${TARGET_USER}:${proxy_password}@${host_ip}:443\"" "${KUBECONFIG_EXTERNAL}"
+        _yq_inplace ".clusters[0].cluster.server = \"http://${TARGET_USER}:${proxy_password}@${host_ip}:8080\"" "${KUBECONFIG_EXTERNAL}"
         _yq_inplace '.clusters[0].cluster."certificate-authority" = "ca.crt"' "${KUBECONFIG_EXTERNAL}"
         _yq_inplace '.users[0].user."client-certificate" = "client.crt"' "${KUBECONFIG_EXTERNAL}"
         _yq_inplace '.users[0].user."client-key" = "client.key"' "${KUBECONFIG_EXTERNAL}"
