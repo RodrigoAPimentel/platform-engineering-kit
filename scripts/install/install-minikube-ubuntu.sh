@@ -285,6 +285,11 @@ cp -f "${TARGET_HOME}/.minikube/profiles/minikube/client.key" "${MINIKUBE_FOLDER
 cp -f "${TARGET_HOME}/.minikube/ca.crt" "${MINIKUBE_FOLDER}/ca.crt"
 chown -R "${TARGET_USER}:${TARGET_USER}" "${MINIKUBE_FOLDER}"
 
+minikube_api_host="minikube"
+if run_as_target "minikube ip" >/dev/null 2>&1; then
+    minikube_api_host="$(run_as_target "minikube ip")"
+fi
+
 _step "Generating NGINX basic auth"
 proxy_password="$(openssl rand -base64 24 | tr -d '\n' | tr '/+' 'ab')"
 htpasswd -cb "${NGINX_FOLDER}/.htpasswd" "${TARGET_USER}" "${proxy_password}" >/dev/null
@@ -309,7 +314,9 @@ http {
         location / {
             proxy_set_header X-Forwarded-For \$remote_addr;
             proxy_set_header Host \$http_host;
-            proxy_pass https://minikube:8443;
+            proxy_connect_timeout 10s;
+            proxy_read_timeout 120s;
+            proxy_pass https://${minikube_api_host}:8443;
             proxy_ssl_certificate /etc/nginx/certs/minikube-client.crt;
             proxy_ssl_certificate_key /etc/nginx/certs/minikube-client.key;
         }
@@ -332,12 +339,9 @@ docker build -t "${PROXY_CONTAINER_NAME}" -f "${NGINX_FOLDER}/Dockerfile" "${MIN
 
 _step "Running nginx proxy container"
 network_name="minikube"
-if ! docker network inspect "${network_name}" >/dev/null 2>&1; then
-        _step_result_suggestion "Docker network 'minikube' not found. Falling back to 'bridge'."
-        network_name="bridge"
-fi
 docker rm -f "${PROXY_CONTAINER_NAME}" >/dev/null 2>&1 || true
-docker run -d \
+if docker network inspect "${network_name}" >/dev/null 2>&1; then
+    docker run -d \
         --name "${PROXY_CONTAINER_NAME}" \
         --memory "500m" \
         --memory-reservation "256m" \
@@ -346,6 +350,17 @@ docker run -d \
         -p 8080:8080 \
         --network "${network_name}" \
         "${PROXY_CONTAINER_NAME}" >/dev/null
+else
+    _step_result_suggestion "Docker network 'minikube' not found. Falling back to host network."
+    docker run -d \
+        --name "${PROXY_CONTAINER_NAME}" \
+        --memory "500m" \
+        --memory-reservation "256m" \
+        --cpus "0.25" \
+        --restart always \
+        --network host \
+        "${PROXY_CONTAINER_NAME}" >/dev/null
+fi
 
 _step "Generating external kubeconfig"
 if [[ "${NGINX_ONLY}" == false ]]; then
