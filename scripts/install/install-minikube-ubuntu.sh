@@ -16,6 +16,7 @@ ADDONS="metrics-server,dashboard,ingress,ingress-dns"
 ADDONS_FLAGS=""
 DRIVER="docker"
 UNINSTALL=false
+NGINX_ONLY=false
 CONFIGURE_INGRESS=true
 CONFIGURE_IPTABLES=true
 DASHBOARD_DOMAIN="minikube-dashboard"
@@ -36,6 +37,7 @@ Options:
   --addons <csv>             Minikube addons list (default: metrics-server,dashboard,ingress,ingress-dns)
   --driver <name>            Minikube driver (default: docker)
   --uninstall                Uninstall minikube and cleanup user profile
+    --nginx-only               Build and run only the nginx proxy container
   --dashboard-domain <host>  Dashboard host for ingress (default: minikube-dashboard)
   --dashboard-port <port>    External forwarded port (default: 88)
   --skip-ingress             Skip kubernetes-dashboard ingress creation
@@ -61,6 +63,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --uninstall)
             UNINSTALL=true
+            shift
+            ;;
+        --nginx-only)
+            NGINX_ONLY=true
             shift
             ;;
         --dashboard-domain)
@@ -146,6 +152,16 @@ if [[ -z "${TARGET_USER}" ]] || ! id "${TARGET_USER}" >/dev/null 2>&1; then
     exit 1
 fi
 
+if [[ "${UNINSTALL}" == true ]] && [[ "${NGINX_ONLY}" == true ]]; then
+    _step_result_failed "Use either --uninstall or --nginx-only, not both"
+    exit 1
+fi
+
+if [[ "${NGINX_ONLY}" == true ]]; then
+    CONFIGURE_INGRESS=false
+    CONFIGURE_IPTABLES=false
+fi
+
 _build_addons_flags "${ADDONS}"
 
 TARGET_HOME="$(eval echo "~${TARGET_USER}")"
@@ -197,34 +213,35 @@ if ! command -v docker >/dev/null 2>&1; then
     exit 1
 fi
 
-_step "Installing prerequisite packages"
-apt-get update -y
-DEBIAN_FRONTEND=noninteractive apt-get install -y curl ca-certificates conntrack iptables-persistent apache2-utils yq openssl
+if [[ "${NGINX_ONLY}" == false ]]; then
+    _step "Installing prerequisite packages"
+    apt-get update -y
+    DEBIAN_FRONTEND=noninteractive apt-get install -y curl ca-certificates conntrack iptables-persistent apache2-utils yq openssl
 
-_step "Installing Minikube binary"
-curl -fsSL -o /tmp/minikube-linux-amd64 https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
-install -m 0755 /tmp/minikube-linux-amd64 /usr/local/bin/minikube
-rm -f /tmp/minikube-linux-amd64
-__verify_packages_installed minikube
+    _step "Installing Minikube binary"
+    curl -fsSL -o /tmp/minikube-linux-amd64 https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
+    install -m 0755 /tmp/minikube-linux-amd64 /usr/local/bin/minikube
+    rm -f /tmp/minikube-linux-amd64
+    __verify_packages_installed minikube
 
-_step "Installing kubectl binary"
-kubectl_version="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
-curl -fsSL -o /tmp/kubectl "https://dl.k8s.io/release/${kubectl_version}/bin/linux/amd64/kubectl"
-curl -fsSL -o /tmp/kubectl.sha256 "https://dl.k8s.io/release/${kubectl_version}/bin/linux/amd64/kubectl.sha256"
-(cd /tmp && echo "$(cat /tmp/kubectl.sha256)  kubectl" | sha256sum --check)
-install -m 0755 /tmp/kubectl /usr/local/bin/kubectl
-rm -f /tmp/kubectl /tmp/kubectl.sha256
-__verify_packages_installed kubectl
+    _step "Installing kubectl binary"
+    kubectl_version="$(curl -fsSL https://dl.k8s.io/release/stable.txt)"
+    curl -fsSL -o /tmp/kubectl "https://dl.k8s.io/release/${kubectl_version}/bin/linux/amd64/kubectl"
+    curl -fsSL -o /tmp/kubectl.sha256 "https://dl.k8s.io/release/${kubectl_version}/bin/linux/amd64/kubectl.sha256"
+    (cd /tmp && echo "$(cat /tmp/kubectl.sha256)  kubectl" | sha256sum --check)
+    install -m 0755 /tmp/kubectl /usr/local/bin/kubectl
+    rm -f /tmp/kubectl /tmp/kubectl.sha256
+    __verify_packages_installed kubectl
 
-_step "Configuring minikube driver"
-run_as_target "minikube config set driver '${DRIVER}'"
+    _step "Configuring minikube driver"
+    run_as_target "minikube config set driver '${DRIVER}'"
 
-_step "Starting minikube cluster"
-run_as_target "minikube start --driver='${DRIVER}' ${ADDONS_FLAGS} --force"
-run_as_target "minikube status"
+    _step "Starting minikube cluster"
+    run_as_target "minikube start --driver='${DRIVER}' ${ADDONS_FLAGS} --force"
+    run_as_target "minikube status"
 
-_step "Creating systemd service for minikube"
-cat > /etc/systemd/system/minikube.service <<EOF
+    _step "Creating systemd service for minikube"
+    cat > /etc/systemd/system/minikube.service <<EOF
 [Unit]
 Description=Minikube Cluster Service
 After=network-online.target docker.service
@@ -249,10 +266,17 @@ TimeoutStopSec=300
 WantedBy=multi-user.target
 EOF
 
-systemctl daemon-reload
-systemctl enable minikube.service
+    systemctl daemon-reload
+    systemctl enable minikube.service
+fi
 
 _section "Configure NGINX Proxy and External Access"
+
+if ! command -v htpasswd >/dev/null 2>&1 || ! command -v openssl >/dev/null 2>&1; then
+    _step "Installing nginx auth dependencies"
+    apt-get update -y
+    DEBIAN_FRONTEND=noninteractive apt-get install -y apache2-utils openssl
+fi
 
 _step "Preparing directories and Minikube certificates"
 install -d -m 0755 "${MINIKUBE_FOLDER}" "${NGINX_FOLDER}"
@@ -325,15 +349,17 @@ docker run -d \
         "${PROXY_CONTAINER_NAME}" >/dev/null
 
 _step "Generating external kubeconfig"
-run_as_target "cp -f ~/.kube/config '${KUBECONFIG_EXTERNAL}'"
-host_ip="$(hostname -I | awk '{print $1}')"
-if command -v yq >/dev/null 2>&1; then
-    _yq_inplace ".clusters[0].cluster.server = \"https://${TARGET_USER}:${proxy_password}@${host_ip}:443\"" "${KUBECONFIG_EXTERNAL}"
-    _yq_inplace '.clusters[0].cluster."certificate-authority" = "ca.crt"' "${KUBECONFIG_EXTERNAL}"
-    _yq_inplace '.users[0].user."client-certificate" = "client.crt"' "${KUBECONFIG_EXTERNAL}"
-    _yq_inplace '.users[0].user."client-key" = "client.key"' "${KUBECONFIG_EXTERNAL}"
+if [[ "${NGINX_ONLY}" == false ]]; then
+    run_as_target "cp -f ~/.kube/config '${KUBECONFIG_EXTERNAL}'"
+    host_ip="$(hostname -I | awk '{print $1}')"
+    if command -v yq >/dev/null 2>&1; then
+        _yq_inplace ".clusters[0].cluster.server = \"https://${TARGET_USER}:${proxy_password}@${host_ip}:443\"" "${KUBECONFIG_EXTERNAL}"
+        _yq_inplace '.clusters[0].cluster."certificate-authority" = "ca.crt"' "${KUBECONFIG_EXTERNAL}"
+        _yq_inplace '.users[0].user."client-certificate" = "client.crt"' "${KUBECONFIG_EXTERNAL}"
+        _yq_inplace '.users[0].user."client-key" = "client.key"' "${KUBECONFIG_EXTERNAL}"
+    fi
+    chown -R "${TARGET_USER}:${TARGET_USER}" "${MINIKUBE_INSTALL_ROOT_FOLDER}"
 fi
-chown -R "${TARGET_USER}:${TARGET_USER}" "${MINIKUBE_INSTALL_ROOT_FOLDER}"
 
 if [[ "${CONFIGURE_INGRESS}" == true ]]; then
     _step "Configuring Kubernetes Dashboard ingress"
@@ -372,14 +398,19 @@ if [[ "${CONFIGURE_IPTABLES}" == true ]]; then
 fi
 
 _step "Summary"
-_step_result_success "Minikube status:"
-run_as_target "minikube status"
-_step_result_success "Dashboard URL: http://${DASHBOARD_DOMAIN}:${DASHBOARD_PORT}"
-_step_result_suggestion "Add to your hosts file: ${host_ip} ${DASHBOARD_DOMAIN}"
-_step_result_suggestion "If needed, copy kubeconfig from ~${TARGET_USER}/.kube/config"
-_step_result_suggestion "External access bundle: ${MINIKUBE_INSTALL_ROOT_FOLDER}"
-_step_result_suggestion "NGINX proxy credentials file: ${NGINX_FOLDER}/proxy-credentials.txt"
-_step_result_suggestion "External kubeconfig: ${KUBECONFIG_EXTERNAL}"
+if [[ "${NGINX_ONLY}" == false ]]; then
+    _step_result_success "Minikube status:"
+    run_as_target "minikube status"
+    _step_result_success "Dashboard URL: http://${DASHBOARD_DOMAIN}:${DASHBOARD_PORT}"
+    _step_result_suggestion "Add to your hosts file: ${host_ip} ${DASHBOARD_DOMAIN}"
+    _step_result_suggestion "If needed, copy kubeconfig from ~${TARGET_USER}/.kube/config"
+    _step_result_suggestion "External access bundle: ${MINIKUBE_INSTALL_ROOT_FOLDER}"
+    _step_result_suggestion "NGINX proxy credentials file: ${NGINX_FOLDER}/proxy-credentials.txt"
+    _step_result_suggestion "External kubeconfig: ${KUBECONFIG_EXTERNAL}"
+else
+    _step_result_success "Nginx proxy container started: ${PROXY_CONTAINER_NAME}"
+    _step_result_suggestion "Credentials file: ${NGINX_FOLDER}/proxy-credentials.txt"
+fi
 
 _finish_information
 
