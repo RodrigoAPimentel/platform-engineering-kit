@@ -10,7 +10,30 @@
 
 ### **_Acessar o Minikube com kubeconfig_**
 
+Referência consultada:
 https://faun.pub/accessing-a-remote-minikube-from-a-local-computer-fd6180dd66dd
+
+Pontos relevantes para acesso remoto ao Minikube:
+
+1. O endpoint do kube-apiserver do Minikube normalmente não é exposto para acesso externo direto.
+2. Para acesso remoto, usar um proxy reverso (NGINX) em frente ao API server do cluster.
+3. Proteger o proxy com autenticação básica (`auth_basic` + `.htpasswd`).
+4. Encaminhar as requisições do proxy para `https://<minikube-ip>:8443`.
+5. No cliente local, usar um kubeconfig dedicado para esse acesso remoto.
+
+Fluxo recomendado:
+
+1. Criar e subir o proxy NGINX no host remoto.
+2. Validar acesso HTTP no proxy (porta publicada).
+3. Criar kubeconfig local específico para o Minikube remoto.
+4. Ajustar no kubeconfig o `server` para o endereço do proxy.
+5. Testar com `kubectl --kubeconfig <arquivo> cluster-info` e `kubectl --kubeconfig <arquivo> get ns`.
+
+Observação de segurança:
+
+- Evitar credenciais em texto puro na URL do `server` do kubeconfig.
+- Preferir TLS fim a fim e credenciais/certificados fora da URL quando possível.
+- Restringir origem por IP no NGINX quando houver exposição pública.
 
 script para nginx: https://github.com/RodrigoAPimentel/scripts/blob/main/external_access_minikube.sh
 

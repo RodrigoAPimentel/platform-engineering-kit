@@ -241,6 +241,7 @@ install -d -m 0755 "${MINIKUBE_FOLDER}" "${NGINX_FOLDER}"
 cp -f "${TARGET_HOME}/.minikube/profiles/minikube/client.crt" "${MINIKUBE_FOLDER}/client.crt"
 cp -f "${TARGET_HOME}/.minikube/profiles/minikube/client.key" "${MINIKUBE_FOLDER}/client.key"
 cp -f "${TARGET_HOME}/.minikube/ca.crt" "${MINIKUBE_FOLDER}/ca.crt"
+chown -R "${TARGET_USER}:${TARGET_USER}" "${MINIKUBE_FOLDER}"
 
 _step "Generating NGINX basic auth"
 proxy_password="$(openssl rand -base64 24 | tr -d '\n' | tr '/+' 'ab')"
