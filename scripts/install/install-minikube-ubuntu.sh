@@ -311,10 +311,6 @@ events {
         worker_connections 1024;
 }
 http {
-    server_tokens off;
-    auth_basic "Minikube Proxy";
-    auth_basic_user_file /etc/nginx/.htpasswd;
-
     server { 
         listen 80; 
         listen [::]:80; 
