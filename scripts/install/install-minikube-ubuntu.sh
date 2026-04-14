@@ -290,14 +290,6 @@ if run_as_target "minikube ip" >/dev/null 2>&1; then
     minikube_api_host="$(run_as_target "minikube ip")"
 fi
 
-minikube_api_server=""
-if run_as_target "test -f ~/.kube/config" >/dev/null 2>&1; then
-    minikube_api_server="$(run_as_target "awk '/server:/{print \$2; exit}' ~/.kube/config")"
-fi
-if [[ -z "${minikube_api_server}" ]]; then
-    minikube_api_server="https://${minikube_api_host}:8443"
-fi
-
 _step "Generating NGINX basic auth"
 proxy_password="$(openssl rand -base64 24 | tr -d '\n' | tr '/+' 'ab')"
 htpasswd -cb "${NGINX_FOLDER}/.htpasswd" "${TARGET_USER}" "${proxy_password}" >/dev/null
@@ -311,19 +303,24 @@ events {
         worker_connections 1024;
 }
 http {
-    server { 
-        listen 80; 
-        listen [::]:80; 
-        server_name localhost;
-        auth_basic "Área do Administrador"; 
-        auth_basic_user_file /etc/nginx/.htpasswd;     
-        
-        location / {    
-            proxy_pass https://192.168.49.2:8443; 
-            proxy_ssl_certificate /etc/nginx/certs/minikube-client.crt; 
-            proxy_ssl_certificate_key /etc/nginx/certs/minikube-client.key; 
-    } 
-}
+    server_tokens off;
+    auth_basic "Minikube Proxy";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+
+    server {
+        listen 8080;
+        server_name _;
+
+        location / {
+            proxy_set_header X-Forwarded-For \$remote_addr;
+            proxy_set_header Host \$http_host;
+            proxy_connect_timeout 10s;
+            proxy_read_timeout 120s;
+            proxy_pass https://${minikube_api_host}:8443;
+            proxy_ssl_certificate /etc/nginx/certs/minikube-client.crt;
+            proxy_ssl_certificate_key /etc/nginx/certs/minikube-client.key;
+        }
+    }
 }
 EOF
 
@@ -346,8 +343,12 @@ docker rm -f "${PROXY_CONTAINER_NAME}" >/dev/null 2>&1 || true
 if docker network inspect "${network_name}" >/dev/null 2>&1; then
     docker run -d \
         --name "${PROXY_CONTAINER_NAME}" \
+        --memory "500m" \
+        --memory-reservation "256m" \
+        --cpus "0.25" \
         --restart always \
-        -p 80:8080 \
+        -p 8080:8080 \
+        --network "${network_name}" \
         "${PROXY_CONTAINER_NAME}" >/dev/null
 else
     _step_result_suggestion "Docker network 'minikube' not found. Falling back to host network."
