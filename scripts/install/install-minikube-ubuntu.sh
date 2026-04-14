@@ -27,6 +27,7 @@ MINIKUBE_FOLDER=""
 NGINX_FOLDER=""
 KUBECONFIG_EXTERNAL=""
 PROXY_CONTAINER_NAME="nginx-minikube-proxy"
+PROXY_CONTAINER_ID=""
 
 usage() {
     cat <<'EOF'
@@ -341,7 +342,7 @@ _step "Running nginx proxy container"
 network_name="minikube"
 docker rm -f "${PROXY_CONTAINER_NAME}" >/dev/null 2>&1 || true
 if docker network inspect "${network_name}" >/dev/null 2>&1; then
-    docker run -d \
+    PROXY_CONTAINER_ID="$(docker run -d \
         --name "${PROXY_CONTAINER_NAME}" \
         --memory "500m" \
         --memory-reservation "256m" \
@@ -349,17 +350,17 @@ if docker network inspect "${network_name}" >/dev/null 2>&1; then
         --restart always \
         -p 8080:8080 \
         --network "${network_name}" \
-        "${PROXY_CONTAINER_NAME}" >/dev/null
+        "${PROXY_CONTAINER_NAME}")"
 else
     _step_result_suggestion "Docker network 'minikube' not found. Falling back to host network."
-    docker run -d \
+    PROXY_CONTAINER_ID="$(docker run -d \
         --name "${PROXY_CONTAINER_NAME}" \
         --memory "500m" \
         --memory-reservation "256m" \
         --cpus "0.25" \
         --restart always \
         --network host \
-        "${PROXY_CONTAINER_NAME}" >/dev/null
+        "${PROXY_CONTAINER_NAME}")"
 fi
 
 _step "Generating external kubeconfig"
@@ -419,10 +420,11 @@ if [[ "${NGINX_ONLY}" == false ]]; then
     _step_result_suggestion "Add to your hosts file: ${host_ip} ${DASHBOARD_DOMAIN}"
     _step_result_suggestion "If needed, copy kubeconfig from ~${TARGET_USER}/.kube/config"
     _step_result_suggestion "External access bundle: ${MINIKUBE_INSTALL_ROOT_FOLDER}"
+    _step_result_suggestion "NGINX proxy container ID: ${PROXY_CONTAINER_ID}"
     _step_result_suggestion "NGINX proxy credentials file: ${NGINX_FOLDER}/proxy-credentials.txt"
     _step_result_suggestion "External kubeconfig: ${KUBECONFIG_EXTERNAL}"
 else
-    _step_result_success "Nginx proxy container started: ${PROXY_CONTAINER_NAME}"
+    _step_result_success "Nginx proxy container started: ${PROXY_CONTAINER_NAME} [${PROXY_CONTAINER_ID}]"
     _step_result_suggestion "Credentials file: ${NGINX_FOLDER}/proxy-credentials.txt"
 fi
 
