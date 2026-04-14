@@ -19,6 +19,11 @@ CONFIGURE_IPTABLES=true
 DASHBOARD_DOMAIN="minikube-dashboard"
 DASHBOARD_PORT=88
 REBOOT_AFTER=false
+MINIKUBE_INSTALL_ROOT_FOLDER=""
+MINIKUBE_FOLDER=""
+NGINX_FOLDER=""
+KUBECONFIG_EXTERNAL=""
+PROXY_CONTAINER_NAME="nginx-minikube-proxy"
 
 usage() {
     cat <<'EOF'
@@ -100,6 +105,12 @@ if [[ -z "${TARGET_USER}" ]] || ! id "${TARGET_USER}" >/dev/null 2>&1; then
     exit 1
 fi
 
+TARGET_HOME="$(eval echo "~${TARGET_USER}")"
+MINIKUBE_INSTALL_ROOT_FOLDER="${TARGET_HOME}/minikube-install"
+MINIKUBE_FOLDER="${MINIKUBE_INSTALL_ROOT_FOLDER}/minikube"
+NGINX_FOLDER="${MINIKUBE_INSTALL_ROOT_FOLDER}/nginx"
+KUBECONFIG_EXTERNAL="${MINIKUBE_FOLDER}/kubeconfig"
+
 _step "Validating Docker dependency"
 if ! command -v docker >/dev/null 2>&1; then
     _step_result_failed "Docker is required. Run install-docker.sh before this script."
@@ -108,7 +119,7 @@ fi
 
 _step "Installing prerequisite packages"
 apt-get update -y
-DEBIAN_FRONTEND=noninteractive apt-get install -y curl ca-certificates conntrack iptables-persistent
+DEBIAN_FRONTEND=noninteractive apt-get install -y curl ca-certificates conntrack iptables-persistent apache2-utils yq openssl
 
 _step "Installing Minikube binary"
 curl -fsSL -o /tmp/minikube-linux-amd64 https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
@@ -153,6 +164,88 @@ EOF
 systemctl daemon-reload
 systemctl enable minikube.service
 
+_section "Configure NGINX Proxy and External Access"
+
+_step "Preparing directories and Minikube certificates"
+install -d -m 0755 "${MINIKUBE_FOLDER}" "${NGINX_FOLDER}"
+cp -f "${TARGET_HOME}/.minikube/profiles/minikube/client.crt" "${MINIKUBE_FOLDER}/client.crt"
+cp -f "${TARGET_HOME}/.minikube/profiles/minikube/client.key" "${MINIKUBE_FOLDER}/client.key"
+cp -f "${TARGET_HOME}/.minikube/ca.crt" "${MINIKUBE_FOLDER}/ca.crt"
+
+_step "Generating NGINX basic auth"
+proxy_password="$(openssl rand -base64 24 | tr -d '\n' | tr '/+' 'ab')"
+htpasswd -cb "${NGINX_FOLDER}/.htpasswd" "${TARGET_USER}" "${proxy_password}" >/dev/null
+chmod 0600 "${NGINX_FOLDER}/.htpasswd"
+printf 'username=%s\npassword=%s\n' "${TARGET_USER}" "${proxy_password}" > "${NGINX_FOLDER}/proxy-credentials.txt"
+chmod 0600 "${NGINX_FOLDER}/proxy-credentials.txt"
+
+_step "Creating nginx.conf"
+cat > "${NGINX_FOLDER}/nginx.conf" <<EOF
+events {
+        worker_connections 1024;
+}
+http {
+    server_tokens off;
+    auth_basic "Minikube Proxy";
+    auth_basic_user_file /etc/nginx/.htpasswd;
+
+    server {
+        listen 443;
+        server_name _;
+
+        location / {
+            proxy_set_header X-Forwarded-For \$remote_addr;
+            proxy_set_header Host \$http_host;
+            proxy_pass https://minikube:8443;
+            proxy_ssl_certificate /etc/nginx/certs/minikube-client.crt;
+            proxy_ssl_certificate_key /etc/nginx/certs/minikube-client.key;
+        }
+    }
+}
+EOF
+
+_step "Creating Dockerfile for nginx proxy"
+cat > "${NGINX_FOLDER}/Dockerfile" <<EOF
+FROM nginx:latest
+
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+COPY nginx/.htpasswd /etc/nginx/.htpasswd
+COPY minikube/client.key /etc/nginx/certs/minikube-client.key
+COPY minikube/client.crt /etc/nginx/certs/minikube-client.crt
+EOF
+
+_step "Building nginx proxy image"
+docker build -t "${PROXY_CONTAINER_NAME}" -f "${NGINX_FOLDER}/Dockerfile" "${MINIKUBE_INSTALL_ROOT_FOLDER}"
+
+_step "Running nginx proxy container"
+network_name="minikube"
+if ! docker network inspect "${network_name}" >/dev/null 2>&1; then
+        _step_result_suggestion "Docker network 'minikube' not found. Falling back to 'bridge'."
+        network_name="bridge"
+fi
+docker rm -f "${PROXY_CONTAINER_NAME}" >/dev/null 2>&1 || true
+docker run -d \
+        --name "${PROXY_CONTAINER_NAME}" \
+        --memory "500m" \
+        --memory-reservation "256m" \
+        --cpus "0.25" \
+        --restart always \
+        -p 443:443 \
+        -p 80:80 \
+        --network "${network_name}" \
+        "${PROXY_CONTAINER_NAME}" >/dev/null
+
+_step "Generating external kubeconfig"
+run_as_target "cp -f ~/.kube/config '${KUBECONFIG_EXTERNAL}'"
+host_ip="$(hostname -I | awk '{print $1}')"
+if command -v yq >/dev/null 2>&1; then
+        yq -i ".clusters[0].cluster.server = \"https://${TARGET_USER}:${proxy_password}@${host_ip}:443\"" "${KUBECONFIG_EXTERNAL}"
+        yq -i '.clusters[0].cluster."certificate-authority" = "ca.crt"' "${KUBECONFIG_EXTERNAL}"
+        yq -i '.users[0].user."client-certificate" = "client.crt"' "${KUBECONFIG_EXTERNAL}"
+        yq -i '.users[0].user."client-key" = "client.key"' "${KUBECONFIG_EXTERNAL}"
+fi
+chown -R "${TARGET_USER}:${TARGET_USER}" "${MINIKUBE_INSTALL_ROOT_FOLDER}"
+
 if [[ "${CONFIGURE_INGRESS}" == true ]]; then
     _step "Configuring Kubernetes Dashboard ingress"
     cat > /tmp/ingress-kubernetes-dashboard.yaml <<EOF
@@ -190,12 +283,14 @@ if [[ "${CONFIGURE_IPTABLES}" == true ]]; then
 fi
 
 _step "Summary"
-host_ip="$(hostname -I | awk '{print $1}')"
 _step_result_success "Minikube status:"
 run_as_target "minikube status"
 _step_result_success "Dashboard URL: http://${DASHBOARD_DOMAIN}:${DASHBOARD_PORT}"
 _step_result_suggestion "Add to your hosts file: ${host_ip} ${DASHBOARD_DOMAIN}"
 _step_result_suggestion "If needed, copy kubeconfig from ~${TARGET_USER}/.kube/config"
+_step_result_suggestion "External access bundle: ${MINIKUBE_INSTALL_ROOT_FOLDER}"
+_step_result_suggestion "NGINX proxy credentials file: ${NGINX_FOLDER}/proxy-credentials.txt"
+_step_result_suggestion "External kubeconfig: ${KUBECONFIG_EXTERNAL}"
 
 _finish_information
 
