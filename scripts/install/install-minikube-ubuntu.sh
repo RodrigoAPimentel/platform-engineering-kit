@@ -316,7 +316,7 @@ http {
             proxy_set_header Host \$http_host;
             proxy_connect_timeout 10s;
             proxy_read_timeout 120s;
-            proxy_pass https://${minikube_api_host}:8443;
+            proxy_pass https://${minikube_api_host}:32771;
             proxy_ssl_certificate /etc/nginx/certs/minikube-client.crt;
             proxy_ssl_certificate_key /etc/nginx/certs/minikube-client.key;
         }
