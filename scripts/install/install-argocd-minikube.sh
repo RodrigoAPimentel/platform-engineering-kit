@@ -16,6 +16,50 @@ ARGOCD_DASHBOARD_DOMAIN="${ARGOCD_DASHBOARD_DOMAIN:-argocd-gui}"
 ARGOCD_DASHBOARD_PORT="${ARGOCD_DASHBOARD_PORT:-88}"
 CONFIGURE_IPTABLES=true
 
+_configure_kube_access() {
+    if [[ -n "${KUBECONFIG:-}" ]]; then
+        _step_result_suggestion "Using KUBECONFIG from environment: ${KUBECONFIG}"
+        return
+    fi
+
+    if [[ -n "${SUDO_USER:-}" ]]; then
+        local sudo_home
+        sudo_home="$(getent passwd "${SUDO_USER}" | cut -d: -f6)"
+
+        if [[ -n "${sudo_home}" && -f "${sudo_home}/.kube/config" ]]; then
+            export KUBECONFIG="${sudo_home}/.kube/config"
+            _step_result_success "Using kubeconfig from sudo user: ${KUBECONFIG}"
+            return
+        fi
+    fi
+
+    _step_result_suggestion "No explicit kubeconfig found; kubectl default resolution will be used"
+}
+
+_verify_kubernetes_connectivity() {
+    _step "Validating Minikube and Kubernetes API connectivity"
+
+    if ! minikube status >/dev/null 2>&1; then
+        _step_result_failed "Minikube is not running or not reachable. Start it first, for example: minikube start --driver=docker --addons=ingress"
+        exit 1
+    fi
+
+    if ! kubectl cluster-info >/dev/null 2>&1; then
+        local current_context
+        current_context="$(kubectl config current-context 2>/dev/null || true)"
+
+        if [[ -z "${current_context}" ]]; then
+            _step_result_failed "kubectl has no current context. If running with sudo, ensure your user kubeconfig is accessible or export KUBECONFIG before running this script"
+        else
+            _step_result_failed "Unable to connect to Kubernetes API using context '${current_context}'. Check cluster status and kubeconfig"
+        fi
+
+        exit 1
+    fi
+
+    _step_result_success "Kubernetes API is reachable"
+}
+
 usage() {
     cat <<'EOF'
 Usage: sudo ./install-argocd-minikube.sh [options]
@@ -69,6 +113,9 @@ _step "Validating required binaries"
 for binary in minikube kubectl curl; do
     __verify_packages_installed "${binary}"
 done
+
+_configure_kube_access
+_verify_kubernetes_connectivity
 
 _step "Ensuring argocd namespace exists"
 if kubectl get namespace argocd >/dev/null 2>&1; then
