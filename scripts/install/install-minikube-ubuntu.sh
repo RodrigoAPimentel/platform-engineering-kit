@@ -174,6 +174,13 @@ if [[ "${UNINSTALL}" == true ]]; then
     run_as_target "rm -rf ~/.minikube"
     run_as_target "rm -rf ~/.kube"
 
+    _step "Removing nginx proxy container"
+    if command -v docker >/dev/null 2>&1; then
+        docker rm -f "${PROXY_CONTAINER_NAME}" >/dev/null 2>&1 || _step_result_suggestion "Nginx proxy container not found"
+    else
+        _step_result_suggestion "Docker not found, skipping nginx proxy container removal"
+    fi
+
     _step "Removing minikube systemd service"
     systemctl disable --now minikube.service >/dev/null 2>&1 || true
     rm -f /etc/systemd/system/minikube.service
