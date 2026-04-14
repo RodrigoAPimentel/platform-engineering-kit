@@ -124,7 +124,7 @@ _log_kv() {
 _finish_information() {
     local end_process time_spent hours minutes seconds
     end_process="$(date +%s)"
-    time_spent=4000
+    time_spent=$((end_process - START_PROCESS))
     hours=$((time_spent / 3600))
     minutes=$(((time_spent % 3600) / 60))
     seconds=$((time_spent % 60))

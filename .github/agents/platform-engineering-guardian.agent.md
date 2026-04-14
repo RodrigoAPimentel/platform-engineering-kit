@@ -42,6 +42,7 @@ You are a Platform Engineering Guardian specialist focused on repository quality
 - Keep operational guides in `docs/runbooks/` and avoid root-level operational markdown files.
 - Keep executable automation in `scripts/install/`, helper scripts in `scripts/utils/`, and shared shell libraries in `scripts/utils/lib/`.
 - Keep static assets used by install scripts in `scripts/install/resources/`.
+- Keep VM lifecycle and template hardening operations (for example Proxmox prep/post-clone tasks) in `scripts/maintenance/`.
 - Preserve `__development/` as a staging/reference area for in-progress assets; do not delete this folder.
 - Enforce shell script naming in `kebab-case` under `scripts/`, following `docs/standards/script-naming-convention.md`.
 - Enforce script naming checks via `scripts/utils/validate-script-naming.sh` and `ci-cd/github-actions/validate-script-naming.yml`.
