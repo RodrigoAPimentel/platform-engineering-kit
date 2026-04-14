@@ -15,6 +15,7 @@ TARGET_USER="${SUDO_USER:-${USER}}"
 ADDONS="metrics-server,dashboard,ingress,ingress-dns"
 ADDONS_FLAGS=""
 DRIVER="docker"
+UNINSTALL=false
 CONFIGURE_INGRESS=true
 CONFIGURE_IPTABLES=true
 DASHBOARD_DOMAIN="minikube-dashboard"
@@ -32,8 +33,9 @@ Usage: sudo ./install-minikube-ubuntu.sh [options]
 
 Options:
   --user <username>          User owner of minikube profile (default: current sudo user)
-    --addons <csv>             Minikube addons list (default: metrics-server,dashboard,ingress,ingress-dns)
+  --addons <csv>             Minikube addons list (default: metrics-server,dashboard,ingress,ingress-dns)
   --driver <name>            Minikube driver (default: docker)
+  --uninstall                Uninstall minikube and cleanup user profile
   --dashboard-domain <host>  Dashboard host for ingress (default: minikube-dashboard)
   --dashboard-port <port>    External forwarded port (default: 88)
   --skip-ingress             Skip kubernetes-dashboard ingress creation
@@ -56,6 +58,10 @@ while [[ $# -gt 0 ]]; do
         --driver)
             DRIVER="${2:-}"
             shift 2
+            ;;
+        --uninstall)
+            UNINSTALL=true
+            shift
             ;;
         --dashboard-domain)
             DASHBOARD_DOMAIN="${2:-}"
@@ -135,6 +141,36 @@ MINIKUBE_INSTALL_ROOT_FOLDER="${TARGET_HOME}/minikube-install"
 MINIKUBE_FOLDER="${MINIKUBE_INSTALL_ROOT_FOLDER}/minikube"
 NGINX_FOLDER="${MINIKUBE_INSTALL_ROOT_FOLDER}/nginx"
 KUBECONFIG_EXTERNAL="${MINIKUBE_FOLDER}/kubeconfig"
+
+if [[ "${UNINSTALL}" == true ]]; then
+    _section "Uninstall Minikube"
+
+    if command -v minikube >/dev/null 2>&1; then
+        _step "Stopping minikube"
+        run_as_target "minikube stop" || _step_result_suggestion "minikube stop returned non-zero status"
+
+        _step "Deleting minikube profiles"
+        run_as_target "minikube delete --all --purge" || _step_result_suggestion "minikube delete returned non-zero status"
+    else
+        _step_result_suggestion "minikube binary not found, skipping stop/delete"
+    fi
+
+    _step "Removing minikube binary"
+    rm -f /usr/local/bin/minikube
+
+    _step "Removing user minikube/kubeconfig folders"
+    run_as_target "rm -rf ~/.minikube"
+    run_as_target "rm -rf ~/.kube"
+
+    _step "Removing minikube systemd service"
+    systemctl disable --now minikube.service >/dev/null 2>&1 || true
+    rm -f /etc/systemd/system/minikube.service
+    systemctl daemon-reload
+
+    _step_result_success "Minikube uninstall completed for user ${TARGET_USER}"
+    _finish_information
+    exit 0
+fi
 
 _step "Validating Docker dependency"
 if ! command -v docker >/dev/null 2>&1; then
