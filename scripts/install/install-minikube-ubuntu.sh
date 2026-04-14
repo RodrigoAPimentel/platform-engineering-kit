@@ -121,6 +121,17 @@ _build_addons_flags() {
     ADDONS_FLAGS="${ADDONS_FLAGS% }"
 }
 
+_yq_inplace() {
+    local expression="$1"
+    local file="$2"
+
+    if yq -i "${expression}" "${file}" >/dev/null 2>&1; then
+        return 0
+    fi
+
+    yq -y -i "${expression}" "${file}"
+}
+
 _script_start "Install Minikube (Ubuntu/Debian)"
 __verify_root
 __detect_package_manager
@@ -310,10 +321,10 @@ _step "Generating external kubeconfig"
 run_as_target "cp -f ~/.kube/config '${KUBECONFIG_EXTERNAL}'"
 host_ip="$(hostname -I | awk '{print $1}')"
 if command -v yq >/dev/null 2>&1; then
-        yq -i ".clusters[0].cluster.server = \"https://${TARGET_USER}:${proxy_password}@${host_ip}:443\"" "${KUBECONFIG_EXTERNAL}"
-        yq -i '.clusters[0].cluster."certificate-authority" = "ca.crt"' "${KUBECONFIG_EXTERNAL}"
-        yq -i '.users[0].user."client-certificate" = "client.crt"' "${KUBECONFIG_EXTERNAL}"
-        yq -i '.users[0].user."client-key" = "client.key"' "${KUBECONFIG_EXTERNAL}"
+    _yq_inplace ".clusters[0].cluster.server = \"https://${TARGET_USER}:${proxy_password}@${host_ip}:443\"" "${KUBECONFIG_EXTERNAL}"
+    _yq_inplace '.clusters[0].cluster."certificate-authority" = "ca.crt"' "${KUBECONFIG_EXTERNAL}"
+    _yq_inplace '.users[0].user."client-certificate" = "client.crt"' "${KUBECONFIG_EXTERNAL}"
+    _yq_inplace '.users[0].user."client-key" = "client.key"' "${KUBECONFIG_EXTERNAL}"
 fi
 chown -R "${TARGET_USER}:${TARGET_USER}" "${MINIKUBE_INSTALL_ROOT_FOLDER}"
 
