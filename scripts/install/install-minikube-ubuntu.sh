@@ -305,19 +305,16 @@ events {
 }
 http {
     server_tokens off;
-    auth_basic "Minikube Proxy";
+    auth_basic "Administrator’s Area";
     auth_basic_user_file /etc/nginx/.htpasswd;
 
     server {
-        listen 8080;
-        server_name _;
+        listen 80;
+        listen  [::]:80;
+        server_name localhost;
 
         location / {
-            proxy_set_header X-Forwarded-For \$remote_addr;
-            proxy_set_header Host \$http_host;
-            proxy_connect_timeout 10s;
-            proxy_read_timeout 120s;
-            proxy_pass https://${minikube_api_host}:8443;
+            proxy_pass https://192.168.49.2:8443;
             proxy_ssl_certificate /etc/nginx/certs/minikube-client.crt;
             proxy_ssl_certificate_key /etc/nginx/certs/minikube-client.key;
         }
@@ -348,7 +345,7 @@ if docker network inspect "${network_name}" >/dev/null 2>&1; then
         --memory-reservation "256m" \
         --cpus "0.25" \
         --restart always \
-        -p 8080:8080 \
+        -p 80:80 \
         --network "${network_name}" \
         "${PROXY_CONTAINER_NAME}")"
 else
