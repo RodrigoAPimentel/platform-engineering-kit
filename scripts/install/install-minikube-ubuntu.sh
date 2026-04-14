@@ -390,7 +390,7 @@ spec:
               service:
                 name: kubernetes-dashboard
                 port:
-                  number: 80
+                  number: ${DASHBOARD_PORT}
 EOF
 
     run_as_target "kubectl apply -f /tmp/ingress-kubernetes-dashboard.yaml"
