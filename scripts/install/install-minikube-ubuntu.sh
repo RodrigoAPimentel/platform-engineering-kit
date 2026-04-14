@@ -341,12 +341,8 @@ docker rm -f "${PROXY_CONTAINER_NAME}" >/dev/null 2>&1 || true
 if docker network inspect "${network_name}" >/dev/null 2>&1; then
     docker run -d \
         --name "${PROXY_CONTAINER_NAME}" \
-        # --memory "500m" \
-        # --memory-reservation "256m" \
-        # --cpus "0.25" \
         --restart always \
         -p 8080:80 \
-        # --network "${network_name}" \
         "${PROXY_CONTAINER_NAME}" >/dev/null
 else
     _step_result_suggestion "Docker network 'minikube' not found. Falling back to host network."
