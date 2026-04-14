@@ -290,6 +290,14 @@ if run_as_target "minikube ip" >/dev/null 2>&1; then
     minikube_api_host="$(run_as_target "minikube ip")"
 fi
 
+minikube_api_server=""
+if run_as_target "test -f ~/.kube/config" >/dev/null 2>&1; then
+    minikube_api_server="$(run_as_target "awk '/server:/{print \$2; exit}' ~/.kube/config")"
+fi
+if [[ -z "${minikube_api_server}" ]]; then
+    minikube_api_server="https://${minikube_api_host}:8443"
+fi
+
 _step "Generating NGINX basic auth"
 proxy_password="$(openssl rand -base64 24 | tr -d '\n' | tr '/+' 'ab')"
 htpasswd -cb "${NGINX_FOLDER}/.htpasswd" "${TARGET_USER}" "${proxy_password}" >/dev/null
@@ -316,7 +324,7 @@ http {
             proxy_set_header Host \$http_host;
             proxy_connect_timeout 10s;
             proxy_read_timeout 120s;
-            proxy_pass https://${minikube_api_host}:8443;
+            proxy_pass ${minikube_api_server};
             proxy_ssl_certificate /etc/nginx/certs/minikube-client.crt;
             proxy_ssl_certificate_key /etc/nginx/certs/minikube-client.key;
         }
