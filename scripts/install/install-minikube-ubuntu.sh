@@ -12,7 +12,8 @@ source "${LIB_DIR}/logging.sh"
 source "${LIB_DIR}/system-functions.sh"
 
 TARGET_USER="${SUDO_USER:-${USER}}"
-ADDONS="ingress,ingress-dns,dashboard"
+ADDONS="metrics-server,dashboard,ingress,ingress-dns"
+ADDONS_FLAGS=""
 DRIVER="docker"
 CONFIGURE_INGRESS=true
 CONFIGURE_IPTABLES=true
@@ -31,7 +32,7 @@ Usage: sudo ./install-minikube-ubuntu.sh [options]
 
 Options:
   --user <username>          User owner of minikube profile (default: current sudo user)
-  --addons <csv>             Minikube addons list (default: ingress,ingress-dns,dashboard)
+    --addons <csv>             Minikube addons list (default: metrics-server,dashboard,ingress,ingress-dns)
   --driver <name>            Minikube driver (default: docker)
   --dashboard-domain <host>  Dashboard host for ingress (default: minikube-dashboard)
   --dashboard-port <port>    External forwarded port (default: 88)
@@ -91,6 +92,28 @@ run_as_target() {
     runuser -u "${TARGET_USER}" -- bash -lc "$*"
 }
 
+_build_addons_flags() {
+    local addons_csv="$1"
+    local addon=""
+    local trimmed=""
+    local addons_flags=()
+
+    IFS=',' read -r -a addons_array <<< "${addons_csv}"
+    for addon in "${addons_array[@]}"; do
+        trimmed="${addon#"${addon%%[![:space:]]*}"}"
+        trimmed="${trimmed%"${trimmed##*[![:space:]]}"}"
+        [[ -z "${trimmed}" ]] && continue
+        addons_flags+=("--addons=${trimmed}")
+    done
+
+    if [[ ${#addons_flags[@]} -eq 0 ]]; then
+        _step_result_failed "Addons list cannot be empty"
+        exit 1
+    fi
+
+    ADDONS_FLAGS="${addons_flags[*]}"
+}
+
 _script_start "Install Minikube (Ubuntu/Debian)"
 __verify_root
 __detect_package_manager
@@ -104,6 +127,8 @@ if [[ -z "${TARGET_USER}" ]] || ! id "${TARGET_USER}" >/dev/null 2>&1; then
     _step_result_failed "Target user is invalid: ${TARGET_USER}"
     exit 1
 fi
+
+_build_addons_flags "${ADDONS}"
 
 TARGET_HOME="$(eval echo "~${TARGET_USER}")"
 MINIKUBE_INSTALL_ROOT_FOLDER="${TARGET_HOME}/minikube-install"
@@ -140,22 +165,30 @@ _step "Configuring minikube driver"
 run_as_target "minikube config set driver '${DRIVER}'"
 
 _step "Starting minikube cluster"
-run_as_target "minikube start --driver='${DRIVER}' --addons='${ADDONS}' --force"
+run_as_target "minikube start --driver='${DRIVER}' ${ADDONS_FLAGS} --force"
 run_as_target "minikube status"
 
 _step "Creating systemd service for minikube"
 cat > /etc/systemd/system/minikube.service <<EOF
 [Unit]
 Description=Minikube Cluster Service
-After=docker.service
+After=network-online.target docker.service
+Wants=network-online.target
 Requires=docker.service
 
 [Service]
 Type=oneshot
 RemainAfterExit=true
 User=${TARGET_USER}
-ExecStart=/usr/local/bin/minikube start --driver=${DRIVER} --addons=${ADDONS} --force
+WorkingDirectory=${TARGET_HOME}
+Environment=HOME=${TARGET_HOME}
+Environment=MINIKUBE_HOME=${TARGET_HOME}/.minikube
+Environment=KUBECONFIG=${TARGET_HOME}/.kube/config
+ExecStartPre=/bin/sh -c 'until /usr/bin/docker info >/dev/null 2>&1; do sleep 2; done'
+ExecStart=/usr/local/bin/minikube start --driver=${DRIVER} ${ADDONS_FLAGS} --force
 ExecStop=/usr/local/bin/minikube stop
+TimeoutStartSec=900
+TimeoutStopSec=300
 
 [Install]
 WantedBy=multi-user.target
