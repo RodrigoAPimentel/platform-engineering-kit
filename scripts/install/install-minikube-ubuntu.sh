@@ -291,6 +291,14 @@ if run_as_target "minikube ip" >/dev/null 2>&1; then
     minikube_api_host="$(run_as_target "minikube ip")"
 fi
 
+minikube_api_server=""
+if run_as_target "test -f ~/.kube/config" >/dev/null 2>&1; then
+    minikube_api_server="$(run_as_target "awk '/server:/{print \$2; exit}' ~/.kube/config")"
+fi
+if [[ -z "${minikube_api_server}" ]]; then
+    minikube_api_server="https://${minikube_api_host}:8443"
+fi
+
 _step "Generating NGINX basic auth"
 proxy_password="$(openssl rand -base64 24 | tr -d '\n' | tr '/+' 'ab')"
 htpasswd -cb "${NGINX_FOLDER}/.htpasswd" "${TARGET_USER}" "${proxy_password}" >/dev/null
@@ -314,7 +322,11 @@ http {
         server_name localhost;
 
         location / {
-            proxy_pass https://192.168.49.2:8443;
+            proxy_set_header X-Forwarded-For \$remote_addr;
+            proxy_set_header Host \$http_host;
+            proxy_connect_timeout 10s;
+            proxy_read_timeout 120s;
+            proxy_pass ${minikube_api_server};
             proxy_ssl_certificate /etc/nginx/certs/minikube-client.crt;
             proxy_ssl_certificate_key /etc/nginx/certs/minikube-client.key;
         }
@@ -336,36 +348,22 @@ _step "Building nginx proxy image"
 docker build -t "${PROXY_CONTAINER_NAME}" -f "${NGINX_FOLDER}/Dockerfile" "${MINIKUBE_INSTALL_ROOT_FOLDER}"
 
 _step "Running nginx proxy container"
-network_name="minikube"
 docker rm -f "${PROXY_CONTAINER_NAME}" >/dev/null 2>&1 || true
-if docker network inspect "${network_name}" >/dev/null 2>&1; then
-    PROXY_CONTAINER_ID="$(docker run -d \
-        --name "${PROXY_CONTAINER_NAME}" \
-        --memory "500m" \
-        --memory-reservation "256m" \
-        --cpus "0.25" \
-        --restart always \
-        -p 80:80 \
-        --network "${network_name}" \
-        "${PROXY_CONTAINER_NAME}")"
-else
-    _step_result_suggestion "Docker network 'minikube' not found. Falling back to host network."
-    PROXY_CONTAINER_ID="$(docker run -d \
-        --name "${PROXY_CONTAINER_NAME}" \
-        --memory "500m" \
-        --memory-reservation "256m" \
-        --cpus "0.25" \
-        --restart always \
-        --network host \
-        "${PROXY_CONTAINER_NAME}")"
-fi
+PROXY_CONTAINER_ID="$(docker run -d \
+    --name "${PROXY_CONTAINER_NAME}" \
+    --memory "500m" \
+    --memory-reservation "256m" \
+    --cpus "0.25" \
+    --restart always \
+    --network host \
+    "${PROXY_CONTAINER_NAME}")"
 
 _step "Generating external kubeconfig"
 if [[ "${NGINX_ONLY}" == false ]]; then
     run_as_target "cp -f ~/.kube/config '${KUBECONFIG_EXTERNAL}'"
     host_ip="$(hostname -I | awk '{print $1}')"
     if command -v yq >/dev/null 2>&1; then
-        _yq_inplace ".clusters[0].cluster.server = \"http://${TARGET_USER}:${proxy_password}@${host_ip}:8080\"" "${KUBECONFIG_EXTERNAL}"
+        _yq_inplace ".clusters[0].cluster.server = \"http://${TARGET_USER}:${proxy_password}@${host_ip}:80\"" "${KUBECONFIG_EXTERNAL}"
         _yq_inplace '.clusters[0].cluster."certificate-authority" = "ca.crt"' "${KUBECONFIG_EXTERNAL}"
         _yq_inplace '.users[0].user."client-certificate" = "client.crt"' "${KUBECONFIG_EXTERNAL}"
         _yq_inplace '.users[0].user."client-key" = "client.key"' "${KUBECONFIG_EXTERNAL}"
