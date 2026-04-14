@@ -38,7 +38,7 @@ Options:
   --addons <csv>             Minikube addons list (default: metrics-server,dashboard,ingress,ingress-dns)
   --driver <name>            Minikube driver (default: docker)
   --uninstall                Uninstall minikube and cleanup user profile
-    --nginx-only               Build and run only the nginx proxy container
+  --nginx-only               Build and run only the nginx proxy container
   --dashboard-domain <host>  Dashboard host for ingress (default: minikube-dashboard)
   --dashboard-port <port>    External forwarded port (default: 88)
   --skip-ingress             Skip kubernetes-dashboard ingress creation
