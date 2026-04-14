@@ -103,6 +103,7 @@ _build_addons_flags() {
     local addon=""
     local trimmed=""
     local addons_flags=()
+    local old_ifs="${IFS}"
 
     IFS=',' read -r -a addons_array <<< "${addons_csv}"
     for addon in "${addons_array[@]}"; do
@@ -117,7 +118,9 @@ _build_addons_flags() {
         exit 1
     fi
 
+    IFS=' '
     ADDONS_FLAGS="${addons_flags[*]}"
+    IFS="${old_ifs}"
 }
 
 _script_start "Install Minikube (Ubuntu/Debian)"
