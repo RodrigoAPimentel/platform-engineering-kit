@@ -307,28 +307,18 @@ chmod 0600 "${NGINX_FOLDER}/proxy-credentials.txt"
 
 _step "Creating nginx.conf"
 cat > "${NGINX_FOLDER}/nginx.conf" <<EOF
-events {
-        worker_connections 1024;
-}
-http {
-    server_tokens off;
-    auth_basic "Minikube Proxy";
-    auth_basic_user_file /etc/nginx/.htpasswd;
-
-    server {
-        listen 8080;
-        server_name _;
-
-        location / {
-            proxy_set_header X-Forwarded-For \$remote_addr;
-            proxy_set_header Host \$http_host;
-            proxy_connect_timeout 10s;
-            proxy_read_timeout 120s;
-            proxy_pass ${minikube_api_server};
-            proxy_ssl_certificate /etc/nginx/certs/minikube-client.crt;
-            proxy_ssl_certificate_key /etc/nginx/certs/minikube-client.key;
-        }
-    }
+server { 
+    listen 80; 
+    listen [::]:80; 
+    server_name localhost;
+    auth_basic "Área do Administrador"; 
+    auth_basic_user_file /etc/nginx/.htpasswd;     
+    
+    location / {    
+        proxy_pass https://192.168.49.2:8443; 
+        proxy_ssl_certificate /etc/nginx/certs/minikube-client.crt; 
+        proxy_ssl_certificate_key /etc/nginx/certs/minikube-client.key; 
+    } 
 }
 EOF
 
