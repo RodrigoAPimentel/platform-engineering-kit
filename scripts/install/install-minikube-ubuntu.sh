@@ -95,7 +95,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 run_as_target() {
-    runuser -u "${TARGET_USER}" -- bash -lc "$*"
+    runuser -u "${TARGET_USER}" -- bash -lc "$1"
 }
 
 _build_addons_flags() {
@@ -103,7 +103,6 @@ _build_addons_flags() {
     local addon=""
     local trimmed=""
     local addons_flags=()
-    local old_ifs="${IFS}"
 
     IFS=',' read -r -a addons_array <<< "${addons_csv}"
     for addon in "${addons_array[@]}"; do
@@ -118,9 +117,8 @@ _build_addons_flags() {
         exit 1
     fi
 
-    IFS=' '
-    ADDONS_FLAGS="${addons_flags[*]}"
-    IFS="${old_ifs}"
+    ADDONS_FLAGS="$(printf '%s ' "${addons_flags[@]}")"
+    ADDONS_FLAGS="${ADDONS_FLAGS% }"
 }
 
 _script_start "Install Minikube (Ubuntu/Debian)"
