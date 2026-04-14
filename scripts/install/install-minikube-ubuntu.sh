@@ -288,7 +288,7 @@ chown -R "${TARGET_USER}:${TARGET_USER}" "${MINIKUBE_FOLDER}"
 _step "Generating NGINX basic auth"
 proxy_password="$(openssl rand -base64 24 | tr -d '\n' | tr '/+' 'ab')"
 htpasswd -cb "${NGINX_FOLDER}/.htpasswd" "${TARGET_USER}" "${proxy_password}" >/dev/null
-chmod 0600 "${NGINX_FOLDER}/.htpasswd"
+chmod 0644 "${NGINX_FOLDER}/.htpasswd"
 printf 'username=%s\npassword=%s\n' "${TARGET_USER}" "${proxy_password}" > "${NGINX_FOLDER}/proxy-credentials.txt"
 chmod 0600 "${NGINX_FOLDER}/proxy-credentials.txt"
 
