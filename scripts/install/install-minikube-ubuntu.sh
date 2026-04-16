@@ -17,6 +17,8 @@ ADDONS_FLAGS=""
 DRIVER="docker"
 UNINSTALL=false
 NGINX_ONLY=false
+ENABLE_DASHBOARD_SERVICE=true
+DASHBOARD_SERVICE_PORT=40505
 CONFIGURE_INGRESS=true
 CONFIGURE_IPTABLES=true
 DASHBOARD_DOMAIN="minikube-dashboard"
@@ -39,6 +41,9 @@ Options:
   --driver <name>            Minikube driver (default: docker)
   --uninstall                Uninstall minikube and cleanup user profile
   --nginx-only               Build and run only the nginx proxy container
+  --enable-dashboard-service Create and enable minikube-dashboard systemd service
+  --disable-dashboard-service Disable minikube-dashboard systemd service creation
+  --dashboard-service-port   Port used by minikube dashboard service (default: 40505)
   --dashboard-domain <host>  Dashboard host for ingress (default: minikube-dashboard)
   --dashboard-port <port>    External forwarded port (default: 88)
   --skip-ingress             Skip kubernetes-dashboard ingress creation
@@ -69,6 +74,18 @@ while [[ $# -gt 0 ]]; do
         --nginx-only)
             NGINX_ONLY=true
             shift
+            ;;
+        --enable-dashboard-service)
+            ENABLE_DASHBOARD_SERVICE=true
+            shift
+            ;;
+        --disable-dashboard-service)
+            ENABLE_DASHBOARD_SERVICE=false
+            shift
+            ;;
+        --dashboard-service-port)
+            DASHBOARD_SERVICE_PORT="${2:-}"
+            shift 2
             ;;
         --dashboard-domain)
             DASHBOARD_DOMAIN="${2:-}"
@@ -155,6 +172,15 @@ fi
 
 if [[ "${UNINSTALL}" == true ]] && [[ "${NGINX_ONLY}" == true ]]; then
     _step_result_failed "Use either --uninstall or --nginx-only, not both"
+    exit 1
+fi
+
+if [[ "${UNINSTALL}" == true ]]; then
+    ENABLE_DASHBOARD_SERVICE=false
+fi
+
+if [[ ! "${DASHBOARD_SERVICE_PORT}" =~ ^[0-9]+$ ]] || (( DASHBOARD_SERVICE_PORT < 1 || DASHBOARD_SERVICE_PORT > 65535 )); then
+    _step_result_failed "Invalid --dashboard-service-port: ${DASHBOARD_SERVICE_PORT}"
     exit 1
 fi
 
@@ -269,6 +295,35 @@ EOF
 
     systemctl daemon-reload
     systemctl enable minikube.service
+
+    if [[ "${ENABLE_DASHBOARD_SERVICE}" == true ]]; then
+        _step "Creating systemd service for minikube dashboard"
+        cat > /etc/systemd/system/minikube-dashboard.service <<EOF
+[Unit]
+Description=Minikube Dashboard Service
+After=network-online.target minikube.service
+Wants=network-online.target
+Requires=minikube.service
+
+[Service]
+Type=simple
+User=${TARGET_USER}
+WorkingDirectory=${TARGET_HOME}
+Environment=HOME=${TARGET_HOME}
+Environment=MINIKUBE_HOME=${TARGET_HOME}/.minikube
+Environment=KUBECONFIG=${TARGET_HOME}/.kube/config
+ExecStartPre=/bin/sh -c 'until /usr/local/bin/minikube status --format="{{.Host}}" 2>/dev/null | grep -q Running; do sleep 2; done'
+ExecStart=/usr/local/bin/minikube dashboard --url --port ${DASHBOARD_SERVICE_PORT}
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+        systemctl daemon-reload
+        systemctl enable --now minikube-dashboard.service
+    fi
 fi
 
 _section "Configure NGINX Proxy and External Access"
@@ -418,6 +473,9 @@ if [[ "${NGINX_ONLY}" == false ]]; then
     _step_result_suggestion "NGINX proxy container ID: ${PROXY_CONTAINER_ID}"
     _step_result_suggestion "NGINX proxy credentials file: ${NGINX_FOLDER}/proxy-credentials.txt"
     _step_result_suggestion "External kubeconfig: ${KUBECONFIG_EXTERNAL}"
+    if [[ "${ENABLE_DASHBOARD_SERVICE}" == true ]]; then
+        _step_result_suggestion "Dashboard service enabled: minikube-dashboard.service (port ${DASHBOARD_SERVICE_PORT})"
+    fi
 else
     _step_result_success "Nginx proxy container started: ${PROXY_CONTAINER_NAME} [${PROXY_CONTAINER_ID}]"
     _step_result_suggestion "Credentials file: ${NGINX_FOLDER}/proxy-credentials.txt"
