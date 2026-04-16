@@ -215,9 +215,9 @@ if ! command -v docker >/dev/null 2>&1; then
 fi
 
 if [[ "${NGINX_ONLY}" == false ]]; then
-    # _step "Installing prerequisite packages"
-    # apt-get update -y
-    # DEBIAN_FRONTEND=noninteractive apt-get install -y curl ca-certificates conntrack iptables-persistent apache2-utils yq openssl
+    _step "Installing prerequisite packages"
+    apt-get update -y
+    DEBIAN_FRONTEND=noninteractive apt-get install -y curl ca-certificates conntrack iptables-persistent apache2-utils yq openssl
 
     _step "Installing Minikube binary"
     curl -fsSL -o /tmp/minikube-linux-amd64 https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
