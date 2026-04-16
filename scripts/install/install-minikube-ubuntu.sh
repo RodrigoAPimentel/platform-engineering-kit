@@ -20,7 +20,7 @@ NGINX_ONLY=false
 CONFIGURE_INGRESS=true
 CONFIGURE_IPTABLES=true
 DASHBOARD_DOMAIN="minikube-dashboard"
-DASHBOARD_PORT=8080
+DASHBOARD_PORT=88
 REBOOT_AFTER=false
 MINIKUBE_INSTALL_ROOT_FOLDER=""
 MINIKUBE_FOLDER=""
@@ -40,7 +40,7 @@ Options:
   --uninstall                Uninstall minikube and cleanup user profile
   --nginx-only               Build and run only the nginx proxy container
   --dashboard-domain <host>  Dashboard host for ingress (default: minikube-dashboard)
-  --dashboard-port <port>    External forwarded port (default: 8080)
+  --dashboard-port <port>    External forwarded port (default: 88)
   --skip-ingress             Skip kubernetes-dashboard ingress creation
   --skip-iptables            Skip iptables forwarding rules
   --reboot                   Reboot host at the end
@@ -317,8 +317,8 @@ http {
     auth_basic_user_file /etc/nginx/.htpasswd;
 
     server {
-        listen 81;
-        listen [::]:81;
+        listen 8080;
+        listen [::]:8080;
         server_name localhost;
 
         location / {
@@ -363,7 +363,7 @@ if [[ "${NGINX_ONLY}" == false ]]; then
     run_as_target "cp -f ~/.kube/config '${KUBECONFIG_EXTERNAL}'"
     host_ip="$(hostname -I | awk '{print $1}')"
     if command -v yq >/dev/null 2>&1; then
-        _yq_inplace ".clusters[0].cluster.server = \"http://${TARGET_USER}:${proxy_password}@${host_ip}:81\"" "${KUBECONFIG_EXTERNAL}"
+        _yq_inplace ".clusters[0].cluster.server = \"http://${TARGET_USER}:${proxy_password}@${host_ip}:8080\"" "${KUBECONFIG_EXTERNAL}"
         _yq_inplace '.clusters[0].cluster."certificate-authority" = "ca.crt"' "${KUBECONFIG_EXTERNAL}"
         _yq_inplace '.users[0].user."client-certificate" = "client.crt"' "${KUBECONFIG_EXTERNAL}"
         _yq_inplace '.users[0].user."client-key" = "client.key"' "${KUBECONFIG_EXTERNAL}"
