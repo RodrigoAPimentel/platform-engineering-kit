@@ -40,7 +40,7 @@ Options:
   --uninstall                Uninstall minikube and cleanup user profile
   --nginx-only               Build and run only the nginx proxy container
   --dashboard-domain <host>  Dashboard host for ingress (default: minikube-dashboard)
-  --dashboard-port <port>    External forwarded port (default: 88)
+  --dashboard-port <port>    External forwarded port (default: 8080)
   --skip-ingress             Skip kubernetes-dashboard ingress creation
   --skip-iptables            Skip iptables forwarding rules
   --reboot                   Reboot host at the end
