@@ -473,6 +473,9 @@ if [[ "${NGINX_ONLY}" == false ]]; then
     _step_result_suggestion "NGINX proxy container ID: ${PROXY_CONTAINER_ID}"
     _step_result_suggestion "NGINX proxy credentials file: ${NGINX_FOLDER}/proxy-credentials.txt"
     _step_result_suggestion "External kubeconfig: ${KUBECONFIG_EXTERNAL}"
+    _step_result_suggestion "For external host dashboard access, keep the dashboard service running on port ${DASHBOARD_SERVICE_PORT}."
+    _step_result_suggestion "Create SSH tunnel from your local machine: ssh -L 8081:localhost:${DASHBOARD_SERVICE_PORT} ${TARGET_USER}@${host_ip}"
+    _step_result_suggestion "Open dashboard locally at: http://localhost:8081/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/"
     if [[ "${ENABLE_DASHBOARD_SERVICE}" == true ]]; then
         _step_result_suggestion "Dashboard service enabled: minikube-dashboard.service (port ${DASHBOARD_SERVICE_PORT})"
     fi
