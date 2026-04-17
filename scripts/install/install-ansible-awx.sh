@@ -335,9 +335,34 @@ fi
 # Download and prepare AWX
 _step "Downloading Ansible AWX v${AWX_VERSION}"
 cd /tmp || exit 1
-wget -q "https://github.com/ansible/awx/archive/${AWX_VERSION}.zip"
-unzip -q "${AWX_VERSION}.zip"
-cd "awx-${AWX_VERSION}/installer" || exit 1
+wget -q -O "${AWX_VERSION}.zip" "https://github.com/ansible/awx/archive/${AWX_VERSION}.zip"
+
+AWX_ARCHIVE_ROOT="$(unzip -Z -1 "${AWX_VERSION}.zip" 2>/dev/null | head -n1 | cut -d'/' -f1)"
+if [[ -z "${AWX_ARCHIVE_ROOT}" ]]; then
+    AWX_ARCHIVE_ROOT="awx-${AWX_VERSION}"
+fi
+
+unzip -q -o "${AWX_VERSION}.zip"
+
+AWX_INSTALLER_DIR=""
+if [[ -d "/tmp/${AWX_ARCHIVE_ROOT}/installer" && -f "/tmp/${AWX_ARCHIVE_ROOT}/installer/install.yml" && -f "/tmp/${AWX_ARCHIVE_ROOT}/installer/inventory" ]]; then
+    AWX_INSTALLER_DIR="/tmp/${AWX_ARCHIVE_ROOT}/installer"
+else
+    AWX_INSTALLER_DIR="$(find "/tmp/${AWX_ARCHIVE_ROOT}" -maxdepth 6 -type f -name install.yml -printf '%h\n' 2>/dev/null | while IFS= read -r candidate; do
+        if [[ -f "${candidate}/inventory" ]]; then
+            printf '%s\n' "${candidate}"
+            break
+        fi
+    done)"
+fi
+
+if [[ -z "${AWX_INSTALLER_DIR}" ]]; then
+    _step_result_failed "AWX v${AWX_VERSION} does not include the legacy installer layout (install.yml + inventory)."
+    _step_result_suggestion "Use a legacy version with installer support (example: 17.1.0) or migrate to AWX Operator workflow for newer versions."
+    exit 1
+fi
+
+cd "${AWX_INSTALLER_DIR}" || exit 1
 _step_result_success "AWX source downloaded"
 
 ensure_ansible_compose_python_module
