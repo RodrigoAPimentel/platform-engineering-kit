@@ -335,14 +335,20 @@ fi
 # Download and prepare AWX
 _step "Downloading Ansible AWX v${AWX_VERSION}"
 cd /tmp || exit 1
-wget -q -O "${AWX_VERSION}.zip" "https://github.com/ansible/awx/archive/${AWX_VERSION}.zip"
+if ! wget -q -O "${AWX_VERSION}.zip" "https://github.com/ansible/awx/archive/${AWX_VERSION}.zip"; then
+    _step_result_failed "Failed to download AWX archive for version ${AWX_VERSION}"
+    exit 1
+fi
 
-AWX_ARCHIVE_ROOT="$(unzip -Z -1 "${AWX_VERSION}.zip" 2>/dev/null | head -n1 | cut -d'/' -f1)"
+AWX_ARCHIVE_ROOT="$(unzip -Z -1 "${AWX_VERSION}.zip" 2>/dev/null | head -n1 | cut -d'/' -f1 || true)"
 if [[ -z "${AWX_ARCHIVE_ROOT}" ]]; then
     AWX_ARCHIVE_ROOT="awx-${AWX_VERSION}"
 fi
 
-unzip -q -o "${AWX_VERSION}.zip"
+if ! unzip -q -o "${AWX_VERSION}.zip"; then
+    _step_result_failed "Failed to extract AWX archive ${AWX_VERSION}.zip"
+    exit 1
+fi
 
 AWX_INSTALLER_DIR=""
 if [[ -d "/tmp/${AWX_ARCHIVE_ROOT}/installer" && -f "/tmp/${AWX_ARCHIVE_ROOT}/installer/install.yml" && -f "/tmp/${AWX_ARCHIVE_ROOT}/installer/inventory" ]]; then
