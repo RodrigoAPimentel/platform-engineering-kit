@@ -19,6 +19,19 @@ DOCKER_COMPOSE_VERSION="2.13.0"
 SKIP_SYSTEM_UPDATE=false
 REBOOT_AFTER=false
 
+update_npm_if_compatible() {
+    if ! command -v npm >/dev/null 2>&1; then
+        return 0
+    fi
+
+    # Newer npm releases require newer Node.js. Do not fail AWX install if npm self-update is unsupported.
+    if npm install --global npm >/tmp/npm-self-update.log 2>&1; then
+        _step_result_success "npm updated to latest version"
+    else
+        _step_result_suggestion "Skipping npm self-update due to Node.js compatibility constraints (details: /tmp/npm-self-update.log)"
+    fi
+}
+
 usage() {
     cat <<'EOF'
 Usage: sudo ./install-ansible-awx.sh [options]
@@ -101,7 +114,7 @@ case "${PACKAGE_MANAGER}" in
             wget \
             unzip \
             python3-docker
-        npm install --global npm
+        update_npm_if_compatible
         ;;
     dnf)
         dnf install -y \
@@ -121,7 +134,7 @@ case "${PACKAGE_MANAGER}" in
             npm \
             unzip \
             python3-docker
-        npm install --global npm
+        update_npm_if_compatible
         ;;
     yum)
         yum install -y \
@@ -140,7 +153,7 @@ case "${PACKAGE_MANAGER}" in
             npm \
             unzip \
             python3-docker
-        npm install --global npm
+        update_npm_if_compatible
         ;;
 esac
 _step_result_success "AWX prerequisites installed"
