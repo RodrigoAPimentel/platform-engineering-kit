@@ -14,6 +14,7 @@ source "${LIB_DIR}/system-functions.sh"
 TARGET_USER="${SUDO_USER:-${USER}}"
 RUN_SYSTEM_UPDATE=true
 REBOOT_AFTER=false
+COMPOSE_FALLBACK_VERSION="v2.29.7"
 
 usage() {
     cat <<'EOF'
@@ -22,6 +23,7 @@ Usage: sudo ./install-docker.sh [options]
 Options:
   --user <username>        User to add to docker group (default: current sudo user)
   --skip-system-update     Skip apt/dnf/yum update and upgrade
+  --compose-fallback <v>   Docker Compose standalone fallback version (default: v2.29.7)
   --reboot                 Reboot host after install
   -h, --help               Show this help
 EOF
@@ -36,6 +38,10 @@ while [[ $# -gt 0 ]]; do
         --skip-system-update)
             RUN_SYSTEM_UPDATE=false
             shift
+            ;;
+        --compose-fallback)
+            COMPOSE_FALLBACK_VERSION="${2:-}"
+            shift 2
             ;;
         --reboot)
             REBOOT_AFTER=true
@@ -56,6 +62,16 @@ _script_start "Install Docker Engine and Compose Plugin"
 __verify_root
 __detect_package_manager
 
+arch="$(uname -m)"
+case "${arch}" in
+    x86_64) compose_arch="x86_64" ;;
+    aarch64|arm64) compose_arch="aarch64" ;;
+    *)
+        _step_result_failed "Unsupported architecture for compose fallback: ${arch}"
+        exit 1
+        ;;
+esac
+
 if [[ "${RUN_SYSTEM_UPDATE}" == true ]]; then
     __update_system
 else
@@ -72,19 +88,25 @@ case "${PACKAGE_MANAGER}" in
     apt)
         apt-get install -y ca-certificates curl gnupg lsb-release
         install -m 0755 -d /etc/apt/keyrings
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+        distro_family="${OS}"
+        case "${OS}" in
+            ubuntu|debian) ;;
+            *)
+                _step_result_failed "Unsupported apt-based distro for Docker repo: ${OS}"
+                exit 1
+                ;;
+        esac
+
+        curl -fsSL "https://download.docker.com/linux/${distro_family}/gpg" -o /etc/apt/keyrings/docker.asc
         chmod a+r /etc/apt/keyrings/docker.asc
 
-        codename=""
-        # shellcheck disable=SC1091
-        source /etc/os-release
         codename="${VERSION_CODENAME:-${UBUNTU_CODENAME:-}}"
         if [[ -z "${codename}" ]]; then
-            _step_result_failed "Could not detect Ubuntu/Debian codename"
+            _step_result_failed "Could not detect codename for apt-based distro"
             exit 1
         fi
 
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu ${codename} stable" > /etc/apt/sources.list.d/docker.list
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/${distro_family} ${codename} stable" > /etc/apt/sources.list.d/docker.list
         apt-get update -y
         ;;
     dnf)
@@ -103,10 +125,12 @@ case "${PACKAGE_MANAGER}" in
         apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
         ;;
     dnf)
-        dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || \
+            dnf install -y docker-ce docker-ce-cli containerd.io
         ;;
     yum)
-        yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+        yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || \
+            yum install -y docker-ce docker-ce-cli containerd.io
         ;;
 esac
 
@@ -121,8 +145,15 @@ __verify_packages_installed docker
 if docker compose version >/dev/null 2>&1; then
     _step_result_success "docker compose plugin is available"
 else
-    _step_result_failed "docker compose plugin is not available"
-    exit 1
+    _step_result_suggestion "docker compose plugin not available; installing standalone fallback"
+    curl -fsSL "https://github.com/docker/compose/releases/download/${COMPOSE_FALLBACK_VERSION}/docker-compose-linux-${compose_arch}" -o /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
+    if command -v docker-compose >/dev/null 2>&1; then
+        _step_result_success "docker-compose standalone installed"
+    else
+        _step_result_failed "docker-compose fallback installation failed"
+        exit 1
+    fi
 fi
 
 _finish_information

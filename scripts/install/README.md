@@ -4,8 +4,9 @@ Scripts for installing tools and dependencies.
 
 ## Contents
 
+- `initial-machine-preparation.sh` -> Baseline machine preparation (locale/session, package update, OpenSSH enablement, optional firewall and reboot) across apt/dnf/yum systems.
 - `initial-preparation.sh` -> Baseline host preparation (system update, prerequisite packages, timezone, optional reboot).
-- `install-docker.sh` -> Installs Docker Engine, Docker Compose plugin, enables service, and adds a user to docker group.
+- `install-docker.sh` -> Unified Docker installer for Ubuntu/Debian/RHEL/CentOS/Fedora with OS detection, Compose plugin, and standalone Compose fallback.
 - `install-minikube-ubuntu.sh` -> Installs Minikube and kubectl on Ubuntu/Debian, configures dashboard ingress/iptables, and provisions NGINX proxy with external kubeconfig bundle by default.
 - `install-node-red.sh` -> Installs Node-RED with PM2 process management and startup integration for Ubuntu/Debian.
 - `install-openssh-server-ubuntu.sh` -> Installs and enables OpenSSH Server on Ubuntu/Debian hosts.
