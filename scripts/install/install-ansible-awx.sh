@@ -18,6 +18,7 @@ AWX_SECRET_KEY=""
 DOCKER_COMPOSE_VERSION="2.13.0"
 SKIP_SYSTEM_UPDATE=false
 REBOOT_AFTER=false
+ANSIBLE_PYTHON_INTERPRETER_BIN="$(command -v python3 || echo /usr/bin/python3)"
 
 update_npm_if_compatible() {
     if ! command -v npm >/dev/null 2>&1; then
@@ -60,14 +61,55 @@ run_docker_compose() {
 ensure_ansible_compose_python_module() {
     _step "Ensuring Python docker-compose module for Ansible"
 
-    if python3 -c 'import compose' >/dev/null 2>&1; then
+    if "${ANSIBLE_PYTHON_INTERPRETER_BIN}" -c 'import compose' >/dev/null 2>&1; then
         _step_result_success "Python docker-compose module already available"
         return
     fi
 
-    if python3 -m pip install --break-system-packages docker-compose==1.29.2 >/tmp/pip-docker-compose.log 2>&1 \
-        || python3 -m pip install docker-compose==1.29.2 >/tmp/pip-docker-compose.log 2>&1; then
-        _step_result_success "Python docker-compose module installed"
+    # Prefer distro packages first to avoid externally-managed Python issues (PEP 668).
+    case "${PACKAGE_MANAGER}" in
+        apt)
+            if apt-get install -y docker-compose >/tmp/awx-compose-package.log 2>&1; then
+                if "${ANSIBLE_PYTHON_INTERPRETER_BIN}" -c 'import compose' >/dev/null 2>&1; then
+                    _step_result_success "Python docker-compose module installed via apt package"
+                    return
+                fi
+            fi
+            ;;
+        dnf)
+            dnf install -y docker-compose >/tmp/awx-compose-package.log 2>&1 || true
+            if "${ANSIBLE_PYTHON_INTERPRETER_BIN}" -c 'import compose' >/dev/null 2>&1; then
+                _step_result_success "Python docker-compose module installed via dnf package"
+                return
+            fi
+            ;;
+        yum)
+            yum install -y docker-compose >/tmp/awx-compose-package.log 2>&1 || true
+            if "${ANSIBLE_PYTHON_INTERPRETER_BIN}" -c 'import compose' >/dev/null 2>&1; then
+                _step_result_success "Python docker-compose module installed via yum package"
+                return
+            fi
+            ;;
+    esac
+
+    # Fallback: isolated venv for Ansible runtime.
+    local awx_venv_dir="/opt/awx-installer-venv"
+
+    if ! python3 -m venv "${awx_venv_dir}" >/tmp/awx-compose-venv.log 2>&1; then
+        if [[ "${PACKAGE_MANAGER}" == "apt" ]]; then
+            apt-get install -y python3-venv >/tmp/awx-compose-venv.log 2>&1
+            python3 -m venv "${awx_venv_dir}" >/tmp/awx-compose-venv.log 2>&1
+        else
+            _step_result_failed "Failed to create Python venv for AWX installer (details: /tmp/awx-compose-venv.log)"
+            exit 1
+        fi
+    fi
+
+    if "${awx_venv_dir}/bin/pip" install --upgrade pip >/tmp/pip-docker-compose.log 2>&1 \
+        && "${awx_venv_dir}/bin/pip" install docker-compose==1.29.2 >/tmp/pip-docker-compose.log 2>&1 \
+        && "${awx_venv_dir}/bin/python" -c 'import compose' >/dev/null 2>&1; then
+        ANSIBLE_PYTHON_INTERPRETER_BIN="${awx_venv_dir}/bin/python"
+        _step_result_success "Python docker-compose module installed in venv (${awx_venv_dir})"
     else
         _step_result_failed "Failed to install Python docker-compose module (details: /tmp/pip-docker-compose.log)"
         exit 1
@@ -304,7 +346,7 @@ _step_result_success "Inventory configured"
 
 # Run AWX installer
 _step "Running Ansible AWX installation playbook"
-if ansible-playbook -i inventory install.yml; then
+if ansible-playbook -i inventory -e "ansible_python_interpreter=${ANSIBLE_PYTHON_INTERPRETER_BIN}" install.yml; then
     _step_result_success "AWX playbook executed successfully"
 else
     _step_result_failed "AWX playbook execution failed"
