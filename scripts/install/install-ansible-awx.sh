@@ -19,6 +19,10 @@ DOCKER_COMPOSE_VERSION="2.13.0"
 SKIP_SYSTEM_UPDATE=false
 REBOOT_AFTER=false
 ANSIBLE_PYTHON_INTERPRETER_BIN="$(command -v python3 || echo /usr/bin/python3)"
+INSTALL_METHOD="auto"
+AWX_OPERATOR_VERSION="2.19.1"
+AWX_NAMESPACE="awx"
+SELECTED_INSTALL_METHOD=""
 
 update_npm_if_compatible() {
     if ! command -v npm >/dev/null 2>&1; then
@@ -126,6 +130,68 @@ is_known_awx_compose_containerconfig_error() {
     grep -q "Error starting project 'ContainerConfig'" "${playbook_log_file}"
 }
 
+install_awx_with_operator() {
+    _step "Installing AWX via AWX Operator (namespace: ${AWX_NAMESPACE})"
+
+    if ! command -v kubectl >/dev/null 2>&1; then
+        _step_result_failed "kubectl is required for operator mode but is not installed"
+        exit 1
+    fi
+
+    if ! kubectl cluster-info >/tmp/awx-k8s-cluster-info.log 2>&1; then
+        _step_result_failed "Kubernetes cluster is not reachable (details: /tmp/awx-k8s-cluster-info.log)"
+        exit 1
+    fi
+
+    if ! kubectl get namespace "${AWX_NAMESPACE}" >/dev/null 2>&1; then
+        kubectl create namespace "${AWX_NAMESPACE}" >/dev/null
+    fi
+
+    if kubectl apply -k "github.com/ansible/awx-operator/config/default?ref=${AWX_OPERATOR_VERSION}" >/tmp/awx-operator-apply.log 2>&1; then
+        _step_result_success "AWX Operator manifests applied"
+    else
+        _step_result_failed "Failed to apply AWX Operator manifests (details: /tmp/awx-operator-apply.log)"
+        exit 1
+    fi
+
+    if kubectl -n "${AWX_NAMESPACE}" wait --for=condition=Available deployment/awx-operator-controller-manager --timeout=600s >/tmp/awx-operator-wait.log 2>&1; then
+        _step_result_success "AWX Operator controller is ready"
+    else
+        _step_result_failed "AWX Operator controller did not become ready (details: /tmp/awx-operator-wait.log)"
+        exit 1
+    fi
+
+    kubectl -n "${AWX_NAMESPACE}" apply -f - <<EOF >/tmp/awx-operator-secret.log 2>&1
+apiVersion: v1
+kind: Secret
+metadata:
+  name: awx-admin-password
+type: Opaque
+stringData:
+  password: "${AWX_ADMIN_PASSWORD}"
+EOF
+
+    if kubectl -n "${AWX_NAMESPACE}" apply -f - <<EOF >/tmp/awx-operator-awx.log 2>&1
+apiVersion: awx.ansible.com/v1beta1
+kind: AWX
+metadata:
+  name: awx
+spec:
+  admin_user: "${AWX_ADMIN_USER}"
+  admin_password_secret: awx-admin-password
+  web_service_type: nodeport
+EOF
+    then
+        _step_result_success "AWX custom resource applied"
+    else
+        _step_result_failed "Failed to apply AWX custom resource (details: /tmp/awx-operator-awx.log)"
+        exit 1
+    fi
+
+    _step_result_suggestion "Operator deployment started. Monitor with: kubectl -n ${AWX_NAMESPACE} get pods"
+    _step_result_suggestion "Retrieve admin password secret with: kubectl -n ${AWX_NAMESPACE} get secret awx-admin-password -o jsonpath='{.data.password}' | base64 -d"
+}
+
 usage() {
     cat <<'EOF'
 Usage: sudo ./install-ansible-awx.sh [options]
@@ -137,6 +203,9 @@ Options:
   --admin-user <username>      AWX admin username (default: root)
   --admin-password <password>  AWX admin password (default: toor)
   --docker-compose <version>   Docker Compose version (default: 2.13.0)
+    --install-method <mode>      Installation mode: auto|legacy|operator (default: auto)
+    --operator-version <version> AWX Operator version (default: 2.19.1)
+    --namespace <name>           Kubernetes namespace for operator mode (default: awx)
   --skip-system-update         Skip package update and upgrade
   --reboot                     Reboot host after installation
   -h, --help                   Show this help message
@@ -144,6 +213,7 @@ Options:
 Examples:
   sudo ./install-ansible-awx.sh --awx-version 21.11.0
   sudo ./install-ansible-awx.sh --awx-version 17.1.0 --admin-user admin --reboot
+    sudo ./install-ansible-awx.sh --awx-version 24.6.1 --install-method operator --namespace awx
 EOF
 }
 
@@ -163,6 +233,18 @@ while [[ $# -gt 0 ]]; do
             ;;
         --docker-compose)
             DOCKER_COMPOSE_VERSION="${2:-}"
+            shift 2
+            ;;
+        --install-method)
+            INSTALL_METHOD="${2:-}"
+            shift 2
+            ;;
+        --operator-version)
+            AWX_OPERATOR_VERSION="${2:-}"
+            shift 2
+            ;;
+        --namespace)
+            AWX_NAMESPACE="${2:-}"
             shift 2
             ;;
         --skip-system-update)
@@ -362,61 +444,88 @@ else
     done)"
 fi
 
-if [[ -z "${AWX_INSTALLER_DIR}" ]]; then
+case "${INSTALL_METHOD}" in
+    auto)
+        if [[ -n "${AWX_INSTALLER_DIR}" ]]; then
+            SELECTED_INSTALL_METHOD="legacy"
+        else
+            SELECTED_INSTALL_METHOD="operator"
+        fi
+        ;;
+    legacy|operator)
+        SELECTED_INSTALL_METHOD="${INSTALL_METHOD}"
+        ;;
+    *)
+        _step_result_failed "Invalid --install-method '${INSTALL_METHOD}'. Use: auto, legacy, or operator."
+        exit 1
+        ;;
+esac
+
+if [[ "${SELECTED_INSTALL_METHOD}" == "legacy" && -z "${AWX_INSTALLER_DIR}" ]]; then
     _step_result_failed "AWX v${AWX_VERSION} does not include the legacy installer layout (install.yml + inventory)."
-    _step_result_suggestion "Use a legacy version with installer support (example: 17.1.0) or migrate to AWX Operator workflow for newer versions."
+    _step_result_suggestion "Use --install-method operator for newer AWX versions."
     exit 1
 fi
 
-cd "${AWX_INSTALLER_DIR}" || exit 1
-_step_result_success "AWX source downloaded"
+if [[ "${SELECTED_INSTALL_METHOD}" == "legacy" ]]; then
+    cd "${AWX_INSTALLER_DIR}" || exit 1
+    _step_result_success "AWX source downloaded (legacy installer mode)"
 
-ensure_ansible_compose_python_module
+    ensure_ansible_compose_python_module
 
-# Generate secure secret key if not provided
-if [[ -z "${AWX_SECRET_KEY}" ]]; then
-    AWX_SECRET_KEY="$(pwgen -N 1 -s 40)"
-fi
-
-# Configure inventory
-_step "Configuring AWX inventory"
-sed -i "s|^admin_user=.*|admin_user=${AWX_ADMIN_USER}|g" inventory
-sed -i -E "s|^#([[:space:]]?)admin_password=password|admin_password=${AWX_ADMIN_PASSWORD}|g" inventory
-sed -i "s|^secret_key=.*|secret_key=${AWX_SECRET_KEY}|g" inventory
-_step_result_success "Inventory configured"
-
-# Run AWX installer
-_step "Running Ansible AWX installation playbook"
-PLAYBOOK_LOG_FILE="/tmp/awx-install-playbook.log"
-if ansible-playbook -i inventory -e "ansible_python_interpreter=${ANSIBLE_PYTHON_INTERPRETER_BIN}" install.yml 2>&1 | tee "${PLAYBOOK_LOG_FILE}"; then
-    _step_result_success "AWX playbook executed successfully"
-else
-    if is_known_awx_compose_containerconfig_error "${PLAYBOOK_LOG_FILE}"; then
-        _step_result_suggestion "Known docker-compose v1 ContainerConfig issue detected during AWX installer"
-        _step_result_suggestion "Proceeding with manual container restart via Compose"
-    else
-        _step_result_failed "AWX playbook execution failed (details: ${PLAYBOOK_LOG_FILE})"
-        exit 1
+    # Generate secure secret key if not provided
+    if [[ -z "${AWX_SECRET_KEY}" ]]; then
+        AWX_SECRET_KEY="$(pwgen -N 1 -s 40)"
     fi
-fi
 
-# Restart AWX containers
-_step "Restarting AWX services"
-cd ~/.awx/awxcompose || exit 1
-run_docker_compose down || true
-sleep 5
-run_docker_compose up -d
-_step_result_success "AWX services restarted"
+    # Configure inventory
+    _step "Configuring AWX inventory"
+    sed -i "s|^admin_user=.*|admin_user=${AWX_ADMIN_USER}|g" inventory
+    sed -i -E "s|^#([[:space:]]?)admin_password=password|admin_password=${AWX_ADMIN_PASSWORD}|g" inventory
+    sed -i "s|^secret_key=.*|secret_key=${AWX_SECRET_KEY}|g" inventory
+    _step_result_success "Inventory configured"
+
+    # Run AWX installer
+    _step "Running Ansible AWX installation playbook"
+    PLAYBOOK_LOG_FILE="/tmp/awx-install-playbook.log"
+    if ansible-playbook -i inventory -e "ansible_python_interpreter=${ANSIBLE_PYTHON_INTERPRETER_BIN}" install.yml 2>&1 | tee "${PLAYBOOK_LOG_FILE}"; then
+        _step_result_success "AWX playbook executed successfully"
+    else
+        if is_known_awx_compose_containerconfig_error "${PLAYBOOK_LOG_FILE}"; then
+            _step_result_suggestion "Known docker-compose v1 ContainerConfig issue detected during AWX installer"
+            _step_result_suggestion "Proceeding with manual container restart via Compose"
+        else
+            _step_result_failed "AWX playbook execution failed (details: ${PLAYBOOK_LOG_FILE})"
+            exit 1
+        fi
+    fi
+
+    # Restart AWX containers
+    _step "Restarting AWX services"
+    cd ~/.awx/awxcompose || exit 1
+    run_docker_compose down || true
+    sleep 5
+    run_docker_compose up -d
+    _step_result_success "AWX services restarted"
+else
+    _step_result_success "AWX source downloaded (operator mode)"
+    install_awx_with_operator
+fi
 
 # Final information
 _finish_information
 
 _step "AWX Installation Summary"
+echo "  Install Method: ${SELECTED_INSTALL_METHOD}"
 echo "  Admin User: ${AWX_ADMIN_USER}"
 echo "  Version: ${AWX_VERSION}"
 echo "  Docker Compose: ${DOCKER_COMPOSE_VERSION}"
 echo ""
-echo "  Access AWX at: http://localhost (or your machine IP)"
+if [[ "${SELECTED_INSTALL_METHOD}" == "legacy" ]]; then
+    echo "  Access AWX at: http://localhost (or your machine IP)"
+else
+    echo "  Access AWX via Kubernetes service in namespace: ${AWX_NAMESPACE}"
+fi
 echo "  Credentials: ${AWX_ADMIN_USER} / ${AWX_ADMIN_PASSWORD}"
 
 if [[ "${REBOOT_AFTER}" == true ]]; then
