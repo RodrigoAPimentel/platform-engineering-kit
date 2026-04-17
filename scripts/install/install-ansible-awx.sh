@@ -134,12 +134,26 @@ install_awx_with_operator() {
     _step "Installing AWX via AWX Operator (namespace: ${AWX_NAMESPACE})"
 
     if ! command -v kubectl >/dev/null 2>&1; then
-        _step_result_failed "kubectl is required for operator mode but is not installed"
+        _step_result_failed "AWX ${AWX_VERSION} requires Kubernetes (operator mode), but kubectl is not installed"
+        _step_result_suggestion "Install kubectl and ensure a Kubernetes cluster or Minikube is running"
         exit 1
     fi
 
     if ! kubectl cluster-info >/tmp/awx-k8s-cluster-info.log 2>&1; then
-        _step_result_failed "Kubernetes cluster is not reachable (details: /tmp/awx-k8s-cluster-info.log)"
+        if command -v minikube >/dev/null 2>&1; then
+            if minikube status >/tmp/awx-minikube-status.log 2>&1; then
+                _step_result_failed "Kubernetes API is not reachable by kubectl (details: /tmp/awx-k8s-cluster-info.log)"
+                _step_result_suggestion "Check kubectl context and cluster connectivity"
+            else
+                _step_result_failed "AWX ${AWX_VERSION} requires Kubernetes, but Minikube is not running"
+                _step_result_suggestion "Start Minikube first (example: minikube start)"
+                _step_result_suggestion "Details: /tmp/awx-minikube-status.log"
+            fi
+        else
+            _step_result_failed "AWX ${AWX_VERSION} requires Kubernetes, but no reachable cluster was found"
+            _step_result_suggestion "Start a Kubernetes cluster or install/start Minikube before running this script"
+            _step_result_suggestion "Details: /tmp/awx-k8s-cluster-info.log"
+        fi
         exit 1
     fi
 
