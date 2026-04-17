@@ -5,6 +5,7 @@ Utility scripts for automation and operations.
 ## Contents
 
 - install → Tool installation
+- install/standalone → Independent application/runtime installers
 - utils → Helper scripts (including repository structure scaffolding)
 - maintenance → Cleanup and maintenance
 
