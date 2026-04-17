@@ -116,6 +116,16 @@ ensure_ansible_compose_python_module() {
     fi
 }
 
+is_known_awx_compose_containerconfig_error() {
+    local playbook_log_file="${1:-}"
+
+    if [[ -z "${playbook_log_file}" || ! -f "${playbook_log_file}" ]]; then
+        return 1
+    fi
+
+    grep -q "Error starting project 'ContainerConfig'" "${playbook_log_file}"
+}
+
 usage() {
     cat <<'EOF'
 Usage: sudo ./install-ansible-awx.sh [options]
@@ -346,11 +356,17 @@ _step_result_success "Inventory configured"
 
 # Run AWX installer
 _step "Running Ansible AWX installation playbook"
-if ansible-playbook -i inventory -e "ansible_python_interpreter=${ANSIBLE_PYTHON_INTERPRETER_BIN}" install.yml; then
+PLAYBOOK_LOG_FILE="/tmp/awx-install-playbook.log"
+if ansible-playbook -i inventory -e "ansible_python_interpreter=${ANSIBLE_PYTHON_INTERPRETER_BIN}" install.yml 2>&1 | tee "${PLAYBOOK_LOG_FILE}"; then
     _step_result_success "AWX playbook executed successfully"
 else
-    _step_result_failed "AWX playbook execution failed"
-    exit 1
+    if is_known_awx_compose_containerconfig_error "${PLAYBOOK_LOG_FILE}"; then
+        _step_result_suggestion "Known docker-compose v1 ContainerConfig issue detected during AWX installer"
+        _step_result_suggestion "Proceeding with manual container restart via Compose"
+    else
+        _step_result_failed "AWX playbook execution failed (details: ${PLAYBOOK_LOG_FILE})"
+        exit 1
+    fi
 fi
 
 # Restart AWX containers
