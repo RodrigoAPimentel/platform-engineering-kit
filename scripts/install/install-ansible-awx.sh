@@ -32,6 +32,48 @@ update_npm_if_compatible() {
     fi
 }
 
+is_docker_installed() {
+    command -v docker >/dev/null 2>&1
+}
+
+is_docker_compose_installed() {
+    if command -v docker-compose >/dev/null 2>&1; then
+        return 0
+    fi
+
+    if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+        return 0
+    fi
+
+    return 1
+}
+
+run_docker_compose() {
+    if command -v docker-compose >/dev/null 2>&1; then
+        docker-compose "$@"
+        return
+    fi
+
+    docker compose "$@"
+}
+
+ensure_ansible_compose_python_module() {
+    _step "Ensuring Python docker-compose module for Ansible"
+
+    if python3 -c 'import compose' >/dev/null 2>&1; then
+        _step_result_success "Python docker-compose module already available"
+        return
+    fi
+
+    if python3 -m pip install --break-system-packages docker-compose==1.29.2 >/tmp/pip-docker-compose.log 2>&1 \
+        || python3 -m pip install docker-compose==1.29.2 >/tmp/pip-docker-compose.log 2>&1; then
+        _step_result_success "Python docker-compose module installed"
+    else
+        _step_result_failed "Failed to install Python docker-compose module (details: /tmp/pip-docker-compose.log)"
+        exit 1
+    fi
+}
+
 usage() {
     cat <<'EOF'
 Usage: sudo ./install-ansible-awx.sh [options]
@@ -158,24 +200,47 @@ case "${PACKAGE_MANAGER}" in
 esac
 _step_result_success "AWX prerequisites installed"
 
-# Install Docker
-_step "Installing Docker Engine and Docker Compose"
-case "${PACKAGE_MANAGER}" in
-    apt)
-        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - 2>/dev/null || true
-        add-apt-repository -y "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" || true
-        apt-get update
-        apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-        ;;
-    dnf)
-        dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-        dnf install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-        ;;
-    yum)
-        yum-config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-        yum install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
-        ;;
-esac
+# Install Docker/Docker Compose only when missing
+if is_docker_installed && is_docker_compose_installed; then
+    _step "Verifying Docker Engine and Docker Compose"
+    _step_result_success "Docker and Docker Compose already installed, skipping installation"
+else
+    _step "Installing Docker Engine and Docker Compose"
+    case "${PACKAGE_MANAGER}" in
+        apt)
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - 2>/dev/null || true
+            add-apt-repository -y "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" || true
+            apt-get update
+
+            if ! is_docker_installed; then
+                apt-get install -y docker-ce docker-ce-cli containerd.io
+            fi
+            if ! is_docker_compose_installed; then
+                apt-get install -y docker-compose-plugin
+            fi
+            ;;
+        dnf)
+            dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+
+            if ! is_docker_installed; then
+                dnf install -y docker-ce docker-ce-cli containerd.io
+            fi
+            if ! is_docker_compose_installed; then
+                dnf install -y docker-compose-plugin
+            fi
+            ;;
+        yum)
+            yum-config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+
+            if ! is_docker_installed; then
+                yum install -y docker-ce docker-ce-cli containerd.io
+            fi
+            if ! is_docker_compose_installed; then
+                yum install -y docker-compose-plugin
+            fi
+            ;;
+    esac
+fi
 
 # Start Docker service
 _step "Enabling and starting Docker service"
@@ -205,7 +270,7 @@ case "${arch}" in
         ;;
 esac
 
-if ! command -v docker-compose >/dev/null 2>&1; then
+if ! is_docker_compose_installed; then
     _step "Installing Docker Compose v${DOCKER_COMPOSE_VERSION} standalone"
     curl -SL "https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-linux-${compose_arch}" \
         -o /usr/local/bin/docker-compose
@@ -222,6 +287,8 @@ wget -q "https://github.com/ansible/awx/archive/${AWX_VERSION}.zip"
 unzip -q "${AWX_VERSION}.zip"
 cd "awx-${AWX_VERSION}/installer" || exit 1
 _step_result_success "AWX source downloaded"
+
+ensure_ansible_compose_python_module
 
 # Generate secure secret key if not provided
 if [[ -z "${AWX_SECRET_KEY}" ]]; then
@@ -240,16 +307,16 @@ _step "Running Ansible AWX installation playbook"
 if ansible-playbook -i inventory install.yml; then
     _step_result_success "AWX playbook executed successfully"
 else
-    _step_result_error "AWX playbook execution failed"
+    _step_result_failed "AWX playbook execution failed"
     exit 1
 fi
 
 # Restart AWX containers
 _step "Restarting AWX services"
 cd ~/.awx/awxcompose || exit 1
-docker-compose down || true
+run_docker_compose down || true
 sleep 5
-docker-compose up -d
+run_docker_compose up -d
 _step_result_success "AWX services restarted"
 
 # Final information
