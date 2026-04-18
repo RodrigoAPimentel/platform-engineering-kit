@@ -132,6 +132,9 @@ is_known_awx_compose_containerconfig_error() {
 
 install_awx_with_operator() {
     _step "Installing AWX via AWX Operator (namespace: ${AWX_NAMESPACE})"
+    local minikube_running=false
+    local sudo_user_home=""
+    local sudo_user_kubeconfig=""
 
     if ! command -v kubectl >/dev/null 2>&1; then
         _step_result_failed "AWX ${AWX_VERSION} requires Kubernetes (operator mode), but kubectl is not installed"
@@ -139,11 +142,33 @@ install_awx_with_operator() {
         exit 1
     fi
 
+    # When running with sudo, prefer the original user's kubeconfig to avoid false negatives.
+    if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
+        sudo_user_home="$(getent passwd "${SUDO_USER}" | cut -d: -f6 || true)"
+        sudo_user_kubeconfig="${sudo_user_home}/.kube/config"
+
+        if [[ -n "${sudo_user_home}" && -f "${sudo_user_kubeconfig}" ]]; then
+            export KUBECONFIG="${sudo_user_kubeconfig}"
+            _step_result_suggestion "Using kubeconfig from sudo user (${SUDO_USER})"
+        fi
+    fi
+
+    if command -v minikube >/dev/null 2>&1; then
+        if minikube status >/tmp/awx-minikube-status.log 2>&1; then
+            minikube_running=true
+        elif [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
+            if runuser -u "${SUDO_USER}" -- minikube status >/tmp/awx-minikube-status.log 2>&1; then
+                minikube_running=true
+            fi
+        fi
+    fi
+
     if ! kubectl cluster-info >/tmp/awx-k8s-cluster-info.log 2>&1; then
         if command -v minikube >/dev/null 2>&1; then
-            if minikube status >/tmp/awx-minikube-status.log 2>&1; then
+            if [[ "${minikube_running}" == true ]]; then
                 _step_result_failed "Kubernetes API is not reachable by kubectl (details: /tmp/awx-k8s-cluster-info.log)"
                 _step_result_suggestion "Check kubectl context and cluster connectivity"
+                _step_result_suggestion "If needed, run: kubectl config use-context minikube"
             else
                 _step_result_failed "AWX ${AWX_VERSION} requires Kubernetes, but Minikube is not running"
                 _step_result_suggestion "Start Minikube first (example: minikube start)"
