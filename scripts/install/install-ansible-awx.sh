@@ -210,14 +210,14 @@ stringData:
   password: "${AWX_ADMIN_PASSWORD}"
 EOF
 
-    if kubectl -n "${AWX_NAMESPACE}" apply -f - <<EOF >/tmp/awx-operator-awx.log 2>&1
+        if kubectl -n "${AWX_NAMESPACE}" apply -f - <<EOF >/tmp/awx-operator-awx.log 2>&1
 apiVersion: awx.ansible.com/v1beta1
 kind: AWX
 metadata:
-  name: awx
+    name: awx
 spec:
-  admin_user: "${AWX_ADMIN_USER}"
-  admin_password_secret: awx-admin-password
+    admin_user: "${AWX_ADMIN_USER}"
+    admin_password_secret: awx-admin-password
     service_type: NodePort
 EOF
     then
