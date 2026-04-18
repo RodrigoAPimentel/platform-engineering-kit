@@ -107,7 +107,11 @@ case "${PACKAGE_MANAGER}" in
         fi
 
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/${distro_family} ${codename} stable" > /etc/apt/sources.list.d/docker.list
-        apt-get update -y
+        if [[ "${RUN_SYSTEM_UPDATE}" == true ]]; then
+            apt-get update -y
+        else
+            _step_result_suggestion "Skipping apt metadata refresh for Docker repo (--skip-system-update)"
+        fi
         ;;
     dnf)
         dnf install -y dnf-plugins-core
