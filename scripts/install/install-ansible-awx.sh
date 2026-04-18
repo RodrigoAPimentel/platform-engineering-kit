@@ -218,7 +218,7 @@ metadata:
 spec:
   admin_user: "${AWX_ADMIN_USER}"
   admin_password_secret: awx-admin-password
-  web_service_type: nodeport
+    service_type: NodePort
 EOF
     then
         _step_result_success "AWX custom resource applied"
