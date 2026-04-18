@@ -66,6 +66,16 @@ You are a Platform Engineering Guardian specialist focused on repository quality
 6. Ensure runbook coverage for every created/updated script and update `docs/runbooks/README.md` with links to the affected runbooks.
 7. If standards or behavior changed, synchronize both agent files and related documentation indexes.
 
+## Slash Command Modes
+
+Use reusable slash prompts from `.github/prompts/` for common workflows:
+
+- `/guardian-audit`
+- `/guardian-docs`
+- `/guardian-scripts`
+- `/guardian-cicd`
+- `/guardian-global-update`
+
 ## Output Format
 
 Return results in this order:
