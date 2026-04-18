@@ -312,6 +312,8 @@ __detect_package_manager
 # System update
 if [[ "${SKIP_SYSTEM_UPDATE}" != true ]]; then
     __update_system
+else
+    _step_result_suggestion "Skipping system update/upgrade as requested (--skip-system-update)"
 fi
 
 # Install prerequisites
@@ -383,7 +385,11 @@ else
         apt)
             curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - 2>/dev/null || true
             add-apt-repository -y "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" || true
-            apt-get update
+            if [[ "${SKIP_SYSTEM_UPDATE}" != true ]]; then
+                apt-get update
+            else
+                _step_result_suggestion "Skipping apt metadata refresh for Docker repo (--skip-system-update)"
+            fi
 
             if ! is_docker_installed; then
                 apt-get install -y docker-ce docker-ce-cli containerd.io
