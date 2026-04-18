@@ -22,7 +22,12 @@ ANSIBLE_PYTHON_INTERPRETER_BIN="$(command -v python3 || echo /usr/bin/python3)"
 INSTALL_METHOD="auto"
 AWX_OPERATOR_VERSION="2.19.1"
 AWX_NAMESPACE="awx"
+AWX_INSTANCE_NAME="awx"
+KUBE_RBAC_PROXY_IMAGE="quay.io/brancz/kube-rbac-proxy:v0.15.0"
 SELECTED_INSTALL_METHOD=""
+UNINSTALL_MODE=false
+REMOVE_OPERATOR_ON_UNINSTALL=false
+DESTRUCTIVE_UNINSTALL=false
 
 update_npm_if_compatible() {
     if ! command -v npm >/dev/null 2>&1; then
@@ -193,6 +198,29 @@ install_awx_with_operator() {
         exit 1
     fi
 
+    # Some operator manifests still reference unavailable gcr kube-rbac-proxy tags.
+    _step "Checking operator proxy image compatibility"
+    if kubectl -n "${AWX_NAMESPACE}" get deployment awx-operator-controller-manager >/dev/null 2>&1; then
+        operator_containers="$(kubectl -n "${AWX_NAMESPACE}" get deployment awx-operator-controller-manager -o jsonpath='{range .spec.template.spec.containers[*]}{.name}{"="}{.image}{"\n"}{end}' 2>/tmp/awx-operator-images.log || true)"
+        patched_proxy=false
+
+        while IFS='=' read -r container_name container_image; do
+            if [[ -n "${container_name}" && "${container_image}" == gcr.io/kubebuilder/kube-rbac-proxy:* ]]; then
+                if kubectl -n "${AWX_NAMESPACE}" set image deployment/awx-operator-controller-manager "${container_name}=${KUBE_RBAC_PROXY_IMAGE}" >/tmp/awx-operator-proxy-patch.log 2>&1; then
+                    patched_proxy=true
+                fi
+            fi
+        done <<< "${operator_containers}"
+
+        if [[ "${patched_proxy}" == true ]]; then
+            _step_result_success "Patched operator proxy image to ${KUBE_RBAC_PROXY_IMAGE}"
+        else
+            _step_result_suggestion "No proxy image patch needed for operator deployment"
+        fi
+    else
+        _step_result_suggestion "Operator deployment not found yet for proxy image check"
+    fi
+
     if kubectl -n "${AWX_NAMESPACE}" wait --for=condition=Available deployment/awx-operator-controller-manager --timeout=600s >/tmp/awx-operator-wait.log 2>&1; then
         _step_result_success "AWX Operator controller is ready"
     else
@@ -210,15 +238,15 @@ stringData:
   password: "${AWX_ADMIN_PASSWORD}"
 EOF
 
-        if kubectl -n "${AWX_NAMESPACE}" apply -f - <<EOF >/tmp/awx-operator-awx.log 2>&1
+            if kubectl -n "${AWX_NAMESPACE}" apply -f - <<EOF >/tmp/awx-operator-awx.log 2>&1
 apiVersion: awx.ansible.com/v1beta1
 kind: AWX
 metadata:
-    name: awx
+        name: ${AWX_INSTANCE_NAME}
 spec:
-    admin_user: "${AWX_ADMIN_USER}"
-    admin_password_secret: awx-admin-password
-    service_type: NodePort
+        admin_user: "${AWX_ADMIN_USER}"
+        admin_password_secret: awx-admin-password
+        service_type: NodePort
 EOF
     then
         _step_result_success "AWX custom resource applied"
@@ -229,6 +257,103 @@ EOF
 
     _step_result_suggestion "Operator deployment started. Monitor with: kubectl -n ${AWX_NAMESPACE} get pods"
     _step_result_suggestion "Retrieve admin password secret with: kubectl -n ${AWX_NAMESPACE} get secret awx-admin-password -o jsonpath='{.data.password}' | base64 -d"
+}
+
+uninstall_awx() {
+    _step "Uninstalling AWX"
+    local sudo_user_home=""
+
+    if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
+        sudo_user_home="$(getent passwd "${SUDO_USER}" | cut -d: -f6 || true)"
+        if [[ -n "${sudo_user_home}" && -f "${sudo_user_home}/.kube/config" ]]; then
+            export KUBECONFIG="${sudo_user_home}/.kube/config"
+            _step_result_suggestion "Using kubeconfig from sudo user (${SUDO_USER})"
+        fi
+    fi
+
+    removed_any=false
+
+    # Operator-based uninstall, following AWX Operator docs: delete AWX custom resource.
+    if command -v kubectl >/dev/null 2>&1 && kubectl api-resources --api-group=awx.ansible.com -o name 2>/dev/null | grep -q '^awxs$'; then
+        if kubectl -n "${AWX_NAMESPACE}" get awx "${AWX_INSTANCE_NAME}" >/dev/null 2>&1; then
+            kubectl -n "${AWX_NAMESPACE}" delete awx "${AWX_INSTANCE_NAME}" >/tmp/awx-uninstall-awx.log 2>&1
+            _step_result_success "AWX custom resource deleted: ${AWX_INSTANCE_NAME}"
+            _step_result_suggestion "Persistent volumes and secrets may remain by design"
+            removed_any=true
+        else
+            _step_result_suggestion "No AWX custom resource named ${AWX_INSTANCE_NAME} found in namespace ${AWX_NAMESPACE}"
+        fi
+
+        if [[ "${REMOVE_OPERATOR_ON_UNINSTALL}" == true ]]; then
+            kubectl delete -k "github.com/ansible/awx-operator/config/default?ref=${AWX_OPERATOR_VERSION}" >/tmp/awx-uninstall-operator.log 2>&1 || true
+            kubectl -n "${AWX_NAMESPACE}" delete deployment awx-operator-controller-manager --ignore-not-found >/dev/null 2>&1 || true
+            _step_result_success "AWX Operator removal attempted"
+            removed_any=true
+        fi
+    else
+        _step_result_suggestion "AWX Operator CRD not found; skipping Kubernetes uninstall"
+    fi
+
+    # Legacy Docker-based uninstall.
+    if [[ -f /root/.awx/awxcompose/docker-compose.yml ]]; then
+        _step "Stopping legacy AWX containers"
+        run_docker_compose -f /root/.awx/awxcompose/docker-compose.yml down || true
+        _step_result_success "Legacy AWX containers stop requested"
+        removed_any=true
+    fi
+
+    if [[ "${DESTRUCTIVE_UNINSTALL}" == true ]]; then
+        _step "Running destructive uninstall cleanup"
+        _step_result_suggestion "Destructive mode enabled: removing namespace/PVC/secrets/PV and legacy local artifacts"
+
+        if command -v kubectl >/dev/null 2>&1; then
+            if kubectl get namespace "${AWX_NAMESPACE}" >/dev/null 2>&1; then
+                kubectl -n "${AWX_NAMESPACE}" delete awx --all --ignore-not-found >/tmp/awx-destructive-delete-awx.log 2>&1 || true
+                kubectl -n "${AWX_NAMESPACE}" delete pvc --all --ignore-not-found >/tmp/awx-destructive-delete-pvc.log 2>&1 || true
+                kubectl -n "${AWX_NAMESPACE}" delete secret --all --ignore-not-found >/tmp/awx-destructive-delete-secret.log 2>&1 || true
+
+                bound_pvs="$(kubectl get pv -o jsonpath='{range .items[?(@.spec.claimRef.namespace=="'"${AWX_NAMESPACE}"'")]}{.metadata.name}{"\n"}{end}' 2>/tmp/awx-destructive-list-pv.log || true)"
+                while IFS= read -r pv_name; do
+                    [[ -z "${pv_name}" ]] && continue
+                    kubectl delete pv "${pv_name}" --ignore-not-found >/tmp/awx-destructive-delete-pv.log 2>&1 || true
+                done <<< "${bound_pvs}"
+
+                kubectl delete namespace "${AWX_NAMESPACE}" --ignore-not-found >/tmp/awx-destructive-delete-namespace.log 2>&1 || true
+                kubectl wait --for=delete namespace/"${AWX_NAMESPACE}" --timeout=300s >/tmp/awx-destructive-wait-namespace.log 2>&1 || true
+                _step_result_success "Kubernetes destructive cleanup requested for namespace ${AWX_NAMESPACE}"
+                removed_any=true
+            else
+                _step_result_suggestion "Namespace ${AWX_NAMESPACE} not found for destructive Kubernetes cleanup"
+            fi
+        fi
+
+        if command -v docker >/dev/null 2>&1; then
+            awx_volumes="$(docker volume ls --format '{{.Name}}' | grep -E 'awx' || true)"
+            while IFS= read -r volume_name; do
+                [[ -z "${volume_name}" ]] && continue
+                docker volume rm "${volume_name}" >/tmp/awx-destructive-docker-volume.log 2>&1 || true
+            done <<< "${awx_volumes}"
+
+            awx_networks="$(docker network ls --format '{{.Name}}' | grep -E 'awx' || true)"
+            while IFS= read -r network_name; do
+                [[ -z "${network_name}" ]] && continue
+                docker network rm "${network_name}" >/tmp/awx-destructive-docker-network.log 2>&1 || true
+            done <<< "${awx_networks}"
+        fi
+
+        rm -rf /root/.awx || true
+        if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
+            sudo_user_home="$(getent passwd "${SUDO_USER}" | cut -d: -f6 || true)"
+            if [[ -n "${sudo_user_home}" ]]; then
+                rm -rf "${sudo_user_home}/.awx" || true
+            fi
+        fi
+        _step_result_success "Legacy local artifacts cleanup requested"
+    fi
+
+    if [[ "${removed_any}" != true ]]; then
+        _step_result_suggestion "No AWX resources found to uninstall"
+    fi
 }
 
 usage() {
@@ -242,9 +367,14 @@ Options:
   --admin-user <username>      AWX admin username (default: root)
   --admin-password <password>  AWX admin password (default: toor)
   --docker-compose <version>   Docker Compose version (default: 2.13.0)
-    --install-method <mode>      Installation mode: auto|legacy|operator (default: auto)
-    --operator-version <version> AWX Operator version (default: 2.19.1)
-    --namespace <name>           Kubernetes namespace for operator mode (default: awx)
+  --install-method <mode>      Installation mode: auto|legacy|operator (default: auto)
+  --operator-version <version> AWX Operator version (default: 2.19.1)
+  --namespace <name>           Kubernetes namespace for operator mode (default: awx)
+    --awx-name <name>            AWX instance name for operator mode (default: awx)
+    --kube-rbac-proxy-image <i>  Override proxy image for operator deployment workaround
+    --uninstall                  Uninstall AWX (operator CR and/or legacy docker compose)
+    --remove-operator            With --uninstall, also remove AWX Operator manifests
+    --destructive-uninstall      With --uninstall, remove namespace/PVC/secrets/PV and local Docker artifacts
   --skip-system-update         Skip package update and upgrade
   --reboot                     Reboot host after installation
   -h, --help                   Show this help message
@@ -252,7 +382,9 @@ Options:
 Examples:
   sudo ./install-ansible-awx.sh --awx-version 21.11.0
   sudo ./install-ansible-awx.sh --awx-version 17.1.0 --admin-user admin --reboot
-    sudo ./install-ansible-awx.sh --awx-version 24.6.1 --install-method operator --namespace awx
+  sudo ./install-ansible-awx.sh --awx-version 24.6.1 --install-method operator --namespace awx
+    sudo ./install-ansible-awx.sh --uninstall --install-method operator --namespace awx --awx-name awx
+    sudo ./install-ansible-awx.sh --uninstall --destructive-uninstall --remove-operator --namespace awx --awx-name awx
 EOF
 }
 
@@ -286,6 +418,26 @@ while [[ $# -gt 0 ]]; do
             AWX_NAMESPACE="${2:-}"
             shift 2
             ;;
+        --awx-name)
+            AWX_INSTANCE_NAME="${2:-}"
+            shift 2
+            ;;
+        --kube-rbac-proxy-image)
+            KUBE_RBAC_PROXY_IMAGE="${2:-}"
+            shift 2
+            ;;
+        --uninstall)
+            UNINSTALL_MODE=true
+            shift
+            ;;
+        --remove-operator)
+            REMOVE_OPERATOR_ON_UNINSTALL=true
+            shift
+            ;;
+        --destructive-uninstall)
+            DESTRUCTIVE_UNINSTALL=true
+            shift
+            ;;
         --skip-system-update)
             SKIP_SYSTEM_UPDATE=true
             shift
@@ -308,6 +460,17 @@ done
 _script_start "Ansible AWX Installation (v${AWX_VERSION})"
 __verify_root
 __detect_package_manager
+
+if [[ "${DESTRUCTIVE_UNINSTALL}" == true && "${UNINSTALL_MODE}" != true ]]; then
+    _step_result_failed "--destructive-uninstall requires --uninstall"
+    exit 1
+fi
+
+if [[ "${UNINSTALL_MODE}" == true ]]; then
+    uninstall_awx
+    _finish_information
+    exit 0
+fi
 
 # System update
 if [[ "${SKIP_SYSTEM_UPDATE}" != true ]]; then

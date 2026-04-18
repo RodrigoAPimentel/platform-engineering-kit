@@ -80,6 +80,7 @@ Feedback --> Dev
 - infrastructure → IaC definitions
 - ci-cd → Pipelines and automation
 - scripts → Utilities and helpers
+- scripts/install/standalone → Independent application/runtime installers
 - observability → Monitoring and logging
 - security → Security and compliance
 - templates → Reusable blueprints

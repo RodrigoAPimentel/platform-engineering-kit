@@ -18,12 +18,13 @@ Pattern:
 
 ## Naming Matrix
 
-| Script Type                       | Location               | Pattern                 | Example                     |
-| --------------------------------- | ---------------------- | ----------------------- | --------------------------- |
-| Install and setup entrypoints     | `scripts/install/`     | `<action>-<scope>.sh`   | `initial-preparation.sh`    |
-| Utility validators and generators | `scripts/utils/`       | `<action>-<object>.sh`  | `validate-script-naming.sh` |
-| Shared shell libraries            | `scripts/utils/lib/`   | `<domain>-<purpose>.sh` | `system-functions.sh`       |
-| Maintenance operations            | `scripts/maintenance/` | `<verb>-<target>.sh`    | `cleanup-artifacts.sh`      |
+| Script Type                       | Location                      | Pattern                          | Example                          |
+| --------------------------------- | ----------------------------- | -------------------------------- | -------------------------------- |
+| Install and setup entrypoints     | `scripts/install/`            | `<action>-<scope>.sh`            | `initial-machine-preparation.sh` |
+| Standalone app/runtime installers | `scripts/install/standalone/` | `<action>-<scope>-standalone.sh` | `install-nodejs-standalone.sh`   |
+| Utility validators and generators | `scripts/utils/`              | `<action>-<object>.sh`           | `validate-script-naming.sh`      |
+| Shared shell libraries            | `scripts/utils/lib/`          | `<domain>-<purpose>.sh`          | `system-functions.sh`            |
+| Maintenance operations            | `scripts/maintenance/`        | `<verb>-<target>.sh`             | `cleanup-artifacts.sh`           |
 
 ## Allowed and not allowed
 

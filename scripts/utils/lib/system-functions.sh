@@ -19,7 +19,7 @@ __verify_root_pass() {
 __verify_root() {
     _step "Checking if script runs as root"
     if [[ "${EUID}" -ne 0 ]]; then
-        _step_result_failed "This script must be run as root. Example: sudo ./initial-preparation.sh"
+        _step_result_failed "This script must be run as root. Example: sudo ./initial-machine-preparation.sh"
         exit 1
     fi
     _step_result_success "Root execution confirmed"
