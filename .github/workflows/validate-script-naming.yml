@@ -17,6 +17,9 @@ on:
       - 'ci-cd/github-actions/validate-script-naming.yml'
       - 'scripts/utils/lib/ci/validate-script-naming.sh'
 
+permissions:
+  contents: read
+
 jobs:
   script-naming:
     runs-on: ubuntu-latest
