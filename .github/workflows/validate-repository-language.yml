@@ -39,3 +39,9 @@ jobs:
 
       - name: Validate English-only policy
         run: scripts/utils/validate-english-content.sh
+
+      - name: Validate with AI
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "language-detection"
+          config-file: ".github/codeql-config.yml"
