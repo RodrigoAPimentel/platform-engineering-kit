@@ -1,33 +1,33 @@
 # Argo CD on Minikube
 
-Runbook para instalação do Argo CD em cluster Minikube já existente.
+Runbook for installing Argo CD on an existing Minikube cluster.
 
-## Script relacionado
+## Related script
 
 - scripts/install/install-argocd-minikube.sh
 
-## Pré-requisitos
+## Prerequisites
 
-- Minikube em execução.
-- kubectl funcional com contexto válido.
-- Permissão root via sudo.
+- Minikube running.
+- kubectl working with a valid context.
+- Root permission via sudo.
 
-## Uso rápido
+## Quick usage
 
 ```bash
 sudo bash scripts/install/install-argocd-minikube.sh
 ```
 
-## Opções principais
+## Main options
 
 ```bash
 --version <tag|stable>
 --dashboard-domain <host>
---dashboard-port <porta>
+--dashboard-port <port>
 --skip-iptables
 ```
 
-## Exemplos
+## Examples
 
 ```bash
 sudo bash scripts/install/install-argocd-minikube.sh --version stable
@@ -35,15 +35,15 @@ sudo bash scripts/install/install-argocd-minikube.sh --dashboard-domain argocd.l
 sudo bash scripts/install/install-argocd-minikube.sh --skip-iptables
 ```
 
-## Resultado esperado
+## Expected result
 
-- Namespace argocd criado.
-- Manifestos oficiais aplicados.
-- CLI argocd instalada em /usr/local/bin/argocd.
-- Ingress configurado com domínio definido.
-- Regras iptables aplicadas, exceto quando desabilitado.
+- argocd namespace created.
+- Official manifests applied.
+- argocd CLI installed at /usr/local/bin/argocd.
+- Ingress configured with the chosen domain.
+- iptables rules applied unless disabled.
 
-## Validação
+## Validation
 
 ```bash
 kubectl -n argocd get pods
@@ -53,7 +53,7 @@ argocd version --client
 
 ## Troubleshooting
 
-- Minikube indisponível:
-  - Inicie o cluster antes da instalação.
-- Sem acesso ao dashboard:
-  - Verifique /etc/hosts, porta externa e regras NAT/FORWARD.
+- Minikube unavailable:
+  - Start the cluster before installation.
+- No dashboard access:
+  - Check /etc/hosts, external port, and NAT/FORWARD rules.

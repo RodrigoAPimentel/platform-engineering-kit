@@ -1,34 +1,34 @@
 # Oh My Zsh Installation (Ubuntu/Debian)
 
-Runbook para instalação de Oh My Zsh, plugins e Powerlevel10k em sistemas apt.
+Runbook for installing Oh My Zsh, plugins, and Powerlevel10k on apt-based systems.
 
-## Script relacionado
+## Related script
 
 - scripts/install/install-oh-my-zsh-ubuntu.sh
 
-## Pré-requisitos
+## Prerequisites
 
 - Ubuntu/Debian.
-- Acesso root via sudo.
-- Usuário alvo válido.
+- Root access via sudo.
+- Valid target user.
 
-## Uso rápido
+## Quick usage
 
 ```bash
 sudo bash scripts/install/install-oh-my-zsh-ubuntu.sh
 ```
 
-## Opções principais
+## Main options
 
 ```bash
---user <usuario>
---theme <tema>
---p10k-config <arquivo>
+--user <username>
+--theme <theme>
+--p10k-config <file>
 --skip-fonts
 --reboot
 ```
 
-## Exemplos
+## Examples
 
 ```bash
 sudo bash scripts/install/install-oh-my-zsh-ubuntu.sh --user devops
@@ -36,23 +36,23 @@ sudo bash scripts/install/install-oh-my-zsh-ubuntu.sh --theme powerlevel10k/powe
 sudo bash scripts/install/install-oh-my-zsh-ubuntu.sh --skip-fonts
 ```
 
-## Resultado esperado
+## Expected result
 
-- zsh instalado e definido como shell padrão do usuário alvo.
-- Oh My Zsh instalado com plugins essenciais.
-- Powerlevel10k e configuração .p10k.zsh aplicados.
+- zsh installed and set as default shell for target user.
+- Oh My Zsh installed with essential plugins.
+- Powerlevel10k and .p10k.zsh configuration applied.
 
-## Validação
+## Validation
 
 ```bash
-getent passwd <usuario> | cut -d: -f7
-sudo -u <usuario> zsh -ic 'echo $ZSH_VERSION'
-sudo -u <usuario> test -f ~/.p10k.zsh && echo ok
+getent passwd <username> | cut -d: -f7
+sudo -u <username> zsh -ic 'echo $ZSH_VERSION'
+sudo -u <username> test -f ~/.p10k.zsh && echo ok
 ```
 
 ## Troubleshooting
 
-- Tema não aplicado:
-  - Valide ZSH_THEME e permissões do arquivo .zshrc.
-- Fonte quebrada no terminal:
-  - Instale fontes powerline no cliente terminal.
+- Theme not applied:
+  - Validate ZSH_THEME and .zshrc file permissions.
+- Broken terminal font rendering:
+  - Install powerline-compatible fonts on the terminal client.

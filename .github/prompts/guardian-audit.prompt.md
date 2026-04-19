@@ -1,33 +1,33 @@
 ---
 mode: agent
-description: "Use when: realizar diagnostico amplo do repositorio com priorizacao de gaps, sem executar refatoracao transversal por padrao."
+description: "Use when: run a broad repository diagnosis with prioritized gaps, without default cross-cutting refactoring."
 ---
 
-Execute um diagnostico amplo do repositório com o agente Platform Engineering Guardian.
+Run a broad repository diagnosis with the Platform Engineering Guardian agent.
 
 Use when:
 
-- Precisa de visao geral de qualidade estrutural, scripts, docs, CI/CD e governanca.
-- Quer backlog priorizado antes de decidir o plano de execucao.
+- You need a holistic view of structural quality, scripts, docs, CI/CD, and governance.
+- You want a prioritized backlog before deciding the execution plan.
 
 Avoid when:
 
-- O objetivo ja estiver fechado em um dominio especifico (use `/guardian-docs`, `/guardian-scripts` ou `/guardian-cicd`).
-- A expectativa for executar uma migracao especializada (use `/guardian-standalone-categorization` ou `/guardian-multi-distro-consolidation`).
+- The objective is already limited to a specific domain (use `/guardian-docs`, `/guardian-scripts`, or `/guardian-cicd`).
+- You need to execute a specialized migration (use `/guardian-standalone-categorization` or `/guardian-multi-distro-consolidation`).
 
 Scope default:
 
-- Repositorio inteiro, salvo quando `scope` for informado.
+- Full repository, unless `scope` is provided.
 
 Output format:
 
-1. Findings (ordem por severidade, com referencias de arquivo).
-2. Recommended actions (reusaveis e escalaveis).
-3. Applied changes (o que foi alterado e impacto esperado).
-4. Next steps (1-3 proximos passos).
+1. Findings (ordered by severity, with file references).
+2. Recommended actions (reusable and scalable).
+3. Applied changes (what changed and expected impact).
+4. Next steps (1-3 follow-up steps).
 
-Contexto opcional:
+Optional context:
 
-- Escopo: ${input:scope:Ex.: scripts, docs, ci-cd, ou repositorio inteiro}
-- Restricoes: ${input:constraints:Ex.: sem mudancas destrutivas, sem refatoracao ampla}
-- Resultado esperado: ${input:outcome:Ex.: lista de gaps com correcoes aplicadas}
+- Scope: ${input:scope:Ex.: scripts, docs, ci-cd, or full repository}
+- Constraints: ${input:constraints:Ex.: no destructive changes, no broad refactoring}
+- Expected outcome: ${input:outcome:Ex.: gap list with applied fixes}

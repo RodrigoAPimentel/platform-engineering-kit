@@ -1,23 +1,23 @@
 ---
 mode: agent
-description: "Use when: revisar scripts shell com foco em padrao tecnico, naming, estrutura e impacto documental minimo necessario."
+description: "Use when: review shell scripts with focus on technical standards, naming, structure, and minimum required documentation impact."
 ---
 
-Revise scripts de automacao e aplique correcoes de padrao com o agente Platform Engineering Guardian.
+Review automation scripts and apply standards corrections with the Platform Engineering Guardian agent.
 
 Use when:
 
-- Precisa corrigir shebang, strict mode, convencao de nomes e organizacao de scripts.
-- Precisa revisar contratos CLI, mensagens operacionais e reaproveitamento em scripts.
+- You need to fix shebang, strict mode, naming convention, and script organization.
+- You need to review CLI contracts, operational messaging, and script reuse.
 
 Avoid when:
 
-- O foco principal for reorganizacao de runbooks e indices de docs (use `/guardian-docs`).
-- O foco principal for CI/CD (use `/guardian-cicd`).
+- The main focus is runbook/index documentation reorganization (use `/guardian-docs`).
+- The main focus is CI/CD (use `/guardian-cicd`).
 
 Scope default:
 
-- `scripts/install/`, `scripts/maintenance/`, `scripts/utils/` e `scripts/install/standalone/`.
+- `scripts/install/`, `scripts/maintenance/`, `scripts/utils/`, and `scripts/install/standalone/`.
 
 Output format:
 
@@ -26,15 +26,15 @@ Output format:
 3. Applied changes
 4. Next steps
 
-Contexto opcional:
+Optional context:
 
-- Escopo: ${input:scope:Ex.: scripts/install, scripts/maintenance, scripts/install/standalone}
-- Restricoes: ${input:constraints:Ex.: sem remocao de funcionalidades}
+- Scope: ${input:scope:Ex.: scripts/install, scripts/maintenance, scripts/install/standalone}
+- Constraints: ${input:constraints:Ex.: no feature removal}
 
-Checklist minimo:
+Minimum checklist:
 
-- Shebang e strict mode.
-- Naming kebab-case em scripts/.
-- Estrutura correta (install, maintenance, standalone, utils/lib).
-- Um runbook por script criado/alterado.
-- Atualizacao dos READMEs afetados.
+- Shebang and strict mode.
+- Kebab-case naming under `scripts/`.
+- Correct structure (`install`, `maintenance`, `standalone`, `utils/lib`).
+- One runbook per created/updated script.
+- Updates to affected README files.

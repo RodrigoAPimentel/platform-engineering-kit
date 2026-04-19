@@ -7,7 +7,7 @@
 ![Security](https://img.shields.io/badge/security-devsecops-red)
 ![AI Powered](https://img.shields.io/badge/AI-enabled-black)
 
-<!-- EXEMPLOS DE BADGES DINÂMICOS (ATIVAR DEPOIS) -->
+<!-- DYNAMIC BADGE EXAMPLES (ENABLE LATER) -->
 
 <!--
 ![Build](https://github.com/USER/REPO/actions/workflows/main.yml/badge.svg)

@@ -1,23 +1,23 @@
 ---
 mode: agent
-description: "Use when: consolidar instaladores distro-especificos em um script unico com deteccao de sistema e package manager."
+description: "Use when: consolidate distro-specific installers into a single script with OS and package manager detection."
 ---
 
-Consolide variantes de instaladores distro-específicos em um único script reutilizável.
+Consolidate distro-specific installer variants into one reusable script.
 
 Use when:
 
-- Existem scripts separados por distro para a mesma ferramenta.
-- O objetivo e reduzir duplicacao mantendo cobertura apt/dnf/yum.
+- There are separate scripts by distro for the same tool.
+- The objective is to reduce duplication while keeping apt/dnf/yum coverage.
 
 Avoid when:
 
-- A tarefa principal for apenas reorganizacao de pasta standalone (use `/guardian-standalone-categorization`).
-- A tarefa principal for auditoria ampla sem execucao especializada (use `/guardian-audit`).
+- The main task is only standalone folder organization (use `/guardian-standalone-categorization`).
+- The main task is broad auditing without specialized execution (use `/guardian-audit`).
 
 Scope default:
 
-- `scripts/install/` e `scripts/install/standalone/`.
+- `scripts/install/` and `scripts/install/standalone/`.
 
 Output format:
 
@@ -26,14 +26,14 @@ Output format:
 3. Applied changes
 4. Next steps
 
-Escopo típico:
+Typical scope:
 
 - scripts/install
 - scripts/install/standalone
 
-Critérios:
+Criteria:
 
-- Um script único por ferramenta sempre que viável.
-- Detecção por apt/dnf/yum e ajustes por arquitetura quando necessário.
-- Sem remoção de funcionalidades existentes.
-- Atualização de README e runbook correspondente.
+- One script per tool whenever feasible.
+- apt/dnf/yum detection and architecture-specific adjustments when needed.
+- No removal of existing functionality.
+- Update the corresponding README and runbook.

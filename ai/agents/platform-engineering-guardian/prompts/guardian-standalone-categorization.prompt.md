@@ -1,23 +1,23 @@
 ---
 mode: agent
-description: "Use when: classificar e organizar instaladores independentes em scripts/install/standalone com documentacao completa."
+description: "Use when: classify and organize independent installers under scripts/install/standalone with complete documentation."
 ---
 
-Analise scripts de aplicações independentes e organize na categoria standalone.
+Analyze independent application installers and organize them in the standalone category.
 
 Use when:
 
-- Precisa mover/ajustar instaladores independentes para `scripts/install/standalone`.
-- Precisa alinhar READMEs e runbooks apos categorizacao standalone.
+- You need to move/adjust independent installers into `scripts/install/standalone`.
+- You need to align README files and runbooks after standalone categorization.
 
 Avoid when:
 
-- A tarefa principal for consolidacao multi-distro de um instalador (use `/guardian-multi-distro-consolidation`).
-- A tarefa principal for melhoria geral de scripts sem recorte standalone (use `/guardian-scripts`).
+- The main task is multi-distro consolidation for one installer (use `/guardian-multi-distro-consolidation`).
+- The main task is general script improvement without standalone scope (use `/guardian-scripts`).
 
 Scope default:
 
-- `scripts/install/standalone/`, `scripts/install/README.md`, `scripts/README.md` e runbooks relacionados.
+- `scripts/install/standalone/`, `scripts/install/README.md`, `scripts/README.md`, and related runbooks.
 
 Output format:
 
@@ -26,14 +26,14 @@ Output format:
 3. Applied changes
 4. Next steps
 
-Objetivo:
+Objective:
 
-- Mover instaladores independentes para scripts/install/standalone.
-- Atualizar scripts/README.md, scripts/install/README.md e scripts/install/standalone/README.md.
-- Criar runbooks dedicados.
+- Move independent installers to `scripts/install/standalone`.
+- Update `scripts/README.md`, `scripts/install/README.md`, and `scripts/install/standalone/README.md`.
+- Create dedicated runbooks.
 
-Critérios:
+Criteria:
 
-- Preservar funcionalidade.
-- Melhorar legibilidade e reuso.
-- Padronizar interface CLI e mensagens operacionais.
+- Preserve functionality.
+- Improve readability and reuse.
+- Standardize CLI interface and operational messaging.

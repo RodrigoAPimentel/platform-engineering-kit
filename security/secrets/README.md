@@ -6,10 +6,10 @@ Secret management practices.
 
 Secure sensitive data.
 
-## Boas práticas de uso de sudo e secrets
+## Best practices for sudo and secrets
 
-- Sempre que possível, evite passar senhas ou secrets diretamente na linha de comando.
-- Prefira variáveis de ambiente, arquivos temporários protegidos ou ferramentas de cofre (ex: Ansible Vault, HashiCorp Vault).
-- Scripts que exigem sudo devem alertar sobre riscos de exposição de credenciais em histórico de shell ou logs.
-- Nunca compartilhe comandos com secrets em chats, tickets ou documentação pública.
-- Limpe variáveis de ambiente sensíveis após uso (`unset SECRET_VAR`).
+- Whenever possible, avoid passing passwords or secrets directly in command-line arguments.
+- Prefer environment variables, protected temporary files, or secret vault tools (for example: Ansible Vault, HashiCorp Vault).
+- Scripts that require sudo should warn about credential exposure risks in shell history or logs.
+- Never share commands containing secrets in chats, tickets, or public documentation.
+- Clear sensitive environment variables after use (`unset SECRET_VAR`).

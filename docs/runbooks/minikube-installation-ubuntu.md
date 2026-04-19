@@ -1,37 +1,37 @@
 # Minikube Installation (Ubuntu/Debian)
 
-Runbook para instalação de Minikube com dashboard, ingress, acesso externo e kubeconfig remoto.
+Runbook for installing Minikube with dashboard, ingress, external access, and remote kubeconfig support.
 
-## Script relacionado
+## Related script
 
 - scripts/install/install-minikube-ubuntu.sh
 
-## Pré-requisitos
+## Prerequisites
 
-- Ubuntu/Debian com Docker funcional.
-- Acesso root via sudo.
-- Usuário alvo para operar o cluster.
+- Ubuntu/Debian with working Docker.
+- Root access via sudo.
+- Target user to operate the cluster.
 
-## Uso rápido
+## Quick usage
 
 ```bash
 sudo bash scripts/install/install-minikube-ubuntu.sh
 ```
 
-## Opções principais
+## Main options
 
 ```bash
---user <usuario>
+--user <username>
 --addons <csv>
 --driver <docker|kvm2|none>
 --dashboard-domain <host>
---dashboard-port <porta>
+--dashboard-port <port>
 --skip-ingress
 --skip-iptables
 --reboot
 ```
 
-## Exemplos
+## Examples
 
 ```bash
 sudo bash scripts/install/install-minikube-ubuntu.sh --user devops
@@ -39,14 +39,14 @@ sudo bash scripts/install/install-minikube-ubuntu.sh --driver docker --addons me
 sudo bash scripts/install/install-minikube-ubuntu.sh --dashboard-domain minikube-gui --dashboard-port 8443
 ```
 
-## Resultado esperado
+## Expected result
 
-- minikube, kubectl e utilitários instalados.
-- Cluster iniciado com addons definidos.
-- Proxy NGINX para API server configurado.
-- kubeconfig externo gerado para acesso remoto.
+- minikube, kubectl, and required utilities installed.
+- Cluster started with selected addons.
+- NGINX proxy for API server configured.
+- External kubeconfig generated for remote access.
 
-## Validação
+## Validation
 
 ```bash
 minikube status
@@ -56,7 +56,7 @@ kubectl get pods -A
 
 ## Troubleshooting
 
-- Cluster não sobe no boot:
-  - Verifique unit systemd do minikube e permissões do usuário alvo.
-- Dashboard inacessível externamente:
-  - Valide iptables, DNS/hosts e portas liberadas.
+- Cluster does not start on boot:
+  - Check minikube systemd unit and target user permissions.
+- Dashboard not externally reachable:
+  - Validate iptables, DNS/hosts, and exposed ports.

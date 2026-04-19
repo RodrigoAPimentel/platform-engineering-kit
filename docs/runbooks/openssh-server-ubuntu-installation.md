@@ -1,23 +1,23 @@
 # OpenSSH Server Installation (Ubuntu/Debian)
 
-Runbook para instalação e habilitação do OpenSSH Server em sistemas apt.
+Runbook for installing and enabling OpenSSH Server on apt-based systems.
 
-## Script relacionado
+## Related script
 
 - scripts/install/install-openssh-server-ubuntu.sh
 
-## Pré-requisitos
+## Prerequisites
 
 - Ubuntu/Debian.
-- Acesso root via sudo.
+- Root access via sudo.
 
-## Uso rápido
+## Quick usage
 
 ```bash
 sudo bash scripts/install/install-openssh-server-ubuntu.sh
 ```
 
-## Opções principais
+## Main options
 
 ```bash
 --skip-system-update
@@ -25,19 +25,19 @@ sudo bash scripts/install/install-openssh-server-ubuntu.sh
 --reboot
 ```
 
-## Exemplos
+## Examples
 
 ```bash
 sudo bash scripts/install/install-openssh-server-ubuntu.sh --skip-system-update
 sudo bash scripts/install/install-openssh-server-ubuntu.sh --disable-service
 ```
 
-## Resultado esperado
+## Expected result
 
-- Pacote openssh-server instalado.
-- Serviço ssh ativo, exceto quando desabilitado por opção.
+- openssh-server package installed.
+- ssh service active, except when disabled by option.
 
-## Validação
+## Validation
 
 ```bash
 systemctl status ssh --no-pager
@@ -46,7 +46,7 @@ ss -tulpen | grep ':22'
 
 ## Troubleshooting
 
-- Serviço não inicia:
-  - Verifique conflitos de porta e arquivo de configuração do sshd.
-- Acesso remoto falha:
-  - Confirme regras de firewall e rota de rede.
+- Service does not start:
+  - Check port conflicts and sshd configuration file.
+- Remote access fails:
+  - Confirm firewall rules and network routing.

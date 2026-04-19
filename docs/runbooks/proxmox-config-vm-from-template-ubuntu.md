@@ -1,18 +1,18 @@
 # Proxmox Post-Clone Configuration (Ubuntu)
 
-Runbook para configurar hostname, rede estática e layout de teclado em VMs clonadas de template.
+Runbook to configure hostname, static networking, and keyboard layout on template-cloned VMs.
 
-## Script relacionado
+## Related script
 
 - scripts/maintenance/proxmox-config-vm-from-template-ubuntu.sh
 
-## Pré-requisitos
+## Prerequisites
 
-- Ubuntu clonado de template Proxmox.
-- Acesso root via sudo.
-- Valores de hostname, IP CIDR e gateway definidos.
+- Ubuntu VM cloned from Proxmox template.
+- Root access via sudo.
+- Defined hostname, IP CIDR, and gateway values.
 
-## Uso rápido
+## Quick usage
 
 ```bash
 sudo bash scripts/maintenance/proxmox-config-vm-from-template-ubuntu.sh \
@@ -21,19 +21,19 @@ sudo bash scripts/maintenance/proxmox-config-vm-from-template-ubuntu.sh \
   --gateway 192.168.10.1
 ```
 
-## Opções principais
+## Main options
 
 ```bash
---hostname <nome>
+--hostname <name>
 --ip-cidr <ip/mask>
 --gateway <ip>
---iface <nome>
+--iface <name>
 --dns <csv>
 --keyboard <layout>
 --reboot
 ```
 
-## Exemplos
+## Examples
 
 ```bash
 sudo bash scripts/maintenance/proxmox-config-vm-from-template-ubuntu.sh \
@@ -46,14 +46,14 @@ sudo bash scripts/maintenance/proxmox-config-vm-from-template-ubuntu.sh \
   --reboot
 ```
 
-## Resultado esperado
+## Expected result
 
-- openssh-server instalado.
-- hostname aplicado via hostnamectl.
-- netplan configurado com IP estático.
-- layout de teclado ajustado.
+- openssh-server installed.
+- hostname applied via hostnamectl.
+- netplan configured with static IP.
+- keyboard layout updated.
 
-## Validação
+## Validation
 
 ```bash
 hostnamectl
@@ -63,7 +63,7 @@ ip route
 
 ## Troubleshooting
 
-- Sem rede após aplicar netplan:
-  - Revise interface e CIDR informados.
-- Gateway inválido:
-  - Ajuste rota padrão e reaplique netplan.
+- No network after netplan apply:
+  - Review provided interface and CIDR values.
+- Invalid gateway:
+  - Adjust default route and reapply netplan.

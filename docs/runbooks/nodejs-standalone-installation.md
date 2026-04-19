@@ -1,55 +1,55 @@
 # Node.js Standalone Installation
 
-⚠️ **Atenção:** Este procedimento exige privilégios de root (`sudo`) e pode manipular secrets/senhas. Revise comandos antes de executar e evite expor credenciais em linha de comando, histórico de shell ou logs. Veja [security/secrets/README.md](../security/secrets/README.md) para boas práticas.
+⚠️ **Warning:** This procedure requires root privileges (`sudo`) and may handle secrets/passwords. Review commands before execution and avoid exposing credentials in command line, shell history, or logs. See [security/secrets/README.md](../security/secrets/README.md) for best practices.
 
-Runbook para instalacao de Node.js (via NVM) como runtime independente para um usuario alvo.
+Runbook for installing Node.js (via NVM) as a standalone runtime for a target user.
 
-## Script relacionado
+## Related script
 
 - scripts/install/standalone/install-nodejs-standalone.sh
 
-## Pre-requisitos
+## Prerequisites
 
-- Acesso root via sudo.
-- Usuario alvo existente.
-- Conectividade com internet para baixar NVM/Node.js.
+- Root access via sudo.
+- Existing target user.
+- Internet connectivity to download NVM/Node.js.
 
-## Uso rapido
+## Quick usage
 
 ```bash
 sudo bash scripts/install/standalone/install-nodejs-standalone.sh
 ```
 
-## Opcoes principais
+## Main options
 
 ```bash
---user <usuario>
---node-version <versao>
+--user <username>
+--node-version <version>
 --skip-system-update
 --reboot
 ```
 
-## Exemplos
+## Examples
 
 ```bash
 sudo bash scripts/install/standalone/install-nodejs-standalone.sh --user devops
 sudo bash scripts/install/standalone/install-nodejs-standalone.sh --node-version 20
 ```
 
-## Resultado esperado
+## Expected result
 
-- NVM instalado no home do usuario alvo.
-- Node.js e npm instalados e configurados como default no NVM.
+- NVM installed in target user home.
+- Node.js and npm installed and configured as default in NVM.
 
-## Validacao
+## Validation
 
 ```bash
-sudo -u <usuario> bash -lc 'export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh" && node --version && npm --version'
+sudo -u <username> bash -lc 'export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh" && node --version && npm --version'
 ```
 
 ## Troubleshooting
 
-- node nao encontrado na sessao:
-  - Abra nova sessao do usuario ou carregue nvm.sh manualmente.
-- erro de download do NVM:
-  - Verifique conectividade de rede e certificados CA.
+- node not found in session:
+  - Open a new user session or source nvm.sh manually.
+- NVM download error:
+  - Check network connectivity and CA certificates.

@@ -1,54 +1,54 @@
 # Node-RED Installation
 
-Runbook para instalação de Node-RED com PM2 em sistemas baseados em apt.
+Runbook for installing Node-RED with PM2 on apt-based systems.
 
-## Script relacionado
+## Related script
 
 - scripts/install/install-node-red.sh
 
-## Pré-requisitos
+## Prerequisites
 
 - Ubuntu/Debian.
-- Acesso root via sudo.
-- Usuário alvo existente.
+- Root access via sudo.
+- Existing target user.
 
-## Uso rápido
+## Quick usage
 
 ```bash
 sudo bash scripts/install/install-node-red.sh
 ```
 
-## Opções principais
+## Main options
 
 ```bash
---user <usuario>
+--user <username>
 --skip-system-update
 --reboot
 ```
 
-## Exemplos
+## Examples
 
 ```bash
-sudo bash scripts/install/install-node-red.sh --user automacao
+sudo bash scripts/install/install-node-red.sh --user automation
 sudo bash scripts/install/install-node-red.sh --skip-system-update
 ```
 
-## Resultado esperado
+## Expected result
 
-- Node.js, npm, PM2 e Node-RED instalados.
-- Processo node-red gerenciado pelo PM2.
-- Startup do PM2 configurado para reinício automático.
+- Node.js, npm, PM2, and Node-RED installed.
+- node-red process managed by PM2.
+- PM2 startup configured for automatic restart.
 
-## Validação
+## Validation
 
 ```bash
-sudo -u <usuario> pm2 list
+sudo -u <username> pm2 list
 curl -I http://127.0.0.1:1880
 ```
 
 ## Troubleshooting
 
-- Porta 1880 indisponível:
-  - Verifique firewall local e bind do serviço.
-- PM2 não sobe após reboot:
-  - Reexecute configuração de startup do PM2 para o usuário alvo.
+- Port 1880 unavailable:
+  - Check local firewall and service bind settings.
+- PM2 does not start after reboot:
+  - Re-run PM2 startup configuration for the target user.

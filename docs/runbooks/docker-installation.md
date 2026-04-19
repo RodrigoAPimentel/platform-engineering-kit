@@ -1,32 +1,32 @@
 # Docker Installation
 
-Runbook para instalação do Docker Engine e Docker Compose em distros apt, dnf e yum.
+Runbook for installing Docker Engine and Docker Compose on apt, dnf, and yum distributions.
 
-## Script relacionado
+## Related script
 
 - scripts/install/install-docker.sh
 
-## Pré-requisitos
+## Prerequisites
 
-- Acesso root via sudo.
-- Usuário alvo existente no sistema.
+- Root access via sudo.
+- Existing target user on the system.
 
-## Uso rápido
+## Quick usage
 
 ```bash
 sudo bash scripts/install/install-docker.sh
 ```
 
-## Opções principais
+## Main options
 
 ```bash
---user <usuario>
+--user <username>
 --skip-system-update
---compose-fallback <versao>
+--compose-fallback <version>
 --reboot
 ```
 
-## Exemplos
+## Examples
 
 ```bash
 sudo bash scripts/install/install-docker.sh --user devops
@@ -34,13 +34,13 @@ sudo bash scripts/install/install-docker.sh --compose-fallback v2.29.7
 sudo bash scripts/install/install-docker.sh --reboot
 ```
 
-## Resultado esperado
+## Expected result
 
-- Docker instalado e serviço habilitado.
-- Usuário adicionado ao grupo docker.
-- Docker Compose plugin ativo ou fallback standalone instalado.
+- Docker installed and service enabled.
+- Target user added to the docker group.
+- Docker Compose plugin active or standalone fallback installed.
 
-## Validação
+## Validation
 
 ```bash
 docker --version
@@ -50,7 +50,7 @@ id "$USER" | grep docker
 
 ## Troubleshooting
 
-- Plugin compose não disponível:
-  - O script instala fallback standalone automaticamente.
-- Permissão negada ao usar docker sem sudo:
-  - Efetue novo login da sessão do usuário alvo.
+- Compose plugin not available:
+  - The script installs standalone fallback automatically.
+- Permission denied when using docker without sudo:
+  - Re-login to the target user session.

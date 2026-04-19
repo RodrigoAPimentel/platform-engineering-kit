@@ -1,22 +1,22 @@
 ---
 mode: agent
-description: "Use when: sincronizar prompts e instrucoes do Platform Engineering Guardian entre .github e ai com rastreabilidade."
+description: "Use when: synchronize Platform Engineering Guardian prompts and instructions between .github and ai with traceability."
 ---
 
-Revise e sincronize definições do Platform Engineering Guardian em todos os pontos oficiais.
+Review and synchronize Platform Engineering Guardian definitions across all official locations.
 
 Use when:
 
-- Houve alteracao em prompt, agent definition ou usage manual em uma das pastas.
-- Precisa validar paridade entre execucao no VS Code e pacote versionado em `ai/`.
+- A prompt, agent definition, or usage manual changed in one location.
+- You need parity between VS Code execution assets and the versioned package in `ai/`.
 
 Avoid when:
 
-- A tarefa principal for auditoria de codigo/repositorio (use outro prompt do catalogo Guardian).
+- The main task is repository/code auditing (use another Guardian prompt).
 
 Scope default:
 
-- `.github/agents/`, `.github/prompts/`, `ai/agents/platform-engineering-guardian/` e `ai/agents/platform-engineering-guardian/prompts/`.
+- `.github/agents/`, `.github/prompts/`, `ai/agents/platform-engineering-guardian/`, and `ai/agents/platform-engineering-guardian/prompts/`.
 
 Output format:
 
@@ -25,17 +25,17 @@ Output format:
 3. Applied changes
 4. Next steps
 
-Objetivo:
+Objective:
 
-- Garantir paridade entre `.github/agents` e `ai/agents`.
-- Garantir paridade entre `.github/prompts` e `ai/agents/platform-engineering-guardian/prompts`.
-- Atualizar manuais de uso e prompts relacionados.
-- Registrar versão no pacote do agent quando houver mudanças relevantes.
+- Ensure parity between `.github/agents` and `ai/agents`.
+- Ensure parity between `.github/prompts` and `ai/agents/platform-engineering-guardian/prompts`.
+- Update usage manuals and related prompts.
+- Record a new package version when changes are significant.
 
 Checklist:
 
-1. Comparar definições atuais.
-2. Aplicar mesmas regras nos arquivos de agent das duas pastas.
-3. Aplicar as mesmas alteracoes de prompts nas duas pastas.
-4. Atualizar usage e indice/catalogo de prompts.
-5. Publicar snapshot de versão quando necessário.
+1. Compare current definitions.
+2. Apply the same rules to agent files in both locations.
+3. Apply the same prompt changes in both locations.
+4. Update usage and prompt index/catalog files.
+5. Publish a version snapshot when needed.

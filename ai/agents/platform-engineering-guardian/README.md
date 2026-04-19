@@ -36,4 +36,9 @@ Structured package for the Platform Engineering Guardian agent, prepared for lon
 - **All agent instruction changes must be mirrored between `.github/agents/platform-engineering-guardian.agent.md` and `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent.md`.**
 - **Any command/catalog change must update `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent_USAGE.md`.**
 - This ensures that VS Code usage and long-term versioning are always aligned.
-- Use the agent-sync prompt (`guardian-agent-sync.prompt.md`) to audit and regularizar a paridade.
+- Use the agent-sync prompt (`guardian-agent-sync.prompt.md`) to audit and restore parity.
+
+## Language Policy
+
+- The default language for prompts, agent instructions, and package documentation is English.
+- Use another language only when explicitly requested for a specific task.

@@ -1,23 +1,23 @@
 ---
 mode: agent
-description: "Use when: revisar pipelines CI/CD, gates de qualidade e padroes de validacao para scripts e infraestrutura."
+description: "Use when: review CI/CD pipelines, quality gates, and validation standards for scripts and infrastructure."
 ---
 
-Audite e padronize CI/CD com o agente Platform Engineering Guardian.
+Audit and standardize CI/CD with the Platform Engineering Guardian agent.
 
 Use when:
 
-- Precisa evoluir pipelines, checks e templates de validacao.
-- Precisa melhorar confiabilidade, velocidade de feedback e cobertura multi-distro.
+- You need to evolve pipelines, checks, and validation templates.
+- You need to improve reliability, feedback speed, and multi-distro coverage.
 
 Avoid when:
 
-- A tarefa principal for qualidade de scripts fora de pipeline (use `/guardian-scripts`).
-- A tarefa principal for documentacao e indices (use `/guardian-docs`).
+- The main task is script quality outside pipelines (use `/guardian-scripts`).
+- The main task is documentation and indexing (use `/guardian-docs`).
 
 Scope default:
 
-- `ci-cd/github-actions/`, `ci-cd/azure-devops/` e `ci-cd/templates/`.
+- `ci-cd/github-actions/`, `ci-cd/azure-devops/`, and `ci-cd/templates/`.
 
 Output format:
 
@@ -26,12 +26,12 @@ Output format:
 3. Applied changes
 4. Next steps
 
-Contexto opcional:
+Optional context:
 
-- Escopo: ${input:scope:Ex.: ci-cd/github-actions, ci-cd/templates}
-- Objetivo: ${input:goal:Ex.: ampliar testes de scripts multi-distro}
+- Scope: ${input:scope:Ex.: ci-cd/github-actions, ci-cd/templates}
+- Goal: ${input:goal:Ex.: expand multi-distro script tests}
 
-Criticidade:
+Criticality:
 
-- Priorizar confiabilidade, reaproveitamento e feedback rapido.
-- Verificar cobertura de validacoes de naming/sintaxe/scripts.
+- Prioritize reliability, reuse, and fast feedback.
+- Verify coverage for naming/syntax/script validations.

@@ -1,30 +1,30 @@
 # Ansible AWX Installation & Operation
 
-Runbook oficial para instalar, operar e desinstalar AWX usando o script consolidado do repositório.
+Official runbook to install, operate, and uninstall AWX using the consolidated repository script.
 
-## Script relacionado
+## Related script
 
 - scripts/install/install-ansible-awx.sh
 
-## Modos de instalação suportados
+## Supported installation modes
 
-- auto: seleciona legacy ou operator de acordo com a estrutura da versão AWX baixada.
-- legacy: fluxo baseado em installer + Docker Compose.
-- operator: fluxo Kubernetes com AWX Operator.
+- auto: chooses legacy or operator based on the downloaded AWX version layout.
+- legacy: installer + Docker Compose flow.
+- operator: Kubernetes flow with AWX Operator.
 
-## Pré-requisitos
+## Prerequisites
 
-- Acesso root via sudo.
-- Conectividade com internet para baixar AWX e dependências.
-- Para modo operator: kubectl configurado e cluster Kubernetes acessível.
+- Root access via sudo.
+- Internet connectivity to download AWX and dependencies.
+- For operator mode: kubectl configured and reachable Kubernetes cluster.
 
-## Uso rápido
+## Quick usage
 
 ```bash
 sudo bash scripts/install/install-ansible-awx.sh
 ```
 
-## Opções principais
+## Main options
 
 ```bash
 --awx-version <version>
@@ -40,9 +40,9 @@ sudo bash scripts/install/install-ansible-awx.sh
 --reboot
 ```
 
-## Exemplos de instalação
+## Installation examples
 
-### Auto (recomendado)
+### Auto (recommended)
 
 ```bash
 sudo bash scripts/install/install-ansible-awx.sh \
@@ -68,21 +68,21 @@ sudo bash scripts/install/install-ansible-awx.sh \
   --awx-name awx
 ```
 
-## Resultado esperado
+## Expected result
 
 ### Legacy
 
-- Stack AWX criada com Docker Compose.
-- Credenciais aplicadas no inventory durante instalação.
-- Serviço acessível via host local/rede.
+- AWX stack created with Docker Compose.
+- Credentials applied to inventory during installation.
+- Service reachable from local/network host.
 
 ### Operator
 
-- Namespace Kubernetes criado (se não existir).
-- AWX Operator aplicado e deployment pronto.
-- Custom Resource AWX aplicada com admin_user/admin_password_secret.
+- Kubernetes namespace created (if missing).
+- AWX Operator applied and deployment ready.
+- AWX Custom Resource applied with admin_user/admin_password_secret.
 
-## Validação
+## Validation
 
 ### Legacy
 
@@ -99,11 +99,11 @@ kubectl -n awx get awx
 kubectl -n awx get svc
 ```
 
-## Desinstalação
+## Uninstallation
 
-O script suporta desinstalação de recursos operator e legado.
+The script supports uninstallation of operator and legacy resources.
 
-### Desinstalação padrão
+### Standard uninstall
 
 ```bash
 sudo bash scripts/install/install-ansible-awx.sh \
@@ -112,7 +112,7 @@ sudo bash scripts/install/install-ansible-awx.sh \
   --awx-name awx
 ```
 
-### Remover também o operator
+### Remove operator too
 
 ```bash
 sudo bash scripts/install/install-ansible-awx.sh \
@@ -122,7 +122,7 @@ sudo bash scripts/install/install-ansible-awx.sh \
   --awx-name awx
 ```
 
-### Modo destrutivo
+### Destructive mode
 
 ```bash
 sudo bash scripts/install/install-ansible-awx.sh \
@@ -133,36 +133,36 @@ sudo bash scripts/install/install-ansible-awx.sh \
   --awx-name awx
 ```
 
-Atenção: modo destrutivo remove namespace/PVC/secrets/PV e artefatos locais legados.
+Warning: destructive mode removes namespace/PVC/secrets/PV and legacy local artifacts.
 
 ## Troubleshooting
 
-- kubectl não acessa cluster no modo operator:
-  - Verifique contexto com kubectl config current-context.
-  - Valide acesso ao cluster com kubectl cluster-info.
-- Minikube não está rodando:
-  - Inicie com minikube start antes de usar operator.
-- Erro em docker-compose no modo legacy:
-  - O script trata fallback compose plugin/standalone e tenta recuperação de erro conhecido ContainerConfig.
-- Permissões após instalação Docker:
-  - Faça novo login da sessão para aplicar grupo docker.
+- kubectl cannot access cluster in operator mode:
+  - Check context with kubectl config current-context.
+  - Validate cluster access with kubectl cluster-info.
+- Minikube is not running:
+  - Start it with minikube start before operator mode.
+- docker-compose error in legacy mode:
+  - The script handles compose plugin/standalone fallback and known ContainerConfig recovery.
+- Permissions after Docker installation:
+  - Re-login the session to apply docker group membership.
 
-## Comandos úteis
+## Useful commands
 
 ```bash
-# Senha admin (operator)
+# Admin password (operator)
 kubectl -n awx get secret awx-admin-password -o jsonpath='{.data.password}' | base64 -d && echo
 
-# Estado do operator
+# Operator status
 kubectl -n awx get deployment awx-operator-controller-manager
 
-# Logs do operator
+# Operator logs
 kubectl -n awx logs deployment/awx-operator-controller-manager
 ```
 
-## Referências
+## References
 
 - Script: scripts/install/install-ansible-awx.sh
-- Runbooks relacionados:
+- Related runbooks:
   - docs/runbooks/docker-installation.md
   - docs/runbooks/minikube-installation-ubuntu.md

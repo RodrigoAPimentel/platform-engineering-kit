@@ -1,44 +1,44 @@
 # Proxmox Template Preparation (Ubuntu)
 
-Runbook para preparar uma VM Ubuntu antes da conversão para template no Proxmox.
+Runbook for preparing an Ubuntu VM before converting it to a Proxmox template.
 
-## Script relacionado
+## Related script
 
 - scripts/maintenance/proxmox-prepare-vm-template-ubuntu.sh
 
-## Pré-requisitos
+## Prerequisites
 
-- Ubuntu em VM no Proxmox.
-- Acesso root via sudo.
+- Ubuntu VM running on Proxmox.
+- Root access via sudo.
 
-## Uso rápido
+## Quick usage
 
 ```bash
 sudo bash scripts/maintenance/proxmox-prepare-vm-template-ubuntu.sh
 ```
 
-## Opções principais
+## Main options
 
 ```bash
 --skip-openssh-helper
 --no-shutdown
 ```
 
-## Exemplos
+## Examples
 
 ```bash
 sudo bash scripts/maintenance/proxmox-prepare-vm-template-ubuntu.sh --no-shutdown
 sudo bash scripts/maintenance/proxmox-prepare-vm-template-ubuntu.sh --skip-openssh-helper
 ```
 
-## Resultado esperado
+## Expected result
 
-- cloud-init, qemu-guest-agent e openssh-server instalados.
-- machine-id e chaves de host SSH resetados.
-- cache e estado do cloud-init limpos.
-- shutdown automático no final, salvo opção contrária.
+- cloud-init, qemu-guest-agent, and openssh-server installed.
+- machine-id and SSH host keys reset.
+- cloud-init cache and state cleaned.
+- automatic shutdown at the end unless disabled.
 
-## Validação
+## Validation
 
 ```bash
 systemctl is-enabled qemu-guest-agent
@@ -47,7 +47,7 @@ ls -la /etc/ssh/ssh_host_* || true
 
 ## Troubleshooting
 
-- Conversão para template falha:
-  - Confirme adição de disco Cloud-Init no Proxmox UI.
-- Clone com identidade duplicada:
-  - Revalide limpeza do machine-id antes da conversão.
+- Template conversion fails:
+  - Confirm Cloud-Init disk was added in Proxmox UI.
+- Clone with duplicate identity:
+  - Revalidate machine-id cleanup before conversion.

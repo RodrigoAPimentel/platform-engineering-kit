@@ -1,33 +1,33 @@
 # Initial Machine Preparation
 
-Runbook para preparação inicial de hosts Linux com suporte a apt, dnf e yum.
+Runbook for initial Linux host preparation with apt, dnf, and yum support.
 
-## Script relacionado
+## Related script
 
 - scripts/install/initial-machine-preparation.sh
 
-## Pré-requisitos
+## Prerequisites
 
-- Acesso root via sudo.
-- Host com conectividade de rede para repositórios.
+- Root access via sudo.
+- Host with network connectivity to repositories.
 
-## Uso rápido
+## Quick usage
 
 ```bash
 sudo bash scripts/install/initial-machine-preparation.sh
 ```
 
-## Opções principais
+## Main options
 
 ```bash
 --skip-system-update
 --skip-openssh
 --skip-firewall
---locale <valor>
+--locale <value>
 --reboot
 ```
 
-## Exemplos
+## Examples
 
 ```bash
 sudo bash scripts/install/initial-machine-preparation.sh --locale pt_BR.UTF-8
@@ -35,14 +35,14 @@ sudo bash scripts/install/initial-machine-preparation.sh --skip-firewall
 sudo bash scripts/install/initial-machine-preparation.sh --reboot
 ```
 
-## Resultado esperado
+## Expected result
 
-- Locale da sessão ajustado.
-- Pacotes do sistema atualizados (quando não ignorado).
-- OpenSSH instalado e habilitado (quando não ignorado).
-- Firewall liberado para SSH se firewalld estiver ativo.
+- Session locale configured.
+- System packages updated (unless skipped).
+- OpenSSH installed and enabled (unless skipped).
+- SSH firewall rules configured when firewalld is active.
 
-## Validação
+## Validation
 
 ```bash
 systemctl is-active ssh || systemctl is-active sshd
@@ -51,7 +51,7 @@ locale
 
 ## Troubleshooting
 
-- EPEL indisponível em distro específica:
-  - O script continua com aviso; valide repositórios locais.
-- firewalld inativo:
-  - O script pula a etapa de firewall e registra sugestão.
+- EPEL unavailable for a specific distro:
+  - The script continues with a warning; validate local repositories.
+- firewalld inactive:
+  - The script skips firewall configuration and logs a suggestion.

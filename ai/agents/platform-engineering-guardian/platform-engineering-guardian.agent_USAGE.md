@@ -91,6 +91,11 @@ Use the mirrored prompt catalog in both locations:
   - `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent.md`
 - Any catalog/command change must also update this usage manual.
 
+## Language policy (mandatory)
+
+- English is the default language for prompts, agent instructions, and generated documentation.
+- Use another language only when explicitly requested for a specific task.
+
 ## When to use this agent instead of the default agent
 
 Use Platform Engineering Guardian when the focus is:

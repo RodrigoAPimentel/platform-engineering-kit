@@ -8,19 +8,19 @@ In Copilot Chat, type `/` and choose one of the commands below.
 
 ## Commands
 
-- `/guardian-audit` -> Diagnostico amplo com priorizacao de gaps (entrada padrao para planejamento).
-- `/guardian-docs` -> Documentacao, indices e cobertura de runbooks.
-- `/guardian-scripts` -> Qualidade tecnica de scripts shell (padrao, naming e estrutura).
-- `/guardian-cicd` -> Revisao e padronizacao de pipelines e gates de qualidade.
-- `/guardian-standalone-categorization` -> Organizacao de instaladores independentes em standalone.
-- `/guardian-multi-distro-consolidation` -> Consolidacao de instaladores por distro em script unico.
-- `/guardian-agent-sync` -> Sincronizacao de prompts e instrucoes do agent entre `.github` e `ai`.
+- `/guardian-audit` -> Broad diagnosis with prioritized gaps (default planning entry point).
+- `/guardian-docs` -> Documentation, indexes, and runbook coverage.
+- `/guardian-scripts` -> Shell script technical quality (standards, naming, and structure).
+- `/guardian-cicd` -> Pipeline and quality gate review/standardization.
+- `/guardian-standalone-categorization` -> Organization of independent installers under standalone.
+- `/guardian-multi-distro-consolidation` -> Consolidation of distro-specific installers into one script.
+- `/guardian-agent-sync` -> Synchronization of prompts and agent instructions between `.github` and `ai`.
 
 ## Synchronization Policy
 
-- Qualquer alteracao em prompts deve ser espelhada entre `.github/prompts/` e `ai/agents/platform-engineering-guardian/prompts/`.
-- Qualquer alteracao em instrucoes do agent deve ser espelhada entre `.github/agents/platform-engineering-guardian.agent.md` e `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent.md`.
-- Alteracoes de catalogo e uso tambem devem atualizar `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent_USAGE.md`.
+- Any prompt change must be mirrored between `.github/prompts/` and `ai/agents/platform-engineering-guardian/prompts/`.
+- Any agent instruction change must be mirrored between `.github/agents/platform-engineering-guardian.agent.md` and `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent.md`.
+- Catalog and usage changes must also update `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent_USAGE.md`.
 
 ## Purpose
 

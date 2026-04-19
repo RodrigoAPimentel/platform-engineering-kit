@@ -1,24 +1,24 @@
 # Minikube Operations Guide
 
-Guia operacional complementar para uso, acesso remoto e troubleshooting do Minikube.
+Complementary operations guide for Minikube usage, remote access, and troubleshooting.
 
-## Script relacionado
+## Related script
 
 - scripts/install/install-minikube-ubuntu.sh
 
-## Runbook principal de instalacao
+## Main installation runbook
 
 - docs/runbooks/minikube-installation-ubuntu.md
 
-## Pre-requisitos
+## Prerequisites
 
-- Minikube e kubectl instalados.
-- Cluster iniciado e funcional.
-- Acesso ao host onde o cluster esta executando.
+- Minikube and kubectl installed.
+- Cluster started and healthy.
+- Access to the host where the cluster is running.
 
-## Operacao basica
+## Basic operation
 
-### Inicializacao com Docker driver
+### Start with Docker driver
 
 ```bash
 minikube start \
@@ -27,7 +27,7 @@ minikube start \
   --force
 ```
 
-### Validacao de saude do cluster
+### Cluster health validation
 
 ```bash
 minikube status
@@ -36,113 +36,113 @@ kubectl get nodes
 kubectl get pods -A
 ```
 
-## Acesso remoto ao cluster com kubeconfig
+## Remote cluster access with kubeconfig
 
-Referencia consultada:
+Reference:
 
 - https://faun.pub/accessing-a-remote-minikube-from-a-local-computer-fd6180dd66dd
 
-### Diretrizes
+### Guidelines
 
-1. O endpoint do kube-apiserver do Minikube nao e exposto para acesso externo direto por padrao.
-2. Para acesso remoto, utilize proxy reverso (NGINX) na frente do API Server.
-3. Proteja o proxy com autenticacao basica e TLS.
-4. Encaminhe requisicoes para https://<minikube-ip>:8443.
-5. Use um kubeconfig dedicado no cliente.
+1. The Minikube kube-apiserver endpoint is not directly exposed externally by default.
+2. For remote access, use a reverse proxy (NGINX) in front of API Server.
+3. Protect the proxy with basic authentication and TLS.
+4. Forward requests to https://\<minikube-ip\>:8443.
+5. Use a dedicated kubeconfig on the client.
 
-### Fluxo recomendado
+### Recommended flow
 
-1. Subir proxy NGINX no host remoto.
-2. Validar endpoint exposto do proxy.
-3. Criar kubeconfig dedicado para esse acesso.
-4. Ajustar campo server no kubeconfig para o endpoint do proxy.
-5. Testar conectividade:
+1. Start an NGINX proxy on the remote host.
+2. Validate the exposed proxy endpoint.
+3. Create a dedicated kubeconfig for that access.
+4. Adjust server field in kubeconfig to point to proxy endpoint.
+5. Test connectivity:
 
 ```bash
-kubectl --kubeconfig <arquivo> cluster-info
-kubectl --kubeconfig <arquivo> get ns
+kubectl --kubeconfig <file> cluster-info
+kubectl --kubeconfig <file> get ns
 ```
 
-### Seguranca
+### Security
 
-- Nao inclua credenciais em texto puro na URL do server no kubeconfig.
-- Prefira TLS ponta a ponta e credenciais fora da URL.
-- Restrinja origem por IP no NGINX quando houver exposicao publica.
+- Do not include plaintext credentials in kubeconfig server URL.
+- Prefer end-to-end TLS and credentials outside URL.
+- Restrict origin by IP on NGINX when publicly exposed.
 
-Script de referencia para proxy:
+Proxy reference script:
 
 - https://github.com/RodrigoAPimentel/scripts/blob/main/external_access_minikube.sh
 
-## Acesso ao dashboard em host externo
+## Dashboard access from external host
 
-### Opcao 1: SSH Tunnel
+### Option 1: SSH Tunnel
 
-URL de acesso no cliente local:
+Local client access URL:
 
 ```text
 http://localhost:8081/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/
 ```
 
-Passos:
+Steps:
 
-1. No host do Minikube, execute:
+1. On Minikube host, run:
 
 ```bash
 minikube dashboard --url --port 40505
 ```
 
-2. No cliente, crie o tunnel SSH:
+2. On client, create SSH tunnel:
 
 ```bash
-ssh -L <porta-local>:localhost:<porta-dashboard> <usuario>@<ip-host-minikube>
+ssh -L <local-port>:localhost:<dashboard-port> <user>@<minikube-host-ip>
 ```
 
-Exemplo:
+Example:
 
 ```bash
 ssh -L 8081:localhost:40505 root@192.168.99.11
 ```
 
-Capturas de apoio:
+Supporting screenshots:
 
 ![](minikube_images/image4.png)
 ![](minikube_images/image.png)
 ![](minikube_images/image-1.png)
 
-### Opcao 2: kubectl proxy
+### Option 2: kubectl proxy
 
-URL de acesso:
+Access URL:
 
 ```text
-http://<minikube-host-ip>:8001/api/v1/namespaces/kube-system/services/kubernetes-dashboard/proxy/
+http://\<minikube-host-ip\>:8001/api/v1/namespaces/kube-system/services/kubernetes-dashboard/proxy/
 ```
 
-Comando:
+Command:
 
 ```bash
 kubectl proxy --address='0.0.0.0' --disable-filter=true
 ```
 
-Captura de apoio:
+Supporting screenshot:
 
 ![](minikube_images/image3.png)
 
-Se necessario, libere porta 8001 no firewalld:
+If needed, open port 8001 in firewalld:
 
 ```bash
 sudo firewall-cmd --zone=public --add-port=8001/tcp --permanent
 sudo firewall-cmd --reload
 ```
 
-Referencia:
+Reference:
 
 - https://stackoverflow.com/a/54960906
 
-## Troubleshooting rapido
+## Quick troubleshooting
 
-- Dashboard nao abre externamente:
-  - Validar tunnel/proxy e firewall.
-- kubectl sem acesso ao cluster:
-  - Validar contexto atual e variavel KUBECONFIG.
-- Erro ao iniciar minikube:
-  - Validar driver Docker e permissao de usuario no grupo docker.
+- Dashboard not reachable externally:
+  - Validate tunnel/proxy and firewall.
+- kubectl cannot access cluster:
+  - Validate current context and KUBECONFIG variable.
+- Minikube startup errors:
+  - Validate Docker driver and user permissions in docker group.

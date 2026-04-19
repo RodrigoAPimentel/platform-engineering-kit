@@ -1,23 +1,23 @@
 ---
 mode: agent
-description: "Use when: auditar e atualizar documentacao, README e cobertura de runbooks com foco em discoverability e consistencia."
+description: "Use when: audit and update documentation, README files, and runbook coverage with focus on discoverability and consistency."
 ---
 
-Revise e atualize documentacao e READMEs com o agente Platform Engineering Guardian.
+Review and update documentation and README files with the Platform Engineering Guardian agent.
 
 Use when:
 
-- Precisa corrigir navegacao, indices e consistencia entre scripts e documentacao.
-- Precisa garantir cobertura de runbook para scripts operacionais e atualizar `docs/runbooks/README.md`.
+- You need to fix navigation, indexes, and consistency between scripts and docs.
+- You need runbook coverage for operational scripts and updates to `docs/runbooks/README.md`.
 
 Avoid when:
 
-- A tarefa principal for padronizacao tecnica de scripts shell (use `/guardian-scripts`).
-- A tarefa principal for pipelines CI/CD (use `/guardian-cicd`).
+- The main task is shell script technical standardization (use `/guardian-scripts`).
+- The main task is CI/CD pipelines (use `/guardian-cicd`).
 
 Scope default:
 
-- `docs/`, `scripts/README.md`, `scripts/install/README.md`, `scripts/install/standalone/README.md` e `docs/runbooks/`.
+- `docs/`, `scripts/README.md`, `scripts/install/README.md`, `scripts/install/standalone/README.md`, and `docs/runbooks/`.
 
 Output format:
 
@@ -26,13 +26,13 @@ Output format:
 3. Applied changes
 4. Next steps
 
-Contexto opcional:
+Optional context:
 
-- Escopo: ${input:scope:Ex.: docs/runbooks, scripts/README.md, README raiz}
-- Objetivo: ${input:goal:Ex.: fechar gaps de runbooks e alinhar indices}
+- Scope: ${input:scope:Ex.: docs/runbooks, scripts/README.md, root README}
+- Goal: ${input:goal:Ex.: close runbook gaps and align indexes}
 
-Criterios:
+Criteria:
 
-- Garantir consistencia entre scripts e runbooks.
-- Atualizar indices locais e navegacao.
-- Evitar markdown operacional no root quando deve estar em docs/runbooks.
+- Ensure consistency between scripts and runbooks.
+- Update local indexes and navigation.
+- Avoid root-level operational markdown when content belongs in `docs/runbooks`.

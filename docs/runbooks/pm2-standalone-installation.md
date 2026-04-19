@@ -1,58 +1,58 @@
 # PM2 Standalone Installation
 
-⚠️ **Atenção:** Este procedimento exige privilégios de root (`sudo`) e pode manipular secrets/senhas. Revise comandos antes de executar e evite expor credenciais em linha de comando, histórico de shell ou logs. Veja [security/secrets/README.md](../security/secrets/README.md) para boas práticas.
+⚠️ **Warning:** This procedure requires root privileges (`sudo`) and may handle secrets/passwords. Review commands before execution and avoid exposing credentials in command line, shell history, or logs. See [security/secrets/README.md](../security/secrets/README.md) for best practices.
 
-Runbook para instalacao do PM2 como gerenciador de processos independente para um usuario alvo.
+Runbook for installing PM2 as a standalone process manager for a target user.
 
-## Script relacionado
+## Related script
 
 - scripts/install/standalone/install-pm2-standalone.sh
 
-## Pre-requisitos
+## Prerequisites
 
-- Acesso root via sudo.
-- Usuario alvo existente.
-- npm disponivel para o usuario alvo (ou permitir auto-instalacao do helper Node.js).
+- Root access via sudo.
+- Existing target user.
+- npm available for the target user (or allow Node.js helper auto-install).
 
-## Uso rapido
+## Quick usage
 
 ```bash
 sudo bash scripts/install/standalone/install-pm2-standalone.sh
 ```
 
-## Opcoes principais
+## Main options
 
 ```bash
---user <usuario>
+--user <username>
 --skip-system-update
 --skip-nodejs-install
 --reboot
 ```
 
-## Exemplos
+## Examples
 
 ```bash
-sudo bash scripts/install/standalone/install-pm2-standalone.sh --user automacao
+sudo bash scripts/install/standalone/install-pm2-standalone.sh --user automation
 sudo bash scripts/install/standalone/install-pm2-standalone.sh --skip-nodejs-install
 ```
 
-## Resultado esperado
+## Expected result
 
-- PM2 instalado globalmente para o usuario alvo.
-- Startup systemd do PM2 configurado.
-- Snapshot PM2 salvo com pm2 save.
+- PM2 installed globally for target user.
+- PM2 systemd startup configured.
+- PM2 snapshot saved with pm2 save.
 
-## Validacao
+## Validation
 
 ```bash
-sudo -u <usuario> pm2 --version
-sudo -u <usuario> pm2 list
-systemctl status pm2-<usuario> --no-pager || true
+sudo -u <username> pm2 --version
+sudo -u <username> pm2 list
+systemctl status pm2-<username> --no-pager || true
 ```
 
 ## Troubleshooting
 
-- npm ausente:
-  - Rode sem --skip-nodejs-install para auto-instalar Node.js helper.
-- PM2 nao inicia no boot:
-  - Reexecutar configuracao de startup e validar unit systemd.
+- npm missing:
+  - Run without --skip-nodejs-install to auto-install Node.js helper.
+- PM2 does not start at boot:
+  - Re-run startup configuration and validate systemd unit.

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-# ⚠️ Atenção: Este script exige privilégios de root (sudo) e pode manipular secrets/senhas.
-# Revise comandos antes de executar e evite expor credenciais em linha de comando, histórico de shell ou logs.
-# Veja ../../../../security/secrets/README.md para boas práticas.
+# ⚠️ Warning: This script requires root privileges (sudo) and may handle secrets/passwords.
+# Review commands before execution and avoid exposing credentials in command-line arguments, shell history, or logs.
+# See ../../../../security/secrets/README.md for best practices.
 
 set -Eeuo pipefail
 IFS=$'\n\t'
