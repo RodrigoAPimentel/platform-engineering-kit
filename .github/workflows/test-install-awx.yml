@@ -26,6 +26,8 @@ jobs:
   syntax-validation:
     name: Bash Syntax Validation
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -46,6 +48,8 @@ jobs:
   unit-tests:
     name: Unit Tests - Parse Arguments
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -68,6 +72,8 @@ jobs:
   container-tests:
     name: Validate Multi-Distro Compatibility
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         container:
@@ -122,6 +128,8 @@ jobs:
   integration-test-dry-run:
     name: Integration Test - Dry Run
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -158,6 +166,8 @@ jobs:
   coverage:
     name: Code Quality Checks
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -201,6 +211,8 @@ jobs:
   report:
     name: Test Report
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     needs: [syntax-validation, unit-tests, container-tests, integration-test-dry-run, coverage]
     if: always()
     steps:
