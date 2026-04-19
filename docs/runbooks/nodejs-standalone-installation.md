@@ -1,5 +1,7 @@
 # Node.js Standalone Installation
 
+⚠️ **Atenção:** Este procedimento exige privilégios de root (`sudo`) e pode manipular secrets/senhas. Revise comandos antes de executar e evite expor credenciais em linha de comando, histórico de shell ou logs. Veja [security/secrets/README.md](../security/secrets/README.md) para boas práticas.
+
 Runbook para instalacao de Node.js (via NVM) como runtime independente para um usuario alvo.
 
 ## Script relacionado

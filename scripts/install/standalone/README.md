@@ -6,13 +6,14 @@ These scripts are intended for decoupled runtimes and process tooling that can b
 
 ## Contents
 
-- install-nodejs-standalone.sh -> Installs Node.js via NVM for a target user across apt/dnf/yum systems.
-- install-pm2-standalone.sh -> Installs PM2 for a target user and configures PM2 startup service.
+- [install-nodejs-standalone.sh](install-nodejs-standalone.sh) → Instala Node.js via NVM para um usuário alvo (apt/dnf/yum).
+  ↳ Runbook: [docs/runbooks/nodejs-standalone-installation.md](../../../docs/runbooks/nodejs-standalone-installation.md)
+- [install-pm2-standalone.sh](install-pm2-standalone.sh) → Instala PM2 para um usuário alvo e configura PM2 como serviço systemd.
+  ↳ Runbook: [docs/runbooks/pm2-standalone-installation.md](../../../docs/runbooks/pm2-standalone-installation.md)
 
-## Related Runbooks
+## Segurança
 
-- docs/runbooks/nodejs-standalone-installation.md
-- docs/runbooks/pm2-standalone-installation.md
+⚠️ **Atenção:** Estes scripts exigem privilégios de root (`sudo`) e podem manipular secrets/senhas. Revise comandos antes de executar e evite expor credenciais em linha de comando, histórico de shell ou logs. Veja [security/secrets/README.md](../../../security/secrets/README.md) para boas práticas.
 
 ## Purpose
 

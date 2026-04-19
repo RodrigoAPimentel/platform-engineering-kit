@@ -15,10 +15,12 @@ Structured package for the Platform Engineering Guardian agent, prepared for lon
 
 ## Prompt Catalog
 
-- prompts/guardian-context-migration.prompt.md
-- prompts/guardian-multi-distro-consolidation.prompt.md
-- prompts/guardian-runbook-enforcement.prompt.md
+- prompts/guardian-audit.prompt.md
+- prompts/guardian-docs.prompt.md
+- prompts/guardian-scripts.prompt.md
+- prompts/guardian-cicd.prompt.md
 - prompts/guardian-standalone-categorization.prompt.md
+- prompts/guardian-multi-distro-consolidation.prompt.md
 - prompts/guardian-agent-sync.prompt.md
 
 ## Governance Notes
@@ -26,3 +28,12 @@ Structured package for the Platform Engineering Guardian agent, prepared for lon
 - Keep active execution entrypoint in .github/agents.
 - Mirror behavioral changes between .github/agents and the package definition at `ai/agents/platform-engineering-guardian/`.
 - When changing behavior significantly, publish a new version snapshot under versions/.
+
+## Synchronization Policy
+
+- **All prompt files (.prompt.md) in `.github/prompts` and `ai/agents/platform-engineering-guardian/prompts` must be kept in sync.**
+- Any change in one location (creation, update, removal) must be reflected in the other.
+- **All agent instruction changes must be mirrored between `.github/agents/platform-engineering-guardian.agent.md` and `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent.md`.**
+- **Any command/catalog change must update `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent_USAGE.md`.**
+- This ensures that VS Code usage and long-term versioning are always aligned.
+- Use the agent-sync prompt (`guardian-agent-sync.prompt.md`) to audit and regularizar a paridade.

@@ -66,28 +66,30 @@ Review security and observability and propose practical, standardized, and autom
 
 Use these commands directly in the Copilot prompt box:
 
-- `/guardian-audit` -> Full repository audit with severity-ordered findings.
-- `/guardian-docs` -> Documentation/README normalization and coverage updates.
-- `/guardian-scripts` -> Script standardization, naming, and runbook coverage checks.
+- `/guardian-audit` -> Full repository diagnosis with severity-ordered findings.
+- `/guardian-docs` -> Documentation/README normalization and runbook coverage updates.
+- `/guardian-scripts` -> Script standardization, naming, and structure checks.
 - `/guardian-cicd` -> CI/CD pipeline review with reusable validation recommendations.
-- `/guardian-global-update` -> End-to-end repository refresh aligned with platform standards.
+- `/guardian-standalone-categorization` -> Classify and organize independent installers under standalone.
+- `/guardian-multi-distro-consolidation` -> Consolidate distro-specific installers into a single multi-distro script.
+- `/guardian-agent-sync` -> Sync prompts and agent instructions between `.github` and `ai`.
 
 Files for these commands are in `.github/prompts/`.
 
 ## Specialized prompt pack (history-based)
 
-Based on most-used workflows in this repository, use:
+Use the mirrored prompt catalog in both locations:
 
-- `ai/agents/platform-engineering-guardian/prompts/guardian-context-migration.prompt.md`
-  - For staging/context script migration, modernization, renaming, and relocation.
-- `ai/agents/platform-engineering-guardian/prompts/guardian-multi-distro-consolidation.prompt.md`
-  - For unifying distro-specific installers into one multi-distro script.
-- `ai/agents/platform-engineering-guardian/prompts/guardian-runbook-enforcement.prompt.md`
-  - For enforcing one runbook per script and index updates.
-- `ai/agents/platform-engineering-guardian/prompts/guardian-standalone-categorization.prompt.md`
-  - For classifying independent apps into scripts/install/standalone.
-- `ai/agents/platform-engineering-guardian/prompts/guardian-agent-sync.prompt.md`
-  - For synchronizing agent behavior across `.github/agents` and `ai/agents`.
+- `.github/prompts/`
+- `ai/agents/platform-engineering-guardian/prompts/`
+
+## Synchronization policy (mandatory)
+
+- Any prompt change (create, update, delete) must be mirrored in both prompt folders.
+- Any agent instruction change must be mirrored in:
+  - `.github/agents/platform-engineering-guardian.agent.md`
+  - `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent.md`
+- Any catalog/command change must also update this usage manual.
 
 ## When to use this agent instead of the default agent
 

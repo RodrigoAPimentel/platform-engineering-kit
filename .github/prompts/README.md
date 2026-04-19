@@ -8,11 +8,19 @@ In Copilot Chat, type `/` and choose one of the commands below.
 
 ## Commands
 
-- `/guardian-audit` -> Full repository audit with prioritized findings.
-- `/guardian-docs` -> Documentation and README audit/update flow.
-- `/guardian-scripts` -> Script standardization, naming, and runbook coverage flow.
-- `/guardian-cicd` -> CI/CD standardization and validation workflow review.
-- `/guardian-global-update` -> Global repository update to enforce platform standards.
+- `/guardian-audit` -> Diagnostico amplo com priorizacao de gaps (entrada padrao para planejamento).
+- `/guardian-docs` -> Documentacao, indices e cobertura de runbooks.
+- `/guardian-scripts` -> Qualidade tecnica de scripts shell (padrao, naming e estrutura).
+- `/guardian-cicd` -> Revisao e padronizacao de pipelines e gates de qualidade.
+- `/guardian-standalone-categorization` -> Organizacao de instaladores independentes em standalone.
+- `/guardian-multi-distro-consolidation` -> Consolidacao de instaladores por distro em script unico.
+- `/guardian-agent-sync` -> Sincronizacao de prompts e instrucoes do agent entre `.github` e `ai`.
+
+## Synchronization Policy
+
+- Qualquer alteracao em prompts deve ser espelhada entre `.github/prompts/` e `ai/agents/platform-engineering-guardian/prompts/`.
+- Qualquer alteracao em instrucoes do agent deve ser espelhada entre `.github/agents/platform-engineering-guardian.agent.md` e `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent.md`.
+- Alteracoes de catalogo e uso tambem devem atualizar `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent_USAGE.md`.
 
 ## Purpose
 
