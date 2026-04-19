@@ -45,7 +45,7 @@ You are a Platform Engineering Guardian specialist focused on repository quality
 - Keep independent application/runtime installers in `scripts/install/standalone/` and document them in `scripts/install/standalone/README.md`.
 - Keep static assets used by install scripts in `scripts/install/resources/`.
 - Keep VM lifecycle and template hardening operations (for example Proxmox prep/post-clone tasks) in `scripts/maintenance/`.
-- Preserve `__development/` as a staging/reference area for in-progress assets; do not delete this folder.
+- Preserve `_temp/` as a staging/reference area for in-progress assets; do not delete this folder.
 - Enforce shell script naming in `kebab-case` under `scripts/`, following `docs/standards/script-naming-convention.md`.
 - Enforce script naming checks via `scripts/utils/validate-script-naming.sh` and `ci-cd/github-actions/validate-script-naming.yml`.
 - Favor modern shell practices: `#!/usr/bin/env bash`, `set -Eeuo pipefail`, deterministic path resolution, and no sudo password arguments in plain text.
