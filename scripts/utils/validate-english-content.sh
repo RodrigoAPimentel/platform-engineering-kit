@@ -22,7 +22,7 @@ EXCLUDE_GLOBS=(
 )
 
 ACCENT_REGEX='[áàâãéêíóôõúçÁÀÂÃÉÊÍÓÔÕÚÇ]'
-PORTUGUESE_WORDS_REGEX='\b(instala[cç][aã]o|reposit[oó]rio|usu[aá]rio|seguran[cç]a|aten[cç][aã]o|objetivo|escopo|restri[cç][oõ]es|valida[cç][aã]o|configura[cç][aã]o|execu[cç][aã]o|atualiza[cç][aã]o|pre-?requisitos|uso\s+r[aá]pido|op[cç][oõ]es\s+principais|resultado\s+esperado|sa[ií]da)\b'
+PORTUGUESE_WORDS_REGEX='\b(instala[cç][aã]o|reposit[oó]rio|usu[aá]rio|seguran[cç]a|aten[cç][aã]o|objetivo|escopo|restri[cç][oõ]es|valida[cç][aã]o|configura[cç][aã]o|execu[cç][aã]o|atualiza[cç][aã]o|pre-?requisitos|uso\s+r[aá]pido|op[cç][oõ]es\s+principais|resultado\s+esperado|sa[ií]da|exemplo|detalhes|passo\s+a\s+passo|documenta[cç][aã]o|descri[cç][aã]o|t[ií]tulo|conte[úu]do|adi[cç][aã]o|remover|alterar|modificar|criar|deletar|erro|sucesso|falha|mensagem|aviso|dica)\b'
 
 tmp_file="$(mktemp)"
 trap 'rm -f "${tmp_file}"' EXIT
