@@ -17,8 +17,24 @@ ARGOCD_DASHBOARD_PORT="${ARGOCD_DASHBOARD_PORT:-88}"
 CONFIGURE_IPTABLES=true
 
 _run_minikube() {
+    local minikube_user=""
+
     if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then
-        sudo -u "${SUDO_USER}" -H minikube "$@"
+        minikube_user="${SUDO_USER}"
+    elif [[ -n "${KUBECONFIG:-}" && -f "${KUBECONFIG}" ]]; then
+        minikube_user="$(stat -c '%U' "${KUBECONFIG}" 2>/dev/null || true)"
+        if [[ "${minikube_user}" == "root" ]]; then
+            minikube_user=""
+        fi
+    fi
+
+    if [[ -n "${minikube_user}" ]]; then
+        if [[ -n "${KUBECONFIG:-}" ]]; then
+            sudo -u "${minikube_user}" -H env KUBECONFIG="${KUBECONFIG}" minikube "$@"
+            return
+        fi
+
+        sudo -u "${minikube_user}" -H minikube "$@"
         return
     fi
 
@@ -49,8 +65,9 @@ _verify_kubernetes_connectivity() {
     _step "Validating Minikube and Kubernetes API connectivity"
 
     if ! _run_minikube status >/dev/null 2>&1; then
-        _step_result_failed "Minikube is not running or not reachable. Start it first, for example: minikube start --driver=docker --addons=ingress"
-        exit 1
+        _step_result_suggestion "Unable to read Minikube status with current context. Continuing with Kubernetes API checks"
+    else
+        _step_result_success "Minikube status is reachable"
     fi
 
     if ! kubectl cluster-info >/dev/null 2>&1; then
