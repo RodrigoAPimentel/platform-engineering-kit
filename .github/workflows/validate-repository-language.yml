@@ -16,7 +16,7 @@ on:
       - 'scripts/**/*.sh'
       - '.github/workflows/validate-repository-language.yml'
       - 'ci-cd/github-actions/validate-repository-language.yml'
-      - 'scripts/utils/validate-english-content.sh'
+      - 'scripts/utils/lib/ci/validate-english-content.sh'
   push:
     branches:
       - main
@@ -31,7 +31,7 @@ on:
       - 'scripts/**/*.sh'
       - '.github/workflows/validate-repository-language.yml'
       - 'ci-cd/github-actions/validate-repository-language.yml'
-      - 'scripts/utils/validate-english-content.sh'
+      - 'scripts/utils/lib/ci/validate-english-content.sh'
 
 jobs:
   repository-language:
@@ -44,7 +44,7 @@ jobs:
         run: sudo apt update && sudo apt install ripgrep -y
 
       - name: Validate English-only policy
-        run: bash scripts/utils/validate-english-content.sh
+        run: bash scripts/utils/lib/ci/validate-english-content.sh
 
       - name: Initialize CodeQL
         if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository

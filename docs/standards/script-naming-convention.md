@@ -44,7 +44,7 @@ Not allowed:
 
 Validation script:
 
-- `scripts/utils/validate-script-naming.sh`
+- `scripts/utils/lib/ci/validate-script-naming.sh`
 
 CI workflow:
 

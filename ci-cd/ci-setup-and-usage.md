@@ -8,8 +8,8 @@ This guide explains how to configure, maintain, and use CI workflows in this rep
   - `.github/workflows/` (active GitHub Actions workflows)
   - `ci-cd/github-actions/` (mirrored workflow catalog)
 - Script validators used by CI:
-  - `scripts/utils/validate-script-naming.sh`
-  - `scripts/utils/validate-english-content.sh`
+  - `scripts/utils/lib/ci/validate-script-naming.sh`
+  - `scripts/utils/lib/ci/validate-english-content.sh`
 
 ## Prerequisites
 
@@ -19,6 +19,8 @@ This guide explains how to configure, maintain, and use CI workflows in this rep
 
 ## Current Workflow Inventory
 
+- `guardian-audit-gate.yml`
+  - Runs on pull requests targeting `main` and blocks merge when configured as a required status check.
 - `validate-script-naming.yml`
   - Validates shell script naming convention.
 - `validate-repository-language.yml`
@@ -60,10 +62,10 @@ Each workflow uses `paths` filters. If your changes are outside these filters, n
 Use these commands from repository root:
 
 ```bash
-bash -n scripts/utils/validate-script-naming.sh
-bash -n scripts/utils/validate-english-content.sh
-bash scripts/utils/validate-script-naming.sh
-bash scripts/utils/validate-english-content.sh
+bash -n scripts/utils/lib/ci/validate-script-naming.sh
+bash -n scripts/utils/lib/ci/validate-english-content.sh
+bash scripts/utils/lib/ci/validate-script-naming.sh
+bash scripts/utils/lib/ci/validate-english-content.sh
 ```
 
 ## Open a Pull Request and Validate
@@ -72,6 +74,19 @@ bash scripts/utils/validate-english-content.sh
 2. Open a pull request targeting `develop` or `main`.
 3. Confirm CI runs in GitHub Actions.
 4. Review failing jobs and logs, then fix and push again.
+
+## Enforce Blocking Behavior
+
+To prevent non-compliant changes from reaching protected branches, configure branch protection rules in GitHub:
+
+1. Open repository settings.
+2. Go to Branches.
+3. Create or update the protection rule for `main`.
+4. Enable required status checks.
+5. Select `Guardian Audit Gate / guardian-audit` as required.
+6. Optionally disable direct pushes for non-admin users.
+
+Note: GitHub Actions cannot universally block every push to every branch by itself. Blocking is enforced through branch protection with required checks.
 
 ## Common Issues and Fixes
 

@@ -3,9 +3,14 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/common.sh"
+
+ROOT_DIR="$(ci_repo_root_from "${BASH_SOURCE[0]}")"
 TARGET_DIR="${ROOT_DIR}/scripts"
 NAME_REGEX='^[a-z0-9]+(-[a-z0-9]+)*\.sh$'
+
+ci_require_commands find basename
 
 violations=()
 
@@ -19,9 +24,9 @@ while IFS= read -r -d '' file; do
 done < <(find "${TARGET_DIR}" -type f -name '*.sh' -print0)
 
 if [[ ${#violations[@]} -gt 0 ]]; then
-    printf 'Script naming violations found (expected kebab-case):\n'
+    ci_log_error 'Script naming violations found (expected kebab-case):'
     printf ' - %s\n' "${violations[@]}"
     exit 1
 fi
 
-printf 'Script naming check passed for %s\n' "${TARGET_DIR}"
+ci_log_info "Script naming check passed for ${TARGET_DIR}"

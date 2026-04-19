@@ -3,9 +3,12 @@
 set -Eeuo pipefail
 IFS=$'\n\t'
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/common.sh"
 
-# Areas governed by the repository language policy.
+ROOT_DIR="$(ci_repo_root_from "${BASH_SOURCE[0]}")"
+ci_require_commands rg sort mktemp
+
 INCLUDE_GLOBS=(
     '*.md'
     '.github/**/*.md'
@@ -49,10 +52,10 @@ cd "${ROOT_DIR}"
 } | sort -u > "${tmp_file}"
 
 if [[ -s "${tmp_file}" ]]; then
-    printf 'Non-English content detected in language-governed areas:\n'
+    ci_log_error 'Non-English content detected in language-governed areas:'
     cat "${tmp_file}"
     printf '\nPlease translate these entries to English or refine validation exclusions if intentional.\n'
     exit 1
 fi
 
-printf 'English content validation passed.\n'
+ci_log_info 'English content validation passed.'
