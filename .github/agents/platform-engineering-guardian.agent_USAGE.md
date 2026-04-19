@@ -1,0 +1,143 @@
+# Platform Engineering Guardian Usage Manual
+
+This manual explains how to use the Platform Engineering Guardian agent in this repository to maintain standards, quality, and continuous evolution.
+
+## Where the agent is located
+
+- Custom agent file: `.github/agents/platform-engineering-guardian.agent.md`
+- Package reference files:
+  - `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent.md`
+  - `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent_USAGE.md`
+
+Use the file in `.github/agents` for execution in the Copilot agent selector.
+
+## What this agent does
+
+- Audits folder structure and alignment with each directory's purpose.
+- Verifies README coverage and quality.
+- Reviews IaC, CI/CD, scripts, security, and observability standards.
+- Suggests and implements improvements focused on reuse and scalability.
+- Prioritizes recommendations by impact on reliability and DevEx.
+
+## How to use it daily
+
+1. Open Copilot Chat in VS Code.
+2. Select the Platform Engineering Guardian agent.
+3. Write a clear objective with scope and constraints.
+4. Review the result in the standard format:
+   1. Findings
+   2. Recommended actions
+   3. Applied changes
+   4. Next steps
+
+## Ready-to-use prompts
+
+### General repository audit
+
+```text
+Run a full repository health check and prioritize gaps by severity.
+```
+
+### CI/CD standardization
+
+```text
+Review ci-cd and propose reusable standardization between github-actions and azure-devops.
+```
+
+### Documentation and READMEs
+
+```text
+Audit documentation and READMEs: identify gaps, improve clarity, and align with the current structure.
+```
+
+### IaC and governance
+
+```text
+Evaluate infrastructure and recommend improvements for modularization, naming, and governance.
+```
+
+### Security and observability
+
+```text
+Review security and observability and propose practical, standardized, and automatable improvements.
+```
+
+## Slash command modes (/)
+
+Use these commands directly in the Copilot prompt box:
+
+- `/guardian-audit` -> Full repository diagnosis with severity-ordered findings.
+- `/guardian-docs` -> Documentation/README normalization and runbook coverage updates.
+- `/guardian-scripts` -> Script standardization, naming, and structure checks.
+- `/guardian-cicd` -> CI/CD pipeline review with reusable validation recommendations.
+- `/guardian-standalone-categorization` -> Classify and organize independent installers under standalone.
+- `/guardian-multi-distro-consolidation` -> Consolidate distro-specific installers into a single multi-distro script.
+- `/guardian-agent-sync` -> Sync prompts and agent instructions between `.github` and `ai`.
+
+Files for these commands are in `.github/prompts/`.
+
+## Specialized prompt pack (history-based)
+
+Use the mirrored prompt catalog in both locations:
+
+- `.github/prompts/`
+- `ai/agents/platform-engineering-guardian/prompts/`
+
+## Synchronization policy (mandatory)
+
+- Any prompt change (create, update, delete) must be mirrored in both prompt folders.
+- Any agent instruction change must be mirrored in:
+  - `.github/agents/platform-engineering-guardian.agent.md`
+  - `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent.md`
+- Any CI workflow change must be mirrored in:
+  - `.github/workflows/`
+  - `ci-cd/github-actions/`
+- Workflow path triggers must include both mirrored workflow file locations when applicable.
+- Any catalog/command change must also update this usage manual.
+
+## Language policy (mandatory)
+
+- English is the default language for prompts, agent instructions, and generated documentation.
+- English is mandatory for CI workflow names, job/step labels, and CI documentation.
+- Use another language only when explicitly requested for a specific task.
+
+## When to use this agent instead of the default agent
+
+Use Platform Engineering Guardian when the focus is:
+
+- Repository organization and consistency.
+- Cross-cutting technical governance.
+- Enterprise platform standards.
+- Structural improvements with traceability.
+
+For purely application feature tasks, prefer the default agent.
+
+## Autonomy level
+
+- It can apply complete changes when needed.
+- For high-impact structural changes, it presents a short rationale and expected impact before applying.
+- It does not remove content without explaining impact and rationale.
+
+## Usage best practices
+
+- Define scope by folder to reduce noise.
+- Include timeline and risk constraints in the prompt.
+- Ask for an incremental plan when changes are broad.
+- Run an agent review before opening important PRs.
+
+## Recommended PR flow
+
+1. Run a structure and documentation audit.
+2. Apply low-risk improvements.
+3. Request a final standards review (IaC, CI/CD, security, observability).
+4. Record relevant decisions in docs/decisions when applicable.
+
+## Troubleshooting
+
+- Agent does not appear in the selector:
+  - Verify the file exists at `.github/agents/platform-engineering-guardian.agent.md`.
+  - Check whether the YAML frontmatter is valid.
+- Response is too generic:
+  - Provide target folder, objective, and success criteria in the prompt.
+- Change scope is too broad:
+  - Explicitly ask for "execute in phases" or "proposals only, do not apply".

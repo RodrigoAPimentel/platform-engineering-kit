@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+IFS=$'\n\t'
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_DIR="${SCRIPT_DIR}/../utils/lib"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+DEFAULT_P10K_CONFIG="${REPO_ROOT}/scripts/install/resources/p10k-zsh-plugin-configuration.txt"
+
+# shellcheck source=/dev/null
+source "${LIB_DIR}/logging.sh"
+# shellcheck source=/dev/null
+source "${LIB_DIR}/system-functions.sh"
+
+TARGET_USER="${SUDO_USER:-${USER}}"
+ZSH_THEME="af-magic"
+INSTALL_POWERLINE_FONTS=true
+REBOOT_AFTER=false
+P10K_CONFIG_PATH="${DEFAULT_P10K_CONFIG}"
+
+usage() {
+    cat <<'EOF'
+Usage: sudo ./install-oh-my-zsh-ubuntu.sh [options]
+
+Options:
+  --user <username>      Target user for shell customization (default: current sudo user)
+    --theme <theme>        Oh My Zsh theme (default: af-magic)
+    --p10k-config <file>   Path to .p10k.zsh template (default: scripts/install/resources/...)
+  --skip-fonts           Do not install powerline fonts
+  --reboot               Reboot host after setup
+  -h, --help             Show this help
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --user)
+            TARGET_USER="${2:-}"
+            shift 2
+            ;;
+        --theme)
+            ZSH_THEME="${2:-}"
+            shift 2
+            ;;
+        --p10k-config)
+            P10K_CONFIG_PATH="${2:-}"
+            shift 2
+            ;;
+        --skip-fonts)
+            INSTALL_POWERLINE_FONTS=false
+            shift
+            ;;
+        --reboot)
+            REBOOT_AFTER=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            __verify_root_pass "$1"
+            shift
+            ;;
+    esac
+done
+
+run_as_target() {
+    runuser -u "${TARGET_USER}" -- bash -lc "$*"
+}
+
+_script_start "Install Oh My Zsh (Ubuntu/Debian)"
+__verify_root
+__detect_package_manager
+
+if [[ "${PACKAGE_MANAGER}" != "apt" ]]; then
+    _step_result_failed "This script currently supports apt-based systems only"
+    exit 1
+fi
+
+if [[ -z "${TARGET_USER}" ]] || ! id "${TARGET_USER}" >/dev/null 2>&1; then
+    _step_result_failed "Target user is invalid: ${TARGET_USER}"
+    exit 1
+fi
+
+TARGET_HOME="$(eval echo "~${TARGET_USER}")"
+if [[ ! -d "${TARGET_HOME}" ]]; then
+    _step_result_failed "Target home directory not found: ${TARGET_HOME}"
+    exit 1
+fi
+
+_step "Installing prerequisite packages"
+apt-get update -y
+apt-get install -y zsh git curl fontconfig
+
+_step "Installing Oh My Zsh for user ${TARGET_USER}"
+run_as_target "rm -rf ~/.oh-my-zsh"
+run_as_target "if [[ -f ~/.zshrc ]]; then cp ~/.zshrc ~/.zshrc.pre-oh-my-zsh.bak; fi"
+run_as_target "RUNZSH=no CHSH=no KEEP_ZSHRC=yes curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | bash -s -- --unattended"
+
+_step "Installing Oh My Zsh plugins"
+run_as_target "git clone --depth 1 https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting || true"
+run_as_target "git clone --depth 1 https://github.com/zsh-users/zsh-autosuggestions.git ~/.oh-my-zsh/custom/plugins/zsh-autosuggestions || true"
+run_as_target "git clone --depth 1 https://github.com/zsh-users/zsh-completions.git ~/.oh-my-zsh/custom/plugins/zsh-completions || true"
+run_as_target "git clone --depth 1 https://github.com/supercrabtree/k.git ~/.oh-my-zsh/custom/plugins/k || true"
+
+_step "Installing fzf"
+run_as_target "if [[ ! -d ~/.fzf ]]; then git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf; fi"
+run_as_target "~/.fzf/install --all --no-bash --no-fish || true"
+
+if [[ "${INSTALL_POWERLINE_FONTS}" == true ]]; then
+    _step "Installing powerline fonts"
+    run_as_target "tmp_dir=\$(mktemp -d) && git clone --depth 1 https://github.com/powerline/fonts.git \"\${tmp_dir}/fonts\" && \"\${tmp_dir}/fonts/install.sh\" && rm -rf \"\${tmp_dir}\""
+fi
+
+_step "Installing Powerlevel10k theme"
+run_as_target "git clone --depth 1 https://github.com/romkatv/powerlevel10k.git ~/.oh-my-zsh/custom/themes/powerlevel10k || true"
+
+_step "Configuring ~/.zshrc"
+run_as_target "sed -i 's|^ZSH_THEME=.*|ZSH_THEME=\"${ZSH_THEME}\"|g' ~/.zshrc"
+run_as_target "if grep -q '^plugins=' ~/.zshrc; then sed -i 's|^plugins=.*|plugins=(git zsh-syntax-highlighting fzf zsh-autosuggestions k zsh-completions)|g' ~/.zshrc; else echo 'plugins=(git zsh-syntax-highlighting fzf zsh-autosuggestions k zsh-completions)' >> ~/.zshrc; fi"
+run_as_target "grep -qxF '[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh' ~/.zshrc || echo '[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh' >> ~/.zshrc"
+
+if [[ -f "${P10K_CONFIG_PATH}" ]]; then
+    _step "Applying Powerlevel10k config from ${P10K_CONFIG_PATH}"
+    install -m 0644 "${P10K_CONFIG_PATH}" "${TARGET_HOME}/.p10k.zsh"
+    chown "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/.p10k.zsh"
+else
+    _step_result_suggestion "p10k config file not found at ${P10K_CONFIG_PATH}. Creating default ~/.p10k.zsh"
+    run_as_target "if [[ ! -f ~/.p10k.zsh ]]; then printf '# Generated by install-oh-my-zsh-ubuntu.sh\n' > ~/.p10k.zsh; fi"
+fi
+
+_step "Setting zsh as default shell"
+usermod -s "$(command -v zsh)" "${TARGET_USER}"
+
+_finish_information
+
+if [[ "${REBOOT_AFTER}" == true ]]; then
+    _step "Rebooting system"
+    reboot
+else
+    _step_result_suggestion "Reboot skipped. User ${TARGET_USER} should open a new session to load zsh by default."
+fi

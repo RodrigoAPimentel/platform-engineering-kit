@@ -1,0 +1,57 @@
+name: Validate Repository Language
+
+permissions:
+  contents: read
+  security-events: write
+
+on:
+  pull_request:
+    paths:
+      - '*.md'
+      - '.github/**/*.md'
+      - 'ai/**/*.md'
+      - 'docs/**/*.md'
+      - 'security/**/*.md'
+      - 'scripts/**/*.md'
+      - 'scripts/**/*.sh'
+      - '.github/workflows/validate-repository-language.yml'
+      - 'ci-cd/github-actions/validate-repository-language.yml'
+      - 'scripts/utils/lib/ci/validate-english-content.sh'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - '*.md'
+      - '.github/**/*.md'
+      - 'ai/**/*.md'
+      - 'docs/**/*.md'
+      - 'security/**/*.md'
+      - 'scripts/**/*.md'
+      - 'scripts/**/*.sh'
+      - '.github/workflows/validate-repository-language.yml'
+      - 'ci-cd/github-actions/validate-repository-language.yml'
+      - 'scripts/utils/lib/ci/validate-english-content.sh'
+
+jobs:
+  repository-language:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Ripgrep
+        run: sudo apt update && sudo apt install ripgrep -y
+
+      - name: Validate English-only policy
+        run: bash scripts/utils/lib/ci/validate-english-content.sh
+
+      - name: Initialize CodeQL
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: github/codeql-action/init@v2
+        with:
+          languages: "actions"
+
+      - name: Perform CodeQL Analysis
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: github/codeql-action/analyze@v2

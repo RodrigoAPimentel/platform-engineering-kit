@@ -1,0 +1,24 @@
+name: Guardian Audit Gate
+
+'on':
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  guardian-audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Ripgrep
+        run: sudo apt update && sudo apt install ripgrep -y
+
+      - name: Run Guardian audit checks
+        run: bash scripts/utils/lib/ci/run-guardian-audit.sh

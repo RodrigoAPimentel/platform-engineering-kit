@@ -1,0 +1,28 @@
+name: Validate Script Naming
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/**/*.sh'
+      - '.github/workflows/validate-script-naming.yml'
+      - 'ci-cd/github-actions/validate-script-naming.yml'
+      - 'scripts/utils/lib/ci/validate-script-naming.sh'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'scripts/**/*.sh'
+      - '.github/workflows/validate-script-naming.yml'
+      - 'ci-cd/github-actions/validate-script-naming.yml'
+      - 'scripts/utils/lib/ci/validate-script-naming.sh'
+
+jobs:
+  script-naming:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate script naming convention
+        run: bash scripts/utils/lib/ci/validate-script-naming.sh
