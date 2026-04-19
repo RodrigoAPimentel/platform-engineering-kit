@@ -24,5 +24,5 @@ Structured package for the Platform Engineering Guardian agent, prepared for lon
 ## Governance Notes
 
 - Keep active execution entrypoint in .github/agents.
-- Mirror behavioral changes in both .github/agents and ai/agents root definition.
+- Mirror behavioral changes between .github/agents and the package definition at `ai/agents/platform-engineering-guardian/`.
 - When changing behavior significantly, publish a new version snapshot under versions/.

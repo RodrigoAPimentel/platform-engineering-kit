@@ -5,7 +5,9 @@ This manual explains how to use the Platform Engineering Guardian agent in this 
 ## Where the agent is located
 
 - Custom agent file: `.github/agents/platform-engineering-guardian.agent.md`
-- Conceptual reference file: `ai/agents/platform-engineering-guardian.md`
+- Package reference files:
+  - `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent.md`
+  - `ai/agents/platform-engineering-guardian/platform-engineering-guardian.agent_USAGE.md`
 
 Use the file in `.github/agents` for execution in the Copilot agent selector.
 
