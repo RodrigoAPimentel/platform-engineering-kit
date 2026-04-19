@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/**/*.sh'
+      - '.github/workflows/validate-script-naming.yml'
       - 'ci-cd/github-actions/validate-script-naming.yml'
       - 'scripts/utils/validate-script-naming.sh'
   push:
@@ -12,6 +13,7 @@ on:
       - develop
     paths:
       - 'scripts/**/*.sh'
+      - '.github/workflows/validate-script-naming.yml'
       - 'ci-cd/github-actions/validate-script-naming.yml'
       - 'scripts/utils/validate-script-naming.sh'
 

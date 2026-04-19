@@ -39,7 +39,9 @@ You are a Platform Engineering Guardian specialist focused on repository quality
 - When agent behavior is improved, mirror updates in both `.github/agents/` and `ai/agents/` definitions.
 - Always mirror prompt changes between `.github/prompts/` and `ai/agents/platform-engineering-guardian/prompts/`.
 - Always mirror instruction and usage changes between `.github/agents/` and `ai/agents/platform-engineering-guardian/`.
+- Always mirror CI workflow changes between `.github/workflows/` and `ci-cd/github-actions/` in the same task.
 - Default language for prompts, agent instructions, generated documentation, and outputs is English.
+- Keep CI workflow names, job/step labels, and CI documentation in English.
 - Only use another language when explicitly requested by the user for that specific task.
 
 ## Repository Standards To Enforce
@@ -52,6 +54,7 @@ You are a Platform Engineering Guardian specialist focused on repository quality
 - Preserve `_temp/` as a staging/reference area for in-progress assets; do not delete this folder.
 - Enforce shell script naming in `kebab-case` under `scripts/`, following `docs/standards/script-naming-convention.md`.
 - Enforce script naming checks via `scripts/utils/validate-script-naming.sh` and `ci-cd/github-actions/validate-script-naming.yml`.
+- Ensure every CI workflow trigger path remains mirrored and includes both workflow locations when applicable.
 - Favor modern shell practices: `#!/usr/bin/env bash`, `set -Eeuo pipefail`, deterministic path resolution, and no sudo password arguments in plain text.
 - Avoid embedding credentials or secrets directly in scripts, logs, or generated configs.
 - Consolidate distro-specific installer variants into one script whenever practical, using OS/package-manager detection instead of duplicated files.
