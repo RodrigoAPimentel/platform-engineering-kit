@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: nginx-modern
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - nginx-logs:/var/log/nginx
+      - ./error_pages:/usr/share/nginx/html:ro
+      - ./nginx.conf.template:/etc/nginx/templates/nginx.conf.template:ro
+      - ./sites-enabled:/etc/nginx/conf.d:ro
+    networks:
+      - tools
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+volumes:
+  nginx-logs:
+    name: nginx-logs
+
+networks:
+  tools:
+    name: tools
