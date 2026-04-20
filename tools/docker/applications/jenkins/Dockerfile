@@ -3,8 +3,6 @@
 ARG BASE_IMAGE=jenkins/jenkins:lts-jdk11
 ARG BUILD_PROFILE=prod
 ARG APP_ENV=production
-ARG UID=10001
-ARG GID=10001
 
 FROM ${BASE_IMAGE}
 
@@ -30,9 +28,7 @@ RUN apt-get update \
     && apt-get update \
     && apt-get install --no-install-recommends -y docker-ce-cli \
     && if [ "${BUILD_PROFILE}" = "dev" ]; then apt-get install --no-install-recommends -y git; fi \
-    && rm -rf /var/lib/apt/lists/* \
-    && groupmod -g ${GID} jenkins \
-    && usermod -u ${UID} -g ${GID} jenkins || true
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --chown=jenkins:jenkins plugins.txt /usr/share/jenkins/ref/plugins.txt
 COPY --chown=jenkins:jenkins casc.yaml /var/jenkins_home/casc.yaml
