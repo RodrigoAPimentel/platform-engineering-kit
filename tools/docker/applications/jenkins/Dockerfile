@@ -30,8 +30,8 @@ RUN apt-get update \
     && apt-get update \
     && apt-get install --no-install-recommends -y docker-ce-cli \
     && if [ "${BUILD_PROFILE}" = "dev" ]; then apt-get install --no-install-recommends -y git; fi \
-    && rm -rf /var/lib/apt/lists/*
-&& groupmod -g ${GID} jenkins \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupmod -g ${GID} jenkins \
     && usermod -u ${UID} -g ${GID} jenkins || true
 
 COPY --chown=jenkins:jenkins plugins.txt /usr/share/jenkins/ref/plugins.txt
