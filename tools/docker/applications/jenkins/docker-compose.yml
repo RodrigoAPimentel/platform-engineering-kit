@@ -27,7 +27,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
-    user: "${GID}:${UID}"
+    user: "${UID}:${GID}"
     privileged: true
           
 volumes:
