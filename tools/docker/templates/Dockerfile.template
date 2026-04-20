@@ -1,0 +1,128 @@
+# syntax=docker/dockerfile:1.7
+# Template name: secure-generic-service
+# Purpose: reusable baseline for development and production container images.
+#
+# Primary references:
+# - https://docs.docker.com/build/building/best-practices/
+# - https://docs.docker.com/reference/dockerfile/
+# - https://docs.docker.com/build/concepts/context/#dockerignore-files
+# - https://github.com/hadolint/hadolint
+#
+# ----------------------------------------------------------------------------
+# How to use this template
+# ----------------------------------------------------------------------------
+# 1) Replace BASE_IMAGE with your runtime image.
+# 2) Choose BUILD_PROFILE=dev or BUILD_PROFILE=prod (default: prod).
+# 3) Pin versions (and optionally digest) for reproducibility.
+# 4) Keep only runtime dependencies in final image.
+# 5) Run as non-root user whenever possible.
+# 6) Add a .dockerignore in the build context (example at the end of this file).
+# 7) Replace healthcheck path/port according to your service.
+
+# Keep build-time configuration as ARG. These values are available only at build time.
+ARG BASE_IMAGE=alpine:3.20
+ARG APP_UID=10001
+ARG APP_GID=10001
+ARG BUILD_PROFILE=prod
+ARG APP_ENV=production
+
+# Final runtime stage.
+FROM ${BASE_IMAGE}
+
+# OCI labels improve traceability and supply-chain metadata.
+# Update values to your repository/project conventions.
+LABEL org.opencontainers.image.title="replace-with-service-name" \
+    org.opencontainers.image.description="replace-with-service-description" \
+    org.opencontainers.image.version="0.1.0" \
+    org.opencontainers.image.source="https://github.com/your-org/your-repo" \
+    org.opencontainers.image.licenses="MIT"
+
+# Runtime defaults. Avoid placing secrets in ENV.
+ENV APP_HOME=/app \
+    APP_ENV=${APP_ENV} \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
+
+# Run package installation as root, then drop privileges later.
+USER root
+
+# Use one RUN for package operations, with cache cleanup in the same layer.
+# If your base image is Debian/Ubuntu, replace apk with apt-get best-practice form.
+RUN apk add --no-cache \
+    ca-certificates \
+    curl \
+    tzdata \
+    && if [ "${BUILD_PROFILE}" = "dev" ]; then \
+    apk add --no-cache bash git; \
+    fi
+
+# Create deterministic non-root user/group.
+# If group/user already exists in your base image, adapt this step accordingly.
+ARG APP_UID
+ARG APP_GID
+RUN addgroup -g ${APP_GID} appgroup \
+    && adduser -D -u ${APP_UID} -G appgroup appuser
+
+# Always use absolute WORKDIR for readability and reliability.
+WORKDIR ${APP_HOME}
+
+# Copy only what is required to run the service.
+# Prefer explicit COPY paths over broad recursive patterns.
+COPY --chown=appuser:appgroup . ${APP_HOME}
+
+# Ensure runtime ownership and least privilege.
+RUN chown -R appuser:appgroup ${APP_HOME}
+USER appuser
+
+# Expose only the service port actually used by your app.
+EXPOSE 8080
+
+# Healthcheck should validate service readiness and not just process existence.
+# Replace endpoint/port to match your app.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD curl -fsS http://127.0.0.1:8080/health || exit 1
+
+# Use JSON form for CMD/ENTRYPOINT for proper signal handling.
+# Replace with your real startup command.
+# This placeholder intentionally differs by profile for easier first-time testing.
+CMD ["sh", "-c", "if [ \"$APP_ENV\" = \"development\" ]; then echo 'Replace DEV CMD'; else echo 'Replace PROD CMD'; fi && sleep infinity"]
+
+# ----------------------------------------------------------------------------
+# Build profile examples (single Dockerfile for both environments)
+# ----------------------------------------------------------------------------
+# Development build:
+#   docker build \
+#     --build-arg BUILD_PROFILE=dev \
+#     --build-arg APP_ENV=development \
+#     -t your-app:dev .
+#
+# Production build:
+#   docker build \
+#     --build-arg BUILD_PROFILE=prod \
+#     --build-arg APP_ENV=production \
+#     -t your-app:1.0.0 .
+
+# ----------------------------------------------------------------------------
+# .dockerignore baseline (create in the same build context)
+# ----------------------------------------------------------------------------
+# .git
+# .github
+# .vscode
+# node_modules
+# dist
+# build
+# coverage
+# *.md
+# *.log
+# *.pem
+# *.key
+# .env
+# .env.*
+
+# ----------------------------------------------------------------------------
+# Optional hardening ideas (enable as needed)
+# ----------------------------------------------------------------------------
+# - Pin image digest in FROM for stronger reproducibility.
+# - Use multi-stage builds when compiling binaries/assets.
+# - Use BuildKit secrets instead of ARG/ENV for sensitive build inputs.
+# - Add CI checks: hadolint + image vulnerability scanning.

@@ -1,0 +1,136 @@
+# Template name: secure-generic-stack
+# Purpose: reusable baseline for production-ready Docker Compose stacks.
+#
+# Primary references:
+# - https://docs.docker.com/compose/
+# - https://docs.docker.com/reference/compose-file/
+# - https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/
+# - https://docs.docker.com/engine/containers/healthcheck/
+#
+# ----------------------------------------------------------------------------
+# How to use this template
+# ----------------------------------------------------------------------------
+# 1) Copy this file as docker-compose.yml in your service folder.
+# 2) Replace service name, image/build, ports, and command.
+# 3) Move sensitive values to a local .env file (never commit secrets).
+# 4) Keep bind mounts minimal and read-only when possible.
+# 5) Add healthchecks for all long-running services.
+# 6) Run: docker compose config (validate) before docker compose up.
+
+version: "3.9"
+
+services:
+  app:
+    # Use one strategy: image OR build. Keep image tags pinned.
+    image: ${IMAGE_NAME:-your-org/your-app}:${IMAGE_VERSION:-1.0.0}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_PROFILE: ${BUILD_PROFILE:-prod}
+        APP_ENV: ${APP_ENV:-production}
+
+    # Keep deterministic and explicit container names in local stacks.
+    container_name: your-app
+
+    # Default restart policy for resilient services.
+    restart: unless-stopped
+
+    # Prefer env_file and variable interpolation over hardcoded values.
+    # Create a local .env next to this compose file.
+    env_file:
+      - .env
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      APP_PORT: ${APP_PORT:-8080}
+
+    # Publish only required ports. Consider exposing only behind reverse proxy.
+    ports:
+      - "${APP_PORT:-8080}:8080"
+      # Development-only example:
+      # - "${APP_METRICS_PORT:-9090}:9090"
+
+    # Use named volumes for stateful data.
+    # Use read-only bind mounts for static configuration files.
+    volumes:
+      - app-data:/var/lib/app
+      # Production-style read-only config mount example:
+      # - ./config/app.yml:/etc/app/app.yml:ro
+      # Development-style bind mount example:
+      # - .:/app
+
+    # Attach service to a dedicated network boundary.
+    networks:
+      - app-net
+
+    # Container health should reflect actual service readiness.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+    # Reduce privileges where possible at runtime.
+    # Adapt UID/GID to match your image user.
+    user: "10001:10001"
+    # Production defaults enabled below.
+    # For development, comment read_only/tmpfs and use bind mounts.
+    read_only: true
+    tmpfs:
+      - /tmp
+
+    # Add least-privilege security options for Linux hosts.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+    # Optional resource guardrails.
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+
+# Named volumes are easier to backup/migrate than anonymous volumes.
+volumes:
+  app-data:
+    name: app-data
+
+# Dedicated network improves traffic segmentation across stacks.
+networks:
+  app-net:
+    name: app-net
+
+# ----------------------------------------------------------------------------
+# Profile examples (single compose file for both environments)
+# ----------------------------------------------------------------------------
+# Development example:
+# - APP_ENV=development
+# - IMAGE_VERSION=dev
+# - BUILD_PROFILE=dev
+# - Uncomment metrics port and bind mount sections in service block
+# - Optionally relax read_only/tmpfs for hot-reload workflows
+#
+# Production example:
+# - APP_ENV=production
+# - IMAGE_VERSION=1.0.0
+# - BUILD_PROFILE=prod
+# - Keep read_only/tmpfs/security_opt/cap_drop enabled
+# - Keep only required published ports
+
+# ----------------------------------------------------------------------------
+# Validation and operations
+# ----------------------------------------------------------------------------
+# Validate resolved file:
+#   docker compose config
+#
+# Start stack:
+#   docker compose up -d
+#
+# Stop stack:
+#   docker compose down
+#
+# Tail logs:
+#   docker compose logs -f app
