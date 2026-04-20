@@ -1,0 +1,36 @@
+name: Validate Docker Compose Config
+
+'on':
+  pull_request:
+    paths:
+      - '**/docker-compose*.yml'
+      - '**/docker-compose*.yaml'
+      - '.github/workflows/validate-docker-compose-config.yml'
+      - 'ci-cd/github-actions/validate-docker-compose-config.yml'
+      - 'scripts/utils/lib/ci/validate-docker-compose-config.sh'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - '**/docker-compose*.yml'
+      - '**/docker-compose*.yaml'
+      - '.github/workflows/validate-docker-compose-config.yml'
+      - 'ci-cd/github-actions/validate-docker-compose-config.yml'
+      - 'scripts/utils/lib/ci/validate-docker-compose-config.sh'
+
+permissions:
+  contents: read
+
+jobs:
+  docker-compose-config:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Docker Compose CLI availability
+        run: docker compose version
+
+      - name: Validate docker compose files
+        run: bash scripts/utils/lib/ci/validate-docker-compose-config.sh

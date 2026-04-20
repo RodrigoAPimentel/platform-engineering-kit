@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  jenkins:
+    image: ${IMAGE_NAME}:${IMAGE_VERSION}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: ${BASE_IMAGE}
+        BUILD_PROFILE: ${APP_ENV}
+        APP_ENV: ${APP_ENV}
+    container_name: ${CONTAINER_NAME}
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${PORT}:8080"
+      - "${AGENT_COMMUNICATION_PORT}:50000"
+    volumes:
+      - volume:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    user: "${GID}:${UID}"
+    privileged: true
+          
+volumes:
+  volume:
+    name: ${VOLUME_NAME}
+    
+networks:
+  network:
+    driver: ${NETWORK_DRIVER}
+    driver_opts:
+      com.docker.network.driver.mtu: ${NETWORK_MTU}
+      com.docker.network.bridge.enable_ip_masquerade: "${NETWORK_ENABLE_IP_MASQUERADE}"
+      com.docker.network.bridge.enable_icc: "${NETWORK_ENABLE_ICC}"
+    name: ${NETWORK_NAME}

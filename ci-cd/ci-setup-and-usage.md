@@ -25,6 +25,8 @@ This guide explains how to configure, maintain, and use CI workflows in this rep
   - Validates shell script naming convention.
 - `validate-repository-language.yml`
   - Enforces English-only policy in governed paths.
+- `validate-docker-compose-config.yml`
+  - Recursively validates all Docker Compose files using `docker compose config`.
 - `test-install-awx.yml`
   - Validates AWX installer script quality and compatibility.
 
@@ -64,8 +66,10 @@ Use these commands from repository root:
 ```bash
 bash -n scripts/utils/lib/ci/validate-script-naming.sh
 bash -n scripts/utils/lib/ci/validate-english-content.sh
+bash -n scripts/utils/lib/ci/validate-docker-compose-config.sh
 bash scripts/utils/lib/ci/validate-script-naming.sh
 bash scripts/utils/lib/ci/validate-english-content.sh
+bash scripts/utils/lib/ci/validate-docker-compose-config.sh
 ```
 
 ## Open a Pull Request and Validate

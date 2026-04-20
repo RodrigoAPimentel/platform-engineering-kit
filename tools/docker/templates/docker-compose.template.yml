@@ -61,7 +61,7 @@ services:
 
     # Attach service to a dedicated network boundary.
     networks:
-      - app-net
+      - network
 
     # Container health should reflect actual service readiness.
     healthcheck:
@@ -96,12 +96,17 @@ services:
 # Named volumes are easier to backup/migrate than anonymous volumes.
 volumes:
   app-data:
-    name: app-data
+    name: ${VOLUME_NAME:-app-data}
 
 # Dedicated network improves traffic segmentation across stacks.
 networks:
-  app-net:
-    name: app-net
+  network:
+    driver: ${NETWORK_DRIVER}
+    driver_opts:
+      com.docker.network.driver.mtu: ${NETWORK_MTU:-1500}
+      com.docker.network.bridge.enable_ip_masquerade: "${NETWORK_ENABLE_IP_MASQUERADE:-true}"
+      com.docker.network.bridge.enable_icc: "${NETWORK_ENABLE_ICC:-true}"
+    name: ${NETWORK_NAME}
 
 # ----------------------------------------------------------------------------
 # Profile examples (single compose file for both environments)
