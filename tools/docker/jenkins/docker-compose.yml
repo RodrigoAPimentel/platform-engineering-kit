@@ -1,0 +1,28 @@
+version: '3.7'
+
+services:
+    jenkins:
+        build:
+            context: "."
+            dockerfile: Dockerfile
+        image: ${IMAGE_NAME}:${IMAGE_VERSION}
+        container_name: ${CONTAINER_NAME}
+        restart: always
+        env_file: .env
+        ports:
+            - "8080:8080"
+            - "50000:50000"
+        volumes:
+            - jenkins:/var/jenkins_home
+            - /var/run/docker.sock:/var/run/docker.sock
+        privileged: true
+        networks:
+            - tools
+
+volumes:
+    jenkins:
+        name: jenkins
+
+networks:
+    tools:
+        name: tools

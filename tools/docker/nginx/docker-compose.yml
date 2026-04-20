@@ -1,0 +1,44 @@
+version: '3.7'
+
+services:
+    nginx:
+        image: nginx:1.21.6-alpine
+        container_name: nginx
+        ports:
+            - 80:80
+            - 443:443
+        volumes:
+            - nginx:/var/log/nginx
+            - /var/run/docker.sock:/var/run/docker.sock
+            - ./error_pages:/usr/share/nginx/html
+            - ./nginx.conf.template:/etc/nginx/templates/nginx.conf.template
+            # - ./sites-enabled/:/etc/nginx/conf.d/
+        restart: always
+        networks:
+            - tools
+    
+    # nginx-manager:
+    #     image: 'jc21/nginx-proxy-manager:latest'
+    #     restart: unless-stopped
+    #     container_name: nginx-manager
+    #     ports:
+    #         - '80:80'
+    #         - '81:81'
+    #         - '443:443'
+    #     volumes:
+    #         - nginx:/data
+    #         - ./letsencrypt:/etc/letsencrypt
+    #         # - nginx:/var/log/nginx
+    #         # - /var/run/docker.sock:/var/run/docker.sock
+    #         # - ./error_pages:/usr/share/nginx/html
+    #         # - ./conf.d/sites-enabled/:/etc/nginx/conf.d/
+    #     networks:
+    #         - tools
+
+volumes:
+    nginx:
+        name: nginx
+
+networks:
+    tools:
+        name: tools
