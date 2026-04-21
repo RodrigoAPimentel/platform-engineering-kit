@@ -17,7 +17,7 @@
 # 5) Add healthchecks for all long-running services.
 # 6) Run: docker compose config (validate) before docker compose up.
 
-version: "3.9"
+name: generic-stack-template
 
 services:
   app:
@@ -53,7 +53,7 @@ services:
     # Use named volumes for stateful data.
     # Use read-only bind mounts for static configuration files.
     volumes:
-      - app-data:/var/lib/app
+      - volume:/var/lib/app
       # Production-style read-only config mount example:
       # - ./config/app.yml:/etc/app/app.yml:ro
       # Development-style bind mount example:
@@ -95,8 +95,8 @@ services:
 
 # Named volumes are easier to backup/migrate than anonymous volumes.
 volumes:
-  app-data:
-    name: ${VOLUME_NAME:-app-data}
+  volume:
+    name: ${VOLUME_NAME:-volume}
 
 # Dedicated network improves traffic segmentation across stacks.
 networks:

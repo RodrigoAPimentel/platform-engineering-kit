@@ -1,4 +1,5 @@
-version: "3"
+
+name: portainer-stack
 
 services:
   portainer:
