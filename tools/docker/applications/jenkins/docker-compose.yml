@@ -1,5 +1,4 @@
-
-name: jenkins-app-stack
+name: jenkins-stack
 
 services:
   jenkins:
@@ -15,21 +14,37 @@ services:
     restart: unless-stopped
     env_file: .env
     ports:
-      - "${PORT}:8080"
-      - "${AGENT_COMMUNICATION_PORT}:50000"
+      - "${JENKINS_PORT}:8080"
+      - "${JENKINS_AGENT_COMMUNICATION_PORT}:50000"
     volumes:
       - volume:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - network
-    # healthcheck:
-    #   test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/health"]
-    #   interval: 30s
-    #   timeout: 5s
-    #   retries: 3
-    #   start_period: 20s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     privileged: true
-          
+    user: "${JENKINS_UID}:${JENKINS_GID}"
+    ## Production defaults enabled below.
+    ## For development, comment read_only/tmpfs and use bind mounts.
+    # read_only: true
+    # tmpfs:
+    #   - /tmp
+    # Add least-privilege security options for Linux hosts.
+    # security_opt:
+    #   - no-new-privileges:true
+    # cap_drop:
+    #   - ALL
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "1.0"
+    #       memory: 1024M
+
 volumes:
   volume:
     name: ${VOLUME_NAME}
