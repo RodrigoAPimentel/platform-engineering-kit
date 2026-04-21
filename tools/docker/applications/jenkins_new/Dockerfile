@@ -12,8 +12,7 @@ LABEL org.opencontainers.image.title="jenkins" \
 
 ENV APP_ENV=${APP_ENV} \
     JAVA_OPTS=-Djenkins.install.runSetupWizard=false \
-    CASC_JENKINS_CONFIG=/usr/share/jenkins/ref/casc.yaml \
-    JENKINS_OPTS=--prefix=/jenkins
+    CASC_JENKINS_CONFIG=/usr/share/jenkins/ref/casc.yaml
 
 ARG JENKINS_UID=10001
 ARG JENKINS_GID=10001
