@@ -14,7 +14,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - volume:/data
-    command: --admin-password "${PORTAINER_HASHED_PASSWORD}"
+    command: --admin-password=${PORTAINER_HASHED_PASSWORD}
     networks:
       - network
     healthcheck:
