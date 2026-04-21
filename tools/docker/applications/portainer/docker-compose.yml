@@ -14,17 +14,16 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - volume:/data
-    command:
-      - --admin-password=${PORTAINER_HASHED_PASSWORD}
+    command: --admin-password "${PORTAINER_HASHED_PASSWORD}"
     networks:
       - network
     healthcheck:
-      test: ["CMD", "wget", "--no-check-certificate", "--quiet", "--tries=1", "--spider", "https://localhost:9443/api/status"]
+      test: ["CMD", "wget", "--no-check-certificate", "--quiet", "--tries=1", "--spider", "https://localhost:9443/api/system/status"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-    user: "${PORTAINER_UID}:${PORTAINER_GID}"
+    # user: "${PORTAINER_UID}:${PORTAINER_GID}"
     ## Production defaults enabled below.
     ## For development, comment read_only/tmpfs and use bind mounts.
     # read_only: true
