@@ -32,6 +32,7 @@ RUN apt-get update \
     && if [ "${BUILD_PROFILE}" = "dev" ]; then apt-get install --no-install-recommends -y git; fi \
     && groupmod -g ${JENKINS_GID} jenkins \
     && usermod -u ${JENKINS_UID} -g ${JENKINS_GID} jenkins \
+    && chown -R ${JENKINS_UID}:${JENKINS_GID} /usr/share/jenkins/ref /usr/local \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --chown=jenkins:jenkins configs/plugins.txt /usr/share/jenkins/ref/plugins.txt
