@@ -14,8 +14,8 @@ services:
     restart: unless-stopped
     env_file: .env
     ports:
-      - "${PORT}:8080"
-      - "${AGENT_COMMUNICATION_PORT}:50000"
+      - "${JENKINS_PORT}:8080"
+      - "${JENKINS_AGENT_COMMUNICATION_PORT}:50000"
     volumes:
       - volume:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
