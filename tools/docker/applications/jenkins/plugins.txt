@@ -83,6 +83,7 @@ ws-cleanup
 script-security
 command-launcher
 configuration-as-code
+job-dsl
 blueocean-git-pipeline
 blueocean-display-url
 blueocean-github-pipeline
