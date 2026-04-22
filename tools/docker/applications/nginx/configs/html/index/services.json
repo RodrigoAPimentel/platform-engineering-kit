@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-04-22T13:03:13Z",
+  "serviceCount": 1,
+  "services": [
+    {
+      "name": "Portainer",
+      "slug": "portainer",
+      "route": "/portainer/",
+      "proxyUrl": "/portainer/",
+      "sourceFile": "portainer.locations",
+      "icon": "docker",
+      "upstream": "https://portainer:9443",
+      "direct": {
+        "protocol": "https",
+        "host": "portainer",
+        "port": "9443",
+        "path": "/portainer/"
+      }
+    }
+  ]
+}

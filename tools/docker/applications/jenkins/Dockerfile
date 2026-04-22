@@ -14,8 +14,8 @@ ENV APP_ENV=${APP_ENV} \
     JAVA_OPTS=-Djenkins.install.runSetupWizard=false \
     CASC_JENKINS_CONFIG=/usr/share/jenkins/ref/casc.yaml
 
-ARG JENKINS_UID=10001
-ARG JENKINS_GID=10001
+ARG APP_UID=10001
+ARG APP_GID=10001
 USER root
 
 RUN apt-get update \
@@ -29,9 +29,9 @@ RUN apt-get update \
     && apt-get update \
     && apt-get install --no-install-recommends -y docker-ce-cli \
     && if [ "${BUILD_PROFILE}" = "dev" ]; then apt-get install --no-install-recommends -y git; fi \
-    && groupmod -g ${JENKINS_GID} jenkins \
-    && usermod -u ${JENKINS_UID} -g ${JENKINS_GID} jenkins \
-    && chown -R ${JENKINS_UID}:${JENKINS_GID} /usr/share/jenkins/ref /usr/local \
+    && groupmod -g ${APP_GID} jenkins \
+    && usermod -u ${APP_UID} -g ${APP_GID} jenkins \
+    && chown -R ${APP_UID}:${APP_GID} /usr/share/jenkins/ref /usr/local \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --chown=jenkins:jenkins configs/plugins.txt /usr/share/jenkins/ref/plugins.txt

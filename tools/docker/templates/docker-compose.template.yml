@@ -17,7 +17,7 @@
 # 5) Add healthchecks for all long-running services.
 # 6) Run: docker compose config (validate) before docker compose up.
 
-name: generic-stack-template
+name: ${PROJECT_NAME}-stack
 
 services:
   app:
@@ -31,7 +31,7 @@ services:
         APP_ENV: ${APP_ENV:-production}
 
     # Keep deterministic and explicit container names in local stacks.
-    container_name: your-app
+    container_name: ${CONTAINER_NAME}
 
     # Default restart policy for resilient services.
     restart: unless-stopped
@@ -73,9 +73,9 @@ services:
 
     # Reduce privileges where possible at runtime.
     # Adapt UID/GID to match your image user.
-    user: "10001:10001"
-    # Production defaults enabled below.
-    # For development, comment read_only/tmpfs and use bind mounts.
+    user: "${APP_UID}:${APP_GID}"
+    ## Production defaults enabled below.
+    ## For development, comment read_only/tmpfs and use bind mounts.
     read_only: true
     tmpfs:
       - /tmp

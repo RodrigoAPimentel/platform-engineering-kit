@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Catalog</title>
+    <style>
+        :root {
+            --bg: #0b1220;
+            --bg-soft: #101a2f;
+            --card: #12203a;
+            --card-border: #2f4a74;
+            --text: #eaf1ff;
+            --muted: #95a9cb;
+            --accent: #2dd4bf;
+            --accent-2: #60a5fa;
+            --danger: #fb7185;
+            --ok: #34d399;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            color: var(--text);
+            font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+            background:
+                radial-gradient(1200px 500px at 15% -10%, #1e3a8a 0%, transparent 55%),
+                radial-gradient(1000px 600px at 100% 0%, #0f766e 0%, transparent 60%),
+                linear-gradient(160deg, var(--bg) 0%, #0a1020 100%);
+            min-height: 100vh;
+        }
+
+        .shell {
+            width: min(1400px, 94vw);
+            margin: 0 auto;
+            padding: 2.5rem 0 4rem;
+        }
+
+        .hero {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            align-items: flex-end;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            margin: 0;
+            letter-spacing: 0.3px;
+            font-size: clamp(1.8rem, 2.5vw, 2.6rem);
+        }
+
+        .subtitle {
+            color: var(--muted);
+            margin-top: 0.5rem;
+            max-width: 65ch;
+            line-height: 1.45;
+        }
+
+        .meta {
+            text-align: right;
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1.25rem;
+        }
+
+        .card {
+            background: linear-gradient(160deg, rgba(19, 33, 60, 0.95), rgba(14, 26, 49, 0.95));
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.2rem;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-height: 320px;
+            animation: rise .45s ease both;
+        }
+
+        @keyframes rise {
+            from { transform: translateY(8px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .top {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+
+        .icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: linear-gradient(140deg, #2563eb, #14b8a6);
+            display: grid;
+            place-items: center;
+            font-size: 1.2rem;
+            flex: 0 0 auto;
+        }
+
+        .title {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        .tag {
+            display: inline-block;
+            width: fit-content;
+            background: rgba(96, 165, 250, 0.15);
+            color: #b8d7ff;
+            border: 1px solid rgba(96, 165, 250, 0.25);
+            border-radius: 999px;
+            padding: 0.15rem 0.6rem;
+            font-size: 0.75rem;
+            margin-top: 0.2rem;
+        }
+
+        .info {
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            width: fit-content;
+            border-radius: 999px;
+            padding: 0.2rem 0.55rem;
+            font-size: 0.75rem;
+            border: 1px solid transparent;
+            margin-top: 0.35rem;
+        }
+
+        .status-pill::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status-pill.checking {
+            color: #fde68a;
+            background: rgba(234, 179, 8, 0.15);
+            border-color: rgba(234, 179, 8, 0.35);
+        }
+
+        .status-pill.online {
+            color: var(--ok);
+            background: rgba(16, 185, 129, 0.16);
+            border-color: rgba(16, 185, 129, 0.35);
+        }
+
+        .status-pill.offline {
+            color: var(--danger);
+            background: rgba(251, 113, 133, 0.12);
+            border-color: rgba(251, 113, 133, 0.35);
+        }
+
+        .line {
+            display: flex;
+            gap: 0.45rem;
+            align-items: baseline;
+            word-break: break-all;
+        }
+
+        .k { color: #93c5fd; min-width: 55px; }
+        .v { color: #dbeafe; }
+
+        .actions {
+            margin-top: auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.55rem;
+        }
+
+        .btn {
+            text-decoration: none;
+            text-align: center;
+            padding: 0.65rem 0.75rem;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.86rem;
+            border: 1px solid transparent;
+            transition: transform 120ms ease, filter 120ms ease;
+        }
+
+        .btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
+
+        .btn.proxy {
+            background: linear-gradient(120deg, var(--accent), var(--accent-2));
+            color: #06132a;
+        }
+
+        .btn.direct {
+            background: transparent;
+            color: var(--text);
+            border-color: #365888;
+        }
+
+        .status {
+            margin: 1rem 0;
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .empty {
+            border: 1px dashed #44618e;
+            border-radius: 14px;
+            padding: 2rem;
+            color: var(--muted);
+            text-align: center;
+            background: rgba(11, 22, 44, 0.5);
+        }
+
+        .direct-off {
+            color: var(--danger);
+            font-size: 0.8rem;
+            margin-top: 0.35rem;
+        }
+
+        @media (max-width: 700px) {
+            .hero { flex-direction: column; align-items: flex-start; }
+            .meta { text-align: left; }
+            .actions { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 760px) {
+            .grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .card {
+                min-height: 0;
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="shell">
+        <section class="hero">
+            <div>
+                <h1>Service Catalog</h1>
+                <p class="subtitle">Catálogo de serviços publicados pelo Nginx. Cada card é gerado a partir dos arquivos em sites-enabled com rota de proxy e link de acesso direto.</p>
+            </div>
+            <div class="meta">
+                <div id="count">Carregando serviços...</div>
+                <div id="generatedAt"></div>
+            </div>
+        </section>
+
+        <div id="status" class="status">Lendo configuração dos serviços...</div>
+        <section id="catalog" class="grid" aria-live="polite"></section>
+    </main>
+
+    <script>
+        const iconMap = {
+            docker: "🐳",
+            chart: "📊",
+            pulse: "📈",
+            search: "🔎",
+            automation: "⚙",
+            shield: "🛡",
+            database: "🗄",
+            stream: "🛰",
+            app: "🧩"
+        };
+
+        const countEl = document.getElementById('count');
+        const generatedAtEl = document.getElementById('generatedAt');
+        const statusEl = document.getElementById('status');
+        const catalogEl = document.getElementById('catalog');
+
+        function safeHostname() {
+            const host = window.location.hostname || 'localhost';
+            return host;
+        }
+
+        function buildDirectUrl(service) {
+            if (!service.direct || !service.direct.port) {
+                return null;
+            }
+
+            const protocol = service.direct.protocol || 'http';
+            const host = service.direct.host && service.direct.host !== 'localhost' && service.direct.host !== '127.0.0.1' && service.direct.host !== 'portainer'
+                ? service.direct.host
+                : safeHostname();
+
+            return `${protocol}://${host}:${service.direct.port}`;
+        }
+
+        function buildProxyUrl(route) {
+            return route;
+        }
+
+        function cardTemplate(service) {
+            const icon = iconMap[service.icon] || iconMap.app;
+            const proxyUrl = buildProxyUrl(service.proxyUrl || service.route);
+            const directUrl = buildDirectUrl(service);
+            const upstream = service.upstream || 'N/A';
+            const safeSlug = (service.slug || service.name || 'service').replace(/[^a-zA-Z0-9_-]/g, '-');
+
+            return `
+                <article class="card" data-service-slug="${safeSlug}" data-proxy-url="${proxyUrl}">
+                    <div class="top">
+                        <div class="icon" aria-hidden="true">${icon}</div>
+                        <div>
+                            <h2 class="title">${service.name}</h2>
+                            <span class="tag">${service.sourceFile}</span>
+                        </div>
+                    </div>
+                    <div class="info">
+                        <div class="line"><span class="k">Rota</span><span class="v">${service.route}</span></div>
+                        <div class="line"><span class="k">Proxy</span><span class="v">${upstream}</span></div>
+                        <div class="status-pill checking" data-health="${safeSlug}">Checando</div>
+                    </div>
+                    <div class="actions">
+                        <a class="btn proxy" href="${proxyUrl}" target="_blank" rel="noopener noreferrer">Acesso via Proxy</a>
+                        ${directUrl
+                            ? `<a class="btn direct" href="${directUrl}" target="_blank" rel="noopener noreferrer">Acesso Direto</a>`
+                            : `<span class="btn direct" style="opacity:.55;pointer-events:none;">Direto indisponível</span>`}
+                    </div>
+                    ${directUrl ? '' : '<div class="direct-off">Nao foi possivel inferir host/porta de acesso direto.</div>'}
+                </article>
+            `;
+        }
+
+        async function checkServiceHealth(proxyUrl, timeoutMs = 4500) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+            try {
+                const response = await fetch(proxyUrl, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    redirect: 'follow',
+                    signal: controller.signal
+                });
+                clearTimeout(timer);
+
+                if (response.ok || (response.status >= 300 && response.status < 400)) {
+                    return { state: 'online', label: 'Online' };
+                }
+                return { state: 'offline', label: `Offline (${response.status})` };
+            } catch (error) {
+                clearTimeout(timer);
+                return { state: 'offline', label: 'Offline' };
+            }
+        }
+
+        async function paintHealthStatuses(services) {
+            const checks = services.map(async (service) => {
+                const slug = (service.slug || service.name || 'service').replace(/[^a-zA-Z0-9_-]/g, '-');
+                const el = document.querySelector(`[data-health="${slug}"]`);
+                if (!el) return;
+
+                const proxyUrl = buildProxyUrl(service.proxyUrl || service.route);
+                const result = await checkServiceHealth(proxyUrl);
+                el.classList.remove('checking');
+                el.classList.add(result.state);
+                el.textContent = result.label;
+            });
+
+            await Promise.all(checks);
+        }
+
+        async function loadCatalog() {
+            try {
+                const response = await fetch('./services.json', { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error(`Falha ao carregar services.json (${response.status})`);
+                }
+
+                const data = await response.json();
+                const services = Array.isArray(data.services) ? data.services : [];
+
+                countEl.textContent = `${services.length} servico(s) mapeado(s)`;
+                generatedAtEl.textContent = data.generatedAt
+                    ? `Gerado em: ${new Date(data.generatedAt).toLocaleString('pt-BR')}`
+                    : '';
+
+                if (!services.length) {
+                    statusEl.textContent = '';
+                    catalogEl.innerHTML = '<div class="empty">Nenhum servico de proxy foi encontrado em sites-enabled.</div>';
+                    return;
+                }
+
+                statusEl.textContent = 'Catalogo carregado com sucesso.';
+                catalogEl.innerHTML = services.map(cardTemplate).join('');
+                paintHealthStatuses(services);
+            } catch (error) {
+                statusEl.textContent = 'Nao foi possivel carregar o catalogo automatico.';
+                catalogEl.innerHTML = `
+                    <div class="empty">
+                        Verifique se o arquivo services.json foi gerado.<br>
+                        Erro: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        loadCatalog();
+    </script>
+</body>
+</html>

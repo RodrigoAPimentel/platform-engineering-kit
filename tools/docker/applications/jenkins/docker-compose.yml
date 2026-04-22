@@ -1,7 +1,7 @@
-name: jenkins-stack
+name: ${PROJECT_NAME}-stack
 
 services:
-  jenkins:
+  app:
     image: ${IMAGE_NAME}:${IMAGE_VERSION}
     build:
       context: .
@@ -10,12 +10,15 @@ services:
         BASE_IMAGE: ${BASE_IMAGE}
         BUILD_PROFILE: ${APP_ENV}
         APP_ENV: ${APP_ENV}
+        APP_UID: ${APP_UID}
+        APP_GID: ${APP_GID}
     container_name: ${CONTAINER_NAME}
     restart: unless-stopped
-    env_file: .env
+    env_file:
+      - .env
     ports:
-      - "${JENKINS_PORT}:8080"
-      - "${JENKINS_AGENT_COMMUNICATION_PORT}:50000"
+      - "${APP_PORT}:8080"
+      - "${APP_AGENT_COMMUNICATION_PORT}:50000"
     volumes:
       - volume:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
@@ -28,23 +31,23 @@ services:
       retries: 3
       start_period: 60s
     privileged: true
-    user: "${JENKINS_UID}:${JENKINS_GID}"
-    ## Production defaults enabled below.
-    ## For development, comment read_only/tmpfs and use bind mounts.
+    user: "${APP_UID}:${APP_GID}"
+    # Production defaults enabled below.
+    # For development, comment read_only/tmpfs and use bind mounts.
     # read_only: true
     # tmpfs:
     #   - /tmp
-    # Add least-privilege security options for Linux hosts.
-    # security_opt:
-    #   - no-new-privileges:true
-    # cap_drop:
-    #   - ALL
-    # deploy:
-    #   resources:
-    #     limits:
-    #       cpus: "1.0"
-    #       memory: 1024M
-
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Optional resource guardrails.
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+          
 volumes:
   volume:
     name: ${VOLUME_NAME}
