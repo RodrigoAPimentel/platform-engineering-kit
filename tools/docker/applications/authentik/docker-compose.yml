@@ -1,0 +1,87 @@
+name: ${PROJECT_NAME}-stack
+
+services:
+  postgresql:
+    image: ${PG_IMAGE_NAME}:${PG_IMAGE_VERSION}
+    container_name: ${PG_CONTAINER_NAME}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_DB: ${PG_DB}
+      POSTGRES_PASSWORD: ${PG_PASS}
+      POSTGRES_USER: ${PG_USER}
+    volumes:
+    - database:/var/lib/postgresql/data
+    healthcheck:
+      interval: 30s
+      retries: 5
+      start_period: 20s
+      test:
+      - CMD-SHELL
+      - pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}
+      timeout: 5s
+    networks:
+      - network
+
+  server:
+    image: ${SERVER_IMAGE_NAME}:${SERVER_IMAGE_VERSION}
+    container_name: ${SERVER_CONTAINER_NAME}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+      AUTHENTIK_POSTGRESQL__USER: ${PG_USER}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+    ports:
+    - ${SERVER_PORT_HTTP}:9000
+    - ${SERVER_PORT_HTTPS}:9443
+    volumes:
+    - ./data:/data
+    - ./custom-templates:/templates
+    command: server
+    networks:
+      - network
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    shm_size: 512mb
+
+  worker:
+    image: ${WORKER_IMAGE_NAME}:${WORKER_IMAGE_VERSION}
+    container_name: ${WORKER_CONTAINER_NAME}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+      AUTHENTIK_POSTGRESQL__USER: ${PG_USER}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    - ./data:/data
+    - ./certs:/certs
+    - ./custom-templates:/templates
+    command: worker
+    networks:
+      - network
+    user: root
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    shm_size: 512mb
+
+volumes:
+  database:
+    name: ${VOLUME_NAME}
+
+networks:
+  network:
+    driver: ${NETWORK_DRIVER}
+    driver_opts:
+      com.docker.network.driver.mtu: ${NETWORK_MTU}
+      com.docker.network.bridge.enable_ip_masquerade: "${NETWORK_ENABLE_IP_MASQUERADE}"
+      com.docker.network.bridge.enable_icc: "${NETWORK_ENABLE_ICC}"
+    name: ${NETWORK_NAME}
