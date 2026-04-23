@@ -56,7 +56,7 @@ networks:
   network:
     driver: ${NETWORK_DRIVER}
     driver_opts:
-      com.docker.network.driver.mtu: ${NETWORK_MTU:-1500}
-      com.docker.network.bridge.enable_ip_masquerade: "${NETWORK_ENABLE_IP_MASQUERADE:-true}"
-      com.docker.network.bridge.enable_icc: "${NETWORK_ENABLE_ICC:-true}"
+      com.docker.network.driver.mtu: ${NETWORK_MTU}
+      com.docker.network.bridge.enable_ip_masquerade: "${NETWORK_ENABLE_IP_MASQUERADE}"
+      com.docker.network.bridge.enable_icc: "${NETWORK_ENABLE_ICC}"
     name: ${NETWORK_NAME}

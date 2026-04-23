@@ -21,9 +21,9 @@ extract_records() {
         proxy=""
         set_name=""
         set_value=""
-        if (match($0, /location[ \t]+(=[ \t]+)?([^ \t{]+)/)) {
+        if (match($0, /location[ \t]+((=|\^~|~\*)[ \t]+|~[ \t]+)?([^ \t{]+)/)) {
           raw=substr($0, RSTART, RLENGTH)
-          sub(/^[ \t]*location[ \t]+(=[ \t]+)?/, "", raw)
+          sub(/^[ \t]*location[ \t]+((=|\^~|~\*)[ \t]+|~[ \t]+)?/, "", raw)
           sub(/[ \t]*\{?$/, "", raw)
           route=trim(raw)
           inloc=1

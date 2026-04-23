@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -175,6 +175,18 @@
             word-break: break-all;
         }
 
+        .routes {
+            margin-top: 0.4rem;
+            display: grid;
+            gap: 0.2rem;
+        }
+
+        .route-item {
+            color: #dbeafe;
+            font-size: 0.86rem;
+            opacity: 0.95;
+        }
+
         .k { color: #93c5fd; min-width: 55px; }
         .v { color: #dbeafe; }
 
@@ -203,12 +215,6 @@
             color: #06132a;
         }
 
-        .btn.direct {
-            background: transparent;
-            color: var(--text);
-            border-color: #365888;
-        }
-
         .status {
             margin: 1rem 0;
             color: var(--muted);
@@ -222,12 +228,6 @@
             color: var(--muted);
             text-align: center;
             background: rgba(11, 22, 44, 0.5);
-        }
-
-        .direct-off {
-            color: var(--danger);
-            font-size: 0.8rem;
-            margin-top: 0.35rem;
         }
 
         @media (max-width: 700px) {
@@ -254,15 +254,15 @@
         <section class="hero">
             <div>
                 <h1>Service Catalog</h1>
-                <p class="subtitle">Catálogo de serviços publicados pelo Nginx. Cada card é gerado a partir dos arquivos em sites-enabled com rota de proxy e link de acesso direto.</p>
+                <p class="subtitle">Catalog of services published by Nginx. Each card is generated from files in sites-enabled with proxy routes.</p>
             </div>
             <div class="meta">
-                <div id="count">Carregando serviços...</div>
+                <div id="count">Loading services...</div>
                 <div id="generatedAt"></div>
             </div>
         </section>
 
-        <div id="status" class="status">Lendo configuração dos serviços...</div>
+        <div id="status" class="status">Reading service configuration...</div>
         <section id="catalog" class="grid" aria-live="polite"></section>
     </main>
 
@@ -289,51 +289,120 @@
             return host;
         }
 
-        function buildDirectUrl(service) {
-            if (!service.direct || !service.direct.port) {
-                return null;
-            }
-
-            const protocol = service.direct.protocol || 'http';
-            const host = service.direct.host && service.direct.host !== 'localhost' && service.direct.host !== '127.0.0.1' && service.direct.host !== 'portainer'
-                ? service.direct.host
-                : safeHostname();
-
-            return `${protocol}://${host}:${service.direct.port}`;
-        }
-
         function buildProxyUrl(route) {
             return route;
         }
 
+        function resolveIconByName(name, fallback = 'app') {
+            const value = String(name || '').toLowerCase();
+
+            if (value.includes('portainer') || value.includes('docker')) return 'docker';
+            if (value.includes('grafana') || value.includes('dashboard')) return 'chart';
+            if (value.includes('prometheus') || value.includes('metrics')) return 'pulse';
+            if (value.includes('kibana') || value.includes('elastic') || value.includes('search')) return 'search';
+            if (value.includes('jenkins') || value.includes('ci') || value.includes('pipeline')) return 'automation';
+            if (value.includes('keycloak') || value.includes('auth') || value.includes('oauth') || value.includes('sso')) return 'shield';
+            if (value.includes('postgres') || value.includes('mysql') || value.includes('mongo') || value.includes('redis') || value.includes('db')) return 'database';
+            if (value.includes('rabbitmq') || value.includes('kafka') || value.includes('queue') || value.includes('broker')) return 'stream';
+
+            return fallback || 'app';
+        }
+
+        function getSourceKey(sourceFile = '') {
+            return sourceFile.toLowerCase().replace(/\..*$/, '');
+        }
+
+        function choosePrimaryRoute(service) {
+            const routes = Array.isArray(service.routes) && service.routes.length
+                ? service.routes
+                : [service.route].filter(Boolean);
+
+            if (!routes.length) {
+                return '/';
+            }
+
+            const sourceKey = getSourceKey(service.sourceFile || '');
+            const preferred = routes.find((route) => sourceKey && route.toLowerCase().includes(`/${sourceKey}`));
+            return preferred || routes[0];
+        }
+
+        function groupServicesByCard(services) {
+            const grouped = new Map();
+
+            for (const item of services) {
+                const sourceFile = item.sourceFile || 'unknown';
+                const key = sourceFile;
+
+                if (!grouped.has(key)) {
+                    grouped.set(key, {
+                        ...item,
+                        routes: [],
+                        upstreams: []
+                    });
+                }
+
+                const group = grouped.get(key);
+                const route = item.route || item.proxyUrl;
+                if (route && !group.routes.includes(route)) {
+                    group.routes.push(route);
+                }
+
+                const upstream = item.upstream || 'N/A';
+                if (upstream && !group.upstreams.includes(upstream)) {
+                    group.upstreams.push(upstream);
+                }
+            }
+
+            return Array.from(grouped.values()).map((service) => {
+                const primaryRoute = choosePrimaryRoute(service);
+                return {
+                    ...service,
+                    route: primaryRoute,
+                    proxyUrl: primaryRoute,
+                    slug: (service.sourceFile || service.slug || service.name || 'service').toLowerCase().replace(/[^a-z0-9_-]/g, '-'),
+                    upstream: (service.upstreams && service.upstreams[0]) || service.upstream || 'N/A'
+                };
+            });
+        }
+
         function cardTemplate(service) {
-            const icon = iconMap[service.icon] || iconMap.app;
             const proxyUrl = buildProxyUrl(service.proxyUrl || service.route);
-            const directUrl = buildDirectUrl(service);
-            const upstream = service.upstream || 'N/A';
+            const cardName = (service.sourceFile || service.name || 'service').replace(/\.locations$/i, '');
+            const iconKey = resolveIconByName(cardName, service.icon);
+            const icon = iconMap[iconKey] || iconMap.app;
+            const upstreams = Array.isArray(service.upstreams) && service.upstreams.length
+                ? service.upstreams
+                : [service.upstream || 'N/A'];
             const safeSlug = (service.slug || service.name || 'service').replace(/[^a-zA-Z0-9_-]/g, '-');
+            const routes = Array.isArray(service.routes) && service.routes.length
+                ? service.routes
+                : [service.route].filter(Boolean);
+            const routesHtml = routes
+                .map((route) => `<div class="route-item">${route}</div>`)
+                .join('');
+            const upstreamHtml = upstreams
+                .map((upstream) => `<div class="route-item">${upstream}</div>`)
+                .join('');
 
             return `
                 <article class="card" data-service-slug="${safeSlug}" data-proxy-url="${proxyUrl}">
                     <div class="top">
                         <div class="icon" aria-hidden="true">${icon}</div>
                         <div>
-                            <h2 class="title">${service.name}</h2>
+                            <h2 class="title">${cardName}</h2>
                             <span class="tag">${service.sourceFile}</span>
                         </div>
                     </div>
                     <div class="info">
-                        <div class="line"><span class="k">Rota</span><span class="v">${service.route}</span></div>
-                        <div class="line"><span class="k">Proxy</span><span class="v">${upstream}</span></div>
-                        <div class="status-pill checking" data-health="${safeSlug}">Checando</div>
+                        <div class="line"><span class="k">Routes</span><span class="v">${routes.length}</span></div>
+                        <div class="routes">${routesHtml}</div>
+                        <div class="line"><span class="k">Proxies</span><span class="v">${upstreams.length}</span></div>
+                        <div class="routes">${upstreamHtml}</div>
+                        <div class="status-pill checking" data-health="${safeSlug}">Checking</div>
                     </div>
                     <div class="actions">
-                        <a class="btn proxy" href="${proxyUrl}" target="_blank" rel="noopener noreferrer">Acesso via Proxy</a>
-                        ${directUrl
-                            ? `<a class="btn direct" href="${directUrl}" target="_blank" rel="noopener noreferrer">Acesso Direto</a>`
-                            : `<span class="btn direct" style="opacity:.55;pointer-events:none;">Direto indisponível</span>`}
+                        <a class="btn proxy" href="${proxyUrl}" target="_blank" rel="noopener noreferrer">Access via Proxy</a>
                     </div>
-                    ${directUrl ? '' : '<div class="direct-off">Nao foi possivel inferir host/porta de acesso direto.</div>'}
                 </article>
             `;
         }
@@ -381,32 +450,33 @@
             try {
                 const response = await fetch('./services.json', { cache: 'no-store' });
                 if (!response.ok) {
-                    throw new Error(`Falha ao carregar services.json (${response.status})`);
+                    throw new Error(`Failed to load services.json (${response.status})`);
                 }
 
                 const data = await response.json();
-                const services = Array.isArray(data.services) ? data.services : [];
+                const rawServices = Array.isArray(data.services) ? data.services : [];
+                const services = groupServicesByCard(rawServices);
 
-                countEl.textContent = `${services.length} servico(s) mapeado(s)`;
+                countEl.textContent = `${services.length} mapped service(s)`;
                 generatedAtEl.textContent = data.generatedAt
-                    ? `Gerado em: ${new Date(data.generatedAt).toLocaleString('pt-BR')}`
+                    ? `Generated at: ${new Date(data.generatedAt).toLocaleString('en-US')}`
                     : '';
 
                 if (!services.length) {
                     statusEl.textContent = '';
-                    catalogEl.innerHTML = '<div class="empty">Nenhum servico de proxy foi encontrado em sites-enabled.</div>';
+                    catalogEl.innerHTML = '<div class="empty">No proxy service was found in sites-enabled.</div>';
                     return;
                 }
 
-                statusEl.textContent = 'Catalogo carregado com sucesso.';
+                statusEl.textContent = 'Catalog loaded successfully.';
                 catalogEl.innerHTML = services.map(cardTemplate).join('');
                 paintHealthStatuses(services);
             } catch (error) {
-                statusEl.textContent = 'Nao foi possivel carregar o catalogo automatico.';
+                statusEl.textContent = 'Could not load the automatic catalog.';
                 catalogEl.innerHTML = `
                     <div class="empty">
-                        Verifique se o arquivo services.json foi gerado.<br>
-                        Erro: ${error.message}
+                        Check whether the services.json file was generated.<br>
+                        Error: ${error.message}
                     </div>
                 `;
             }

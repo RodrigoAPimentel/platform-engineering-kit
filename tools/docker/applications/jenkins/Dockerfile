@@ -12,7 +12,8 @@ LABEL org.opencontainers.image.title="jenkins" \
 
 ENV APP_ENV=${APP_ENV} \
     JAVA_OPTS=-Djenkins.install.runSetupWizard=false \
-    CASC_JENKINS_CONFIG=/usr/share/jenkins/ref/casc.yaml
+    CASC_JENKINS_CONFIG=/usr/share/jenkins/ref/casc.yaml \
+    JENKINS_OPTS=--prefix=/jenkins 
 
 ARG APP_UID=10001
 ARG APP_GID=10001
@@ -40,7 +41,7 @@ COPY --chown=jenkins:jenkins configs/seedjob.groovy /usr/local/seedjob.groovy
 
 USER jenkins
 
-RUN jenkins-plugin-cli -f /usr/share/jenkins/ref/plugins.txt \
-    && echo 2.0 > /usr/share/jenkins/ref/jenkins.install.UpgradeWizard.state
+RUN jenkins-plugin-cli -f /usr/share/jenkins/ref/plugins.txt
+RUN echo 2.0 > /usr/share/jenkins/ref/jenkins.install.UpgradeWizard.state
 
-EXPOSE 8080 50000
+EXPOSE 8088 50000

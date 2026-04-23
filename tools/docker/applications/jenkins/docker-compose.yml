@@ -14,8 +14,7 @@ services:
         APP_GID: ${APP_GID}
     container_name: ${CONTAINER_NAME}
     restart: unless-stopped
-    env_file:
-      - .env
+    env_file: .env
     ports:
       - "${APP_PORT}:8080"
       - "${APP_AGENT_COMMUNICATION_PORT}:50000"
@@ -25,7 +24,7 @@ services:
     networks:
       - network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/jenkins/login > /dev/null || curl -fsS http://localhost:8080/login > /dev/null"]
       interval: 30s
       timeout: 10s
       retries: 3

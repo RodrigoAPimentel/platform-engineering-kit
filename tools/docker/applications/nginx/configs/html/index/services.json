@@ -1,7 +1,82 @@
 {
-  "generatedAt": "2026-04-22T13:39:41Z",
-  "serviceCount": 1,
+  "generatedAt": "2026-04-23T12:01:19Z",
+  "serviceCount": 8,
   "services": [
+    {
+      "name": "Api V3",
+      "slug": "api-v3",
+      "route": "/api/v3/",
+      "proxyUrl": "/api/v3/",
+      "sourceFile": "authentik.locations",
+      "icon": "app",
+      "upstream": "http://authentik_server:9000",
+      "direct": {
+        "protocol": "http",
+        "host": "authentik_server",
+        "port": "9000",
+        "path": "/api/v3/"
+      }
+    },
+    {
+      "name": "Api Websocket",
+      "slug": "api-websocket",
+      "route": "/api/websocket/",
+      "proxyUrl": "/api/websocket/",
+      "sourceFile": "portainer.locations",
+      "icon": "app",
+      "upstream": "http://portainer:9000/api/websocket/",
+      "direct": {
+        "protocol": "http",
+        "host": "portainer",
+        "port": "9000",
+        "path": "/api/websocket/"
+      }
+    },
+    {
+      "name": "Api",
+      "slug": "api",
+      "route": "/api/",
+      "proxyUrl": "/api/",
+      "sourceFile": "portainer.locations",
+      "icon": "app",
+      "upstream": "http://portainer:9000/api/",
+      "direct": {
+        "protocol": "http",
+        "host": "portainer",
+        "port": "9000",
+        "path": "/api/"
+      }
+    },
+    {
+      "name": "Authentik",
+      "slug": "authentik",
+      "route": "/authentik/",
+      "proxyUrl": "/authentik/",
+      "sourceFile": "authentik.locations",
+      "icon": "shield",
+      "upstream": "http://authentik_server:9000",
+      "direct": {
+        "protocol": "http",
+        "host": "authentik_server",
+        "port": "9000",
+        "path": "/authentik/"
+      }
+    },
+    {
+      "name": "Jenkins",
+      "slug": "jenkins",
+      "route": "/jenkins/",
+      "proxyUrl": "/jenkins/",
+      "sourceFile": "jenkins.locations",
+      "icon": "automation",
+      "upstream": "$jenkins_upstream$request_uri",
+      "direct": {
+        "protocol": "",
+        "host": "",
+        "port": "",
+        "path": "/jenkins/"
+      }
+    },
     {
       "name": "Portainer",
       "slug": "portainer",
@@ -9,12 +84,42 @@
       "proxyUrl": "/portainer/",
       "sourceFile": "portainer.locations",
       "icon": "docker",
-      "upstream": "https://portainer:9443",
+      "upstream": "http://portainer:9000",
       "direct": {
-        "protocol": "https",
+        "protocol": "http",
         "host": "portainer",
-        "port": "9443",
+        "port": "9000",
         "path": "/portainer/"
+      }
+    },
+    {
+      "name": "Static",
+      "slug": "static",
+      "route": "/static/",
+      "proxyUrl": "/static/",
+      "sourceFile": "authentik.locations",
+      "icon": "app",
+      "upstream": "http://authentik_server:9000",
+      "direct": {
+        "protocol": "http",
+        "host": "authentik_server",
+        "port": "9000",
+        "path": "/static/"
+      }
+    },
+    {
+      "name": "Ws",
+      "slug": "ws",
+      "route": "/ws/",
+      "proxyUrl": "/ws/",
+      "sourceFile": "authentik.locations",
+      "icon": "app",
+      "upstream": "http://authentik_server:9000",
+      "direct": {
+        "protocol": "http",
+        "host": "authentik_server",
+        "port": "9000",
+        "path": "/ws/"
       }
     }
   ]
