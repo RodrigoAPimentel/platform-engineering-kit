@@ -1,0 +1,53 @@
+name: ${PROJECT_NAME}-stack
+
+services:
+  app:
+    image: ${IMAGE_NAME}:${IMAGE_VERSION}
+    container_name: ${CONTAINER_NAME}
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${APP_PORT}:9090"
+    volumes:
+      - ./configs:/etc/prometheus/
+      - volume:/prometheus
+    command:
+    - --config.file=/etc/prometheus/prometheus.yml
+    - --storage.tsdb.path=/prometheus
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    user: "${APP_UID}:${APP_GID}"
+    ## Production defaults enabled below.
+    ## For development, comment read_only/tmpfs and use bind mounts.
+    # read_only: true
+    # tmpfs:
+    #   - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Optional resource guardrails.
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+
+volumes:
+  volume:
+    name: ${VOLUME_NAME}
+
+networks:
+  network:
+    driver: ${NETWORK_DRIVER}
+    driver_opts:
+      com.docker.network.driver.mtu: ${NETWORK_MTU:-1500}
+      com.docker.network.bridge.enable_ip_masquerade: "${NETWORK_ENABLE_IP_MASQUERADE:-true}"
+      com.docker.network.bridge.enable_icc: "${NETWORK_ENABLE_ICC:-true}"
+    name: ${NETWORK_NAME}

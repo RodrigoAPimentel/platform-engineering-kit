@@ -1,7 +1,22 @@
 {
-  "generatedAt": "2026-04-23T12:01:19Z",
-  "serviceCount": 8,
+  "generatedAt": "2026-04-23T13:33:30Z",
+  "serviceCount": 11,
   "services": [
+    {
+      "name": "Alertmanager",
+      "slug": "alertmanager",
+      "route": "/alertmanager/",
+      "proxyUrl": "/alertmanager/",
+      "sourceFile": "alertmanager.locations",
+      "icon": "app",
+      "upstream": "http://alertmanager:9093",
+      "direct": {
+        "protocol": "http",
+        "host": "alertmanager",
+        "port": "9093",
+        "path": "/alertmanager/"
+      }
+    },
     {
       "name": "Api V3",
       "slug": "api-v3",
@@ -63,6 +78,21 @@
       }
     },
     {
+      "name": "Grafana",
+      "slug": "grafana",
+      "route": "/grafana/",
+      "proxyUrl": "/grafana/",
+      "sourceFile": "grafana.locations",
+      "icon": "chart",
+      "upstream": "http://$grafana_upstream",
+      "direct": {
+        "protocol": "http",
+        "host": "$grafana_upstream",
+        "port": "80",
+        "path": "/grafana/"
+      }
+    },
+    {
       "name": "Jenkins",
       "slug": "jenkins",
       "route": "/jenkins/",
@@ -90,6 +120,21 @@
         "host": "portainer",
         "port": "9000",
         "path": "/portainer/"
+      }
+    },
+    {
+      "name": "Prometheus",
+      "slug": "prometheus",
+      "route": "/prometheus/",
+      "proxyUrl": "/prometheus/",
+      "sourceFile": "prometheus.locations",
+      "icon": "pulse",
+      "upstream": "http://prometheus:9090",
+      "direct": {
+        "protocol": "http",
+        "host": "prometheus",
+        "port": "9090",
+        "path": "/prometheus/"
       }
     },
     {
