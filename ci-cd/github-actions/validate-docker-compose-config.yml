@@ -1,6 +1,6 @@
 name: Validate Docker Compose Config
 
-on:
+'on':
   pull_request:
     paths:
       - '**/docker-compose*.yml'

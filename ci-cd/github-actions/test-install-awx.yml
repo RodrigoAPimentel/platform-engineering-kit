@@ -19,6 +19,9 @@ on:
       - '.github/workflows/test-install-awx.yml'
       - 'ci-cd/github-actions/test-install-awx.yml'
 
+permissions:
+  contents: read
+
 jobs:
   syntax-validation:
     name: Bash Syntax Validation
