@@ -5,9 +5,14 @@ name: Guardian Audit Gate
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   guardian-audit:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

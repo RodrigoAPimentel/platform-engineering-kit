@@ -14,6 +14,8 @@ This directory contains operational procedures.
   ↳ Script: [scripts/install/standalone/install-nodejs-standalone.sh](../../scripts/install/standalone/install-nodejs-standalone.sh)
 - [PM2 Standalone Installation](pm2-standalone-installation.md) - PM2 installation with systemd startup for a target user.  
   ↳ Script: [scripts/install/standalone/install-pm2-standalone.sh](../../scripts/install/standalone/install-pm2-standalone.sh)
+- [DevOps Tools Stack Standalone Installation](devops-tools-stack-standalone-installation.md) - Standalone Docker-based provisioning for Jenkins, Keycloak, Portainer, and NGINX, including current limitations and validation steps.  
+  ↳ Script: [scripts/install/standalone/install-devops-tools-stack-standalone.sh](../../scripts/install/standalone/install-devops-tools-stack-standalone.sh)
 - [OpenSSH Server Installation (Ubuntu/Debian)](openssh-server-ubuntu-installation.md) - OpenSSH installation and service enablement.
 - [Argo CD on Minikube](argocd-minikube-installation.md) - Argo CD deployment with ingress and external access.
 - [Oh My Zsh Installation (Ubuntu/Debian)](oh-my-zsh-ubuntu-installation.md) - Shell customization for target user.
