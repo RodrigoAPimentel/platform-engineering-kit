@@ -1,6 +1,6 @@
 name: Guardian Audit Gate
 
-'on':
+on:
   pull_request:
     branches:
       - main
