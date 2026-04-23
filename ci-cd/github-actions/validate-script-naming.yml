@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/**/*.sh'
+      - 'scripts/**/*'
       - '.github/workflows/validate-script-naming.yml'
       - 'ci-cd/github-actions/validate-script-naming.yml'
       - 'scripts/utils/lib/ci/validate-script-naming.sh'
