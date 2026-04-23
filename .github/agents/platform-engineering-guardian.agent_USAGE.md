@@ -73,6 +73,7 @@ Use these commands directly in the Copilot prompt box:
 - `/guardian-standalone-categorization` -> Classify and organize independent installers under standalone.
 - `/guardian-multi-distro-consolidation` -> Consolidate distro-specific installers into a single multi-distro script.
 - `/guardian-agent-sync` -> Sync prompts and agent instructions between `.github` and `ai`.
+- `/guardian-temp-triage` -> Analyze `_temp/`, classify artifacts, and move valid files to canonical locations.
 
 Files for these commands are in `.github/prompts/`.
 

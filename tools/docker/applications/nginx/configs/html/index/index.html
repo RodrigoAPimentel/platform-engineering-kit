@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Catalog</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <main class="shell">
+        <section class="hero">
+            <div class="hero-copy">
+                <div class="eyebrow">NGINX Service Catalog</div>
+                <h1>Service Catalog</h1>
+                <p class="subtitle">Catalog of services published by Nginx. Each card is generated from files in sites-enabled with proxy routes.</p>
+            </div>
+            <div class="meta hero-meta">
+                <div id="count">Loading services...</div>
+                <div id="generatedAt"></div>
+            </div>
+        </section>
+
+        <div id="status" class="status">Reading service configuration...</div>
+        <section id="catalog" class="grid" aria-live="polite"></section>
+    </main>
+
+    <script>
+        const serviceIcons = {
+            alertmanager: { slug: "alertmanager", label: "Alertmanager" },
+            authentik: { slug: "authentik", label: "Authentik" },
+            grafana: { slug: "grafana", label: "Grafana" },
+            jenkins: { slug: "jenkins", label: "Jenkins" },
+            portainer: { slug: "portainer", label: "Portainer" },
+            prometheus: { slug: "prometheus", label: "Prometheus" },
+            app: { slug: null, label: "Service" }
+        };
+
+        const countEl = document.getElementById('count');
+        const generatedAtEl = document.getElementById('generatedAt');
+        const statusEl = document.getElementById('status');
+        const catalogEl = document.getElementById('catalog');
+        const statusOrder = {
+            online: 0,
+            offline: 1,
+            checking: 2
+        };
+
+        function safeHostname() {
+            const host = window.location.hostname || 'localhost';
+            return host;
+        }
+
+        function buildProxyUrl(route) {
+            return route;
+        }
+
+        function normalizeServiceKey(value = '') {
+            return String(value || '').toLowerCase().replace(/\..*$/, '');
+        }
+
+        function resolveIconKey(service) {
+            const sourceKey = normalizeServiceKey(service.sourceFile || '');
+            const nameKey = normalizeServiceKey(service.name || '');
+
+            if (sourceKey.includes('alertmanager') || nameKey.includes('alertmanager')) return 'alertmanager';
+            if (sourceKey.includes('authentik') || nameKey.includes('authentik')) return 'authentik';
+            if (sourceKey.includes('grafana') || nameKey.includes('grafana') || nameKey.includes('dashboard')) return 'grafana';
+            if (sourceKey.includes('jenkins') || nameKey.includes('jenkins')) return 'jenkins';
+            if (sourceKey.includes('portainer') || nameKey.includes('portainer')) return 'portainer';
+            if (sourceKey.includes('prometheus') || nameKey.includes('prometheus') || nameKey.includes('metrics')) return 'prometheus';
+
+            return 'app';
+        }
+
+        function getServiceIconMeta(service) {
+            const key = resolveIconKey(service);
+            return serviceIcons[key] || serviceIcons.app;
+        }
+
+        function getFallbackIconLabel(service) {
+            const baseName = (service.sourceFile || service.name || 'service').replace(/\.locations$/i, '');
+            const compact = baseName
+                .split(/[^a-zA-Z0-9]+/)
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((part) => part.charAt(0).toUpperCase())
+                .join('');
+
+            return compact || 'S';
+        }
+
+        function getCardLabel(service) {
+            return (service.sourceFile || service.name || 'service').replace(/\.locations$/i, '');
+        }
+
+        function compareServicesByStatusAndName(left, right) {
+            const leftPriority = statusOrder[left.status] ?? statusOrder.checking;
+            const rightPriority = statusOrder[right.status] ?? statusOrder.checking;
+
+            if (leftPriority !== rightPriority) {
+                return leftPriority - rightPriority;
+            }
+
+            return getCardLabel(left).localeCompare(getCardLabel(right), undefined, { sensitivity: 'base' });
+        }
+
+        function reorderCatalogCards(services) {
+            const cards = new Map();
+
+            catalogEl.querySelectorAll('.card').forEach((card) => {
+                cards.set(card.dataset.serviceSlug, card);
+            });
+
+            const orderedCards = services
+                .slice()
+                .sort(compareServicesByStatusAndName)
+                .map((service) => cards.get((service.slug || service.name || 'service').replace(/[^a-zA-Z0-9_-]/g, '-')))
+                .filter(Boolean);
+
+            catalogEl.replaceChildren(...orderedCards);
+        }
+
+        function getSourceKey(sourceFile = '') {
+            return sourceFile.toLowerCase().replace(/\..*$/, '');
+        }
+
+        function choosePrimaryRoute(service) {
+            const routes = Array.isArray(service.routes) && service.routes.length
+                ? service.routes
+                : [service.route].filter(Boolean);
+
+            if (!routes.length) {
+                return '/';
+            }
+
+            const sourceKey = getSourceKey(service.sourceFile || '');
+            const preferred = routes.find((route) => sourceKey && route.toLowerCase().includes(`/${sourceKey}`));
+            return preferred || routes[0];
+        }
+
+        function groupServicesByCard(services) {
+            const grouped = new Map();
+
+            for (const item of services) {
+                const sourceFile = item.sourceFile || 'unknown';
+                const key = sourceFile;
+
+                if (!grouped.has(key)) {
+                    grouped.set(key, {
+                        ...item,
+                        routes: [],
+                        upstreams: []
+                    });
+                }
+
+                const group = grouped.get(key);
+                const route = item.route || item.proxyUrl;
+                if (route && !group.routes.includes(route)) {
+                    group.routes.push(route);
+                }
+
+                const upstream = item.upstream || 'N/A';
+                if (upstream && !group.upstreams.includes(upstream)) {
+                    group.upstreams.push(upstream);
+                }
+            }
+
+            return Array.from(grouped.values()).map((service) => {
+                const primaryRoute = choosePrimaryRoute(service);
+                return {
+                    ...service,
+                    route: primaryRoute,
+                    proxyUrl: primaryRoute,
+                    slug: (service.sourceFile || service.slug || service.name || 'service').toLowerCase().replace(/[^a-z0-9_-]/g, '-'),
+                    icon: resolveIconKey(service),
+                    upstream: (service.upstreams && service.upstreams[0]) || service.upstream || 'N/A'
+                };
+            });
+        }
+
+        function cardTemplate(service) {
+            const proxyUrl = buildProxyUrl(service.proxyUrl || service.route);
+            const cardName = getCardLabel(service);
+            const iconMeta = getServiceIconMeta(service);
+            const fallbackLabel = getFallbackIconLabel(service);
+            const upstreams = Array.isArray(service.upstreams) && service.upstreams.length
+                ? service.upstreams
+                : [service.upstream || 'N/A'];
+            const safeSlug = (service.slug || service.name || 'service').replace(/[^a-zA-Z0-9_-]/g, '-');
+            const routes = Array.isArray(service.routes) && service.routes.length
+                ? service.routes
+                : [service.route].filter(Boolean);
+            const routesHtml = routes
+                .map((route) => `<div class="route-item">${route}</div>`)
+                .join('');
+            const upstreamHtml = upstreams
+                .map((upstream) => `<div class="route-item">${upstream}</div>`)
+                .join('');
+
+            return `
+                <article class="card status-checking" data-service-slug="${safeSlug}" data-proxy-url="${proxyUrl}">
+                    <div class="card-head">
+                        <div class="icon" aria-hidden="true">
+                            ${iconMeta.slug ? `<img class="service-icon" src="https://cdn.simpleicons.org/${iconMeta.slug}/0f172a" alt="${iconMeta.label} logo" loading="lazy" data-fallback="${fallbackLabel}">` : `<span class="service-icon-fallback">${fallbackLabel}</span>`}
+                        </div>
+                        <div class="card-heading">
+                            <h2 class="title">${cardName}</h2>
+                            <span class="tag">${service.sourceFile}</span>
+                        </div>
+                    </div>
+                    <div class="card-summary">
+                        <div class="summary-item">
+                            <span class="k">Routes</span>
+                            <span class="v">${routes.length}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="k">Proxies</span>
+                            <span class="v">${upstreams.length}</span>
+                        </div>
+                    </div>
+                    <div class="info">
+                        <div class="section-label">Routes</div>
+                        <div class="routes">${routesHtml}</div>
+                        <div class="section-label">Upstreams</div>
+                        <div class="routes">${upstreamHtml}</div>
+                        <div class="status-pill checking" data-health="${safeSlug}">Checking</div>
+                    </div>
+                    <div class="actions">
+                        <a class="btn proxy" href="${proxyUrl}" target="_blank" rel="noopener noreferrer">Access via Proxy</a>
+                    </div>
+                </article>
+            `;
+        }
+
+        async function checkServiceHealth(proxyUrl, timeoutMs = 4500) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+            try {
+                const response = await fetch(proxyUrl, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    redirect: 'follow',
+                    signal: controller.signal
+                });
+                const body = await response.text();
+                clearTimeout(timer);
+
+                const unavailablePattern = /unavailable|currently not accessible/i;
+
+                if ((response.ok || (response.status >= 300 && response.status < 400)) && !unavailablePattern.test(body)) {
+                    return { state: 'online', label: 'Online' };
+                }
+
+                const titleMatch = body.match(/<title>([^<]+)<\/title>/i);
+                const bodyLabel = titleMatch ? titleMatch[1].trim() : `Offline (${response.status})`;
+                return { state: 'offline', label: bodyLabel };
+            } catch (error) {
+                clearTimeout(timer);
+                return { state: 'offline', label: 'Offline' };
+            }
+        }
+
+        async function paintHealthStatuses(services) {
+            const checks = services.map(async (service) => {
+                const slug = (service.slug || service.name || 'service').replace(/[^a-zA-Z0-9_-]/g, '-');
+                const el = document.querySelector(`[data-health="${slug}"]`);
+                if (!el) return;
+
+                const proxyUrl = buildProxyUrl(service.proxyUrl || service.route);
+                const result = await checkServiceHealth(proxyUrl);
+                el.classList.remove('checking');
+                el.classList.add(result.state);
+                el.textContent = result.label;
+
+                const card = el.closest('.card');
+                if (card) {
+                    card.classList.remove('status-checking', 'status-online', 'status-offline');
+                    card.classList.add(`status-${result.state}`);
+                }
+
+                service.status = result.state;
+            });
+
+            await Promise.all(checks);
+            reorderCatalogCards(services);
+        }
+
+        function wireIconFallbacks() {
+            document.querySelectorAll('.service-icon').forEach((icon) => {
+                icon.addEventListener('error', () => {
+                    const fallback = icon.dataset.fallback || 'S';
+                    const container = icon.closest('.icon');
+                    if (container) {
+                        container.innerHTML = `<span class="service-icon-fallback">${fallback}</span>`;
+                    }
+                });
+            });
+        }
+
+        async function loadCatalog() {
+            try {
+                const response = await fetch('./services.json', { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error(`Failed to load services.json (${response.status})`);
+                }
+
+                const data = await response.json();
+                const rawServices = Array.isArray(data.services) ? data.services : [];
+                const services = groupServicesByCard(rawServices);
+
+                countEl.textContent = `${services.length} mapped service(s)`;
+                generatedAtEl.textContent = data.generatedAt
+                    ? `Generated at: ${new Date(data.generatedAt).toLocaleString('en-US')}`
+                    : '';
+
+                if (!services.length) {
+                    statusEl.textContent = '';
+                    catalogEl.innerHTML = '<div class="empty">No proxy service was found in sites-enabled.</div>';
+                    return;
+                }
+
+                statusEl.textContent = 'Catalog loaded successfully.';
+                catalogEl.innerHTML = services.map(cardTemplate).join('');
+                wireIconFallbacks();
+                paintHealthStatuses(services);
+            } catch (error) {
+                statusEl.textContent = 'Could not load the automatic catalog.';
+                catalogEl.innerHTML = `
+                    <div class="empty">
+                        Check whether the services.json file was generated.<br>
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        loadCatalog();
+    </script>
+</body>
+</html>

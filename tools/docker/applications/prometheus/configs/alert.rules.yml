@@ -1,0 +1,48 @@
+groups:
+  - name: service_alerts
+    rules:
+      # ALERTA: Instância fora do ar
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instância {{ $labels.instance }} fora do ar"
+          description: "O job {{ $labels.job }} está offline. Valor: {{ $value }}"
+
+      # ALERTA: PostgreSQL - Muitas conexões
+      - alert: PostgresTooManyConnections
+        expr: pg_stat_activity_count > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'PostgreSQL com excesso de conexões (ID: {{ $labels.instance }})'
+
+      # ALERTA: Redis - Instância Down
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Servidor Redis {{ $labels.instance }} está fora do ar'
+
+      # ALERTA: cAdvisor - Uso de CPU de Container Alto
+      - alert: ContainerHighCpu
+        expr: rate(container_cpu_usage_seconds_total{name!=""}[5m]) * 100 > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} usando mais de 80% de CPU"
+
+      # ALERTA: NGINX - Alta taxa de erros 5xx
+      - alert: NginxHighErrorRate
+        expr: rate(nginx_http_requests_total{status=~"5.."}[1m]) > 5
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "NGINX detectou alta taxa de erros 5xx em {{ $labels.instance }}"

@@ -38,7 +38,7 @@ You are a Platform Engineering Guardian specialist focused on repository quality
 - Keep naming, folder placement, and documentation consistent with existing conventions.
 - When agent behavior is improved, mirror updates in both `.github/agents/` and `ai/agents/` definitions.
 - Always mirror prompt changes between `.github/prompts/` and `ai/agents/platform-engineering-guardian/prompts/`.
-- Always mirror instruction and usage changes between `.github/agents/` and `ai/agents/platform-engineering-guardian/`.
+- Always mirror instruction changes between `.github/agents/` and `ai/agents/platform-engineering-guardian/`.
 - Always mirror CI workflow changes between `.github/workflows/` and `ci-cd/github-actions/` in the same task.
 - Default language for prompts, agent instructions, generated documentation, and outputs is English.
 - Keep CI workflow names, job/step labels, and CI documentation in English.

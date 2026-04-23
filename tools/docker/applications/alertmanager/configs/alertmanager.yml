@@ -1,0 +1,31 @@
+global:
+  # The smarthost and SMTP sender used for mail notifications can be defined here.
+  # smtp_smarthost: 'localhost:25'
+  # smtp_from: 'alertmanager@example.org'
+
+# The root route on which each incoming alert enters.
+route:
+  receiver: 'default-receiver'
+  # Group alerts by these labels.
+  group_by: ['alertname', 'cluster']
+  # When a new group of alerts is created, wait at least this long before sending the initial notification.
+  group_wait: 30s
+  # When the first notification was sent, wait this long to send the next notification for the same group.
+  group_interval: 5m
+  # If an alert has been firing for this long, send a notification every.
+  repeat_interval: 1h
+
+# The receivers to which alerts are sent.
+receivers:
+- name: 'default-receiver'
+  webhook_configs:
+  - url: 'http://<insert-your-webhook-url-here>' # Use a site like webhook.site for testing
+    send_resolved: true
+
+# Inhibition rules silence alerts if other alerts are already firing (e.g., silence child alerts if a parent "cluster is down" alert is firing).
+inhibit_rules:
+  - source_matchers:
+      - 'alertname = ClusterDown'
+    target_matchers:
+      - 'alertname != ClusterDown'
+    equal: ['cluster']

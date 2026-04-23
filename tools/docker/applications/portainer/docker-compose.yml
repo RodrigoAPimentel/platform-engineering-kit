@@ -1,0 +1,61 @@
+name: ${PROJECT_NAME}-stack
+
+services:
+  app:
+    image: ${IMAGE_NAME}:${IMAGE_VERSION}
+    container_name: ${CONTAINER_NAME}
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "${APP_PORT}:9443"
+      - "${APP_LEGACY_HTTP_PORT}:9000"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - volume:/data
+    command:
+      #- --admin-password=$${PORTAINER_HASHED_PASSWORD}
+      
+      ## For use with Traefik or other reverse proxies, set the base URL to ensure correct routing and asset loading.
+      - --base-url
+      - ${PORTAINER_BASE_URL}
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "wget", "--no-check-certificate", "--quiet", "--tries=1", "--spider", "https://localhost:9443/api/system/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # user: "${APP_UID}:${APP_GID}"
+    
+    ## Production defaults enabled below.
+    ## For development, comment read_only/tmpfs and use bind mounts.
+    # read_only: true
+    # tmpfs:
+    #   - /tmp
+    
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Optional resource guardrails.
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+          
+volumes:
+  volume:
+    name: ${VOLUME_NAME}
+    
+networks:
+  network:
+    driver: ${NETWORK_DRIVER}
+    driver_opts:
+      com.docker.network.driver.mtu: ${NETWORK_MTU}
+      com.docker.network.bridge.enable_ip_masquerade: "${NETWORK_ENABLE_IP_MASQUERADE}"
+      com.docker.network.bridge.enable_icc: "${NETWORK_ENABLE_ICC}"
+    name: ${NETWORK_NAME}

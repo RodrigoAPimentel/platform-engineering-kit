@@ -1,0 +1,62 @@
+name: ${PROJECT_NAME}-stack
+
+services:
+  app:
+    image: ${IMAGE_NAME}:${IMAGE_VERSION}
+    container_name: ${CONTAINER_NAME}
+    restart: always
+    env_file: .env
+    command: >
+      /bin/sh -c "
+      sh /usr/share/nginx/html/index/generate-services-catalog.sh /etc/nginx/sites-enabled /usr/share/nginx/html/index/services.json &&
+      exec nginx -g 'daemon off;'
+      "
+    ports:
+      - "${APP_PORT}:80"
+    volumes:
+      - volume:/var/log/nginx
+      - ./configs/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./configs/sites-enabled:/etc/nginx/sites-enabled:ro
+      - ./configs/html:/usr/share/nginx/html
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # user: "${APP_UID}:${APP_GID}"    
+    ## Production defaults enabled below.
+    ## For development, comment read_only/tmpfs and use bind mounts.
+    # read_only: true
+    # tmpfs:
+    #   - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - NET_BIND_SERVICE
+    # Optional resource guardrails.
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+
+volumes:
+  volume:
+    name: ${VOLUME_NAME}
+    
+networks:
+  network:
+    driver: ${NETWORK_DRIVER}
+    driver_opts:
+      com.docker.network.driver.mtu: ${NETWORK_MTU}
+      com.docker.network.bridge.enable_ip_masquerade: "${NETWORK_ENABLE_IP_MASQUERADE}"
+      com.docker.network.bridge.enable_icc: "${NETWORK_ENABLE_ICC}"
+    name: ${NETWORK_NAME}

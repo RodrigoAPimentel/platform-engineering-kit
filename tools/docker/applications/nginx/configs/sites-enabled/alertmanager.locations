@@ -1,0 +1,26 @@
+location = /alertmanager {
+    return 301 /alertmanager/;
+}
+
+# # Reverse proxy for Alertmanager at /alertmanager
+# # Fallback: if the upstream is not accessible, return a friendly page
+location /alertmanager {
+    set $alertmanager_upstream http://alertmanager:9093;
+    rewrite ^/alertmanager/(.*)$ /$1 break;
+    proxy_pass $alertmanager_upstream;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_http_version 1.1;
+    proxy_read_timeout 90s;
+    proxy_intercept_errors on;
+    error_page 500 502 503 504 = /alertmanager-unavailable.html;
+}
+
+location = /alertmanager-unavailable.html {
+    default_type text/html;
+    return 200 '<!DOCTYPE html><html><head><title>Alertmanager Unavailable</title></head><body style="font-family:sans-serif;text-align:center;margin-top:10vh;"><h1>Alertmanager Unavailable</h1><p>The Alertmanager service is currently not accessible.<br>Please try again later.</p></body></html>';
+}

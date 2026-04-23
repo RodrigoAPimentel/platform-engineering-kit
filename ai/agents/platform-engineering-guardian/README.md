@@ -22,6 +22,7 @@ Structured package for the Platform Engineering Guardian agent, prepared for lon
 - prompts/guardian-standalone-categorization.prompt.md
 - prompts/guardian-multi-distro-consolidation.prompt.md
 - prompts/guardian-agent-sync.prompt.md
+- prompts/guardian-temp-triage.prompt.md
 
 ## Governance Notes
 
@@ -42,3 +43,7 @@ Structured package for the Platform Engineering Guardian agent, prepared for lon
 
 - The default language for prompts, agent instructions, and package documentation is English.
 - Use another language only when explicitly requested for a specific task.
+
+## Troubleshooting
+
+- If slash prompts do not appear in Copilot Chat, reload the window and confirm that the prompt files exist in both `.github/prompts/` and `ai/agents/platform-engineering-guardian/prompts/`.

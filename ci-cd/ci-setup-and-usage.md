@@ -11,6 +11,20 @@ This guide explains how to configure, maintain, and use CI workflows in this rep
   - `scripts/utils/lib/ci/validate-script-naming.sh`
   - `scripts/utils/lib/ci/validate-english-content.sh`
 
+## Mirror Integrity Contract
+
+The repository enforces a mandatory mirror policy for CI workflows:
+
+- `.github/workflows/` must be synchronized with `ci-cd/github-actions/`.
+- Any workflow creation, update, rename, or deletion must be applied to both locations in the same change.
+- Workflow path triggers must include both mirrored workflow file paths when applicable.
+
+Recommended pull request checks before merge:
+
+1. Inventory parity between workflow directories.
+2. Content parity between mirrored files.
+3. Trigger path parity for changed workflows.
+
 ## Prerequisites
 
 - GitHub repository with Actions enabled.
@@ -19,14 +33,25 @@ This guide explains how to configure, maintain, and use CI workflows in this rep
 
 ## Current Workflow Inventory
 
+Active workflows (`.github/workflows/`):
+
 - `guardian-audit-gate.yml`
   - Runs on pull requests targeting `main` and blocks merge when configured as a required status check.
 - `validate-script-naming.yml`
   - Validates shell script naming convention.
 - `validate-repository-language.yml`
   - Enforces English-only policy in governed paths.
+- `validate-docker-compose-config.yml`
+  - Recursively validates all Docker Compose files using `docker compose config`.
+
+Mirrored catalog workflows (`ci-cd/github-actions/`):
+
+- `guardian-audit-gate.yml`
+- `validate-script-naming.yml`
+- `validate-repository-language.yml`
+- `validate-docker-compose-config.yml`
 - `test-install-awx.yml`
-  - Validates AWX installer script quality and compatibility.
+  - Validates AWX installer script quality and compatibility. If this workflow is expected to run in GitHub Actions, ensure a synchronized file exists under `.github/workflows/`.
 
 ## How CI Is Triggered
 
@@ -64,8 +89,10 @@ Use these commands from repository root:
 ```bash
 bash -n scripts/utils/lib/ci/validate-script-naming.sh
 bash -n scripts/utils/lib/ci/validate-english-content.sh
+bash -n scripts/utils/lib/ci/validate-docker-compose-config.sh
 bash scripts/utils/lib/ci/validate-script-naming.sh
 bash scripts/utils/lib/ci/validate-english-content.sh
+bash scripts/utils/lib/ci/validate-docker-compose-config.sh
 ```
 
 ## Open a Pull Request and Validate
@@ -103,6 +130,7 @@ Note: GitHub Actions cannot universally block every push to every branch by itse
 ## Pull Request Checklist (CI)
 
 - Workflow updated in both mirror locations.
+- Workflow inventories are consistent between mirror directories.
 - Path triggers include both mirror file paths.
 - English naming and labels are preserved.
 - Validators run locally.

@@ -10,6 +10,8 @@ These scripts are intended for decoupled runtimes and process tooling that can b
   ↳ Runbook: [docs/runbooks/nodejs-standalone-installation.md](../../../docs/runbooks/nodejs-standalone-installation.md)
 - [install-pm2-standalone.sh](install-pm2-standalone.sh) -> Installs PM2 for a target user and configures PM2 as a systemd service.
   ↳ Runbook: [docs/runbooks/pm2-standalone-installation.md](../../../docs/runbooks/pm2-standalone-installation.md)
+- [install-devops-tools-stack-standalone.sh](install-devops-tools-stack-standalone.sh) -> Installs a standalone DevOps tools stack with Docker-based services (Jenkins, Keycloak, Portainer, and NGINX).
+  ↳ Runbook: [docs/runbooks/devops-tools-stack-standalone-installation.md](../../../docs/runbooks/devops-tools-stack-standalone-installation.md)
 
 ## Security
 
