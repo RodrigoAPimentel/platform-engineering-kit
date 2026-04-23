@@ -36,13 +36,17 @@ function parseServiceName(route) {
     .join(' ');
 }
 
-function iconForService(serviceName) {
+function iconForService(serviceName, sourceFile = '') {
+  const source = sourceFile.toLowerCase();
   const lower = serviceName.toLowerCase();
-  if (lower.includes('portainer')) return 'docker';
-  if (lower.includes('grafana')) return 'chart';
-  if (lower.includes('prometheus')) return 'pulse';
-  if (lower.includes('kibana')) return 'search';
-  if (lower.includes('jenkins')) return 'automation';
+
+  if (source.includes('alertmanager') || lower.includes('alertmanager')) return 'alertmanager';
+  if (source.includes('authentik') || lower.includes('authentik')) return 'authentik';
+  if (source.includes('grafana') || lower.includes('grafana')) return 'grafana';
+  if (source.includes('jenkins') || lower.includes('jenkins')) return 'jenkins';
+  if (source.includes('portainer') || lower.includes('portainer')) return 'portainer';
+  if (source.includes('prometheus') || lower.includes('prometheus')) return 'prometheus';
+
   return 'app';
 }
 
@@ -140,13 +144,15 @@ function collectServices() {
       const upstream = resolveUpstream(block.text);
       const direct = upstream ? parseDirectLink(upstream, normalizedRoute) : null;
 
+      const sourceFile = path.relative(sitesEnabledDir, file);
+
       services.push({
         name: serviceName,
         slug: normalizedRoute.replace(/^\/+|\/+$/g, '').replace(/\//g, '-'),
         route: normalizedRoute,
         proxyUrl: normalizedRoute,
-        sourceFile: path.relative(sitesEnabledDir, file),
-        icon: iconForService(serviceName),
+        sourceFile,
+        icon: iconForService(serviceName, path.basename(file, path.extname(file))),
         upstream: upstream || null,
         direct,
       });

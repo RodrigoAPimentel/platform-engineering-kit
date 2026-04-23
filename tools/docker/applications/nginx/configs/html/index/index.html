@@ -4,259 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Service Catalog</title>
-    <style>
-        :root {
-            --bg: #0b1220;
-            --bg-soft: #101a2f;
-            --card: #12203a;
-            --card-border: #2f4a74;
-            --text: #eaf1ff;
-            --muted: #95a9cb;
-            --accent: #2dd4bf;
-            --accent-2: #60a5fa;
-            --danger: #fb7185;
-            --ok: #34d399;
-        }
-
-        * { box-sizing: border-box; }
-
-        body {
-            margin: 0;
-            color: var(--text);
-            font-family: "Segoe UI", "Trebuchet MS", sans-serif;
-            background:
-                radial-gradient(1200px 500px at 15% -10%, #1e3a8a 0%, transparent 55%),
-                radial-gradient(1000px 600px at 100% 0%, #0f766e 0%, transparent 60%),
-                linear-gradient(160deg, var(--bg) 0%, #0a1020 100%);
-            min-height: 100vh;
-        }
-
-        .shell {
-            width: min(1400px, 94vw);
-            margin: 0 auto;
-            padding: 2.5rem 0 4rem;
-        }
-
-        .hero {
-            display: flex;
-            justify-content: space-between;
-            gap: 1rem;
-            align-items: flex-end;
-            margin-bottom: 2rem;
-        }
-
-        h1 {
-            margin: 0;
-            letter-spacing: 0.3px;
-            font-size: clamp(1.8rem, 2.5vw, 2.6rem);
-        }
-
-        .subtitle {
-            color: var(--muted);
-            margin-top: 0.5rem;
-            max-width: 65ch;
-            line-height: 1.45;
-        }
-
-        .meta {
-            text-align: right;
-            color: var(--muted);
-            font-size: 0.9rem;
-            line-height: 1.45;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 1.25rem;
-        }
-
-        .card {
-            background: linear-gradient(160deg, rgba(19, 33, 60, 0.95), rgba(14, 26, 49, 0.95));
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            padding: 1.2rem;
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            min-height: 320px;
-            animation: rise .45s ease both;
-        }
-
-        @keyframes rise {
-            from { transform: translateY(8px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .top {
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-        }
-
-        .icon {
-            width: 46px;
-            height: 46px;
-            border-radius: 12px;
-            background: linear-gradient(140deg, #2563eb, #14b8a6);
-            display: grid;
-            place-items: center;
-            font-size: 1.2rem;
-            flex: 0 0 auto;
-        }
-
-        .title {
-            margin: 0;
-            font-size: 1.15rem;
-            font-weight: 700;
-        }
-
-        .tag {
-            display: inline-block;
-            width: fit-content;
-            background: rgba(96, 165, 250, 0.15);
-            color: #b8d7ff;
-            border: 1px solid rgba(96, 165, 250, 0.25);
-            border-radius: 999px;
-            padding: 0.15rem 0.6rem;
-            font-size: 0.75rem;
-            margin-top: 0.2rem;
-        }
-
-        .info {
-            color: var(--muted);
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-
-        .status-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            width: fit-content;
-            border-radius: 999px;
-            padding: 0.2rem 0.55rem;
-            font-size: 0.75rem;
-            border: 1px solid transparent;
-            margin-top: 0.35rem;
-        }
-
-        .status-pill::before {
-            content: "";
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: currentColor;
-        }
-
-        .status-pill.checking {
-            color: #fde68a;
-            background: rgba(234, 179, 8, 0.15);
-            border-color: rgba(234, 179, 8, 0.35);
-        }
-
-        .status-pill.online {
-            color: var(--ok);
-            background: rgba(16, 185, 129, 0.16);
-            border-color: rgba(16, 185, 129, 0.35);
-        }
-
-        .status-pill.offline {
-            color: var(--danger);
-            background: rgba(251, 113, 133, 0.12);
-            border-color: rgba(251, 113, 133, 0.35);
-        }
-
-        .line {
-            display: flex;
-            gap: 0.45rem;
-            align-items: baseline;
-            word-break: break-all;
-        }
-
-        .routes {
-            margin-top: 0.4rem;
-            display: grid;
-            gap: 0.2rem;
-        }
-
-        .route-item {
-            color: #dbeafe;
-            font-size: 0.86rem;
-            opacity: 0.95;
-        }
-
-        .k { color: #93c5fd; min-width: 55px; }
-        .v { color: #dbeafe; }
-
-        .actions {
-            margin-top: auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.55rem;
-        }
-
-        .btn {
-            text-decoration: none;
-            text-align: center;
-            padding: 0.65rem 0.75rem;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.86rem;
-            border: 1px solid transparent;
-            transition: transform 120ms ease, filter 120ms ease;
-        }
-
-        .btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
-
-        .btn.proxy {
-            background: linear-gradient(120deg, var(--accent), var(--accent-2));
-            color: #06132a;
-        }
-
-        .status {
-            margin: 1rem 0;
-            color: var(--muted);
-            font-size: 0.92rem;
-        }
-
-        .empty {
-            border: 1px dashed #44618e;
-            border-radius: 14px;
-            padding: 2rem;
-            color: var(--muted);
-            text-align: center;
-            background: rgba(11, 22, 44, 0.5);
-        }
-
-        @media (max-width: 700px) {
-            .hero { flex-direction: column; align-items: flex-start; }
-            .meta { text-align: left; }
-            .actions { grid-template-columns: 1fr; }
-        }
-
-        @media (max-width: 760px) {
-            .grid {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-
-            .card {
-                min-height: 0;
-                padding: 1rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
     <main class="shell">
         <section class="hero">
-            <div>
+            <div class="hero-copy">
+                <div class="eyebrow">NGINX Service Catalog</div>
                 <h1>Service Catalog</h1>
                 <p class="subtitle">Catalog of services published by Nginx. Each card is generated from files in sites-enabled with proxy routes.</p>
             </div>
-            <div class="meta">
+            <div class="meta hero-meta">
                 <div id="count">Loading services...</div>
                 <div id="generatedAt"></div>
             </div>
@@ -267,22 +25,25 @@
     </main>
 
     <script>
-        const iconMap = {
-            docker: "🐳",
-            chart: "📊",
-            pulse: "📈",
-            search: "🔎",
-            automation: "⚙",
-            shield: "🛡",
-            database: "🗄",
-            stream: "🛰",
-            app: "🧩"
+        const serviceIcons = {
+            alertmanager: { slug: "alertmanager", label: "Alertmanager" },
+            authentik: { slug: "authentik", label: "Authentik" },
+            grafana: { slug: "grafana", label: "Grafana" },
+            jenkins: { slug: "jenkins", label: "Jenkins" },
+            portainer: { slug: "portainer", label: "Portainer" },
+            prometheus: { slug: "prometheus", label: "Prometheus" },
+            app: { slug: null, label: "Service" }
         };
 
         const countEl = document.getElementById('count');
         const generatedAtEl = document.getElementById('generatedAt');
         const statusEl = document.getElementById('status');
         const catalogEl = document.getElementById('catalog');
+        const statusOrder = {
+            online: 0,
+            offline: 1,
+            checking: 2
+        };
 
         function safeHostname() {
             const host = window.location.hostname || 'localhost';
@@ -293,19 +54,70 @@
             return route;
         }
 
-        function resolveIconByName(name, fallback = 'app') {
-            const value = String(name || '').toLowerCase();
+        function normalizeServiceKey(value = '') {
+            return String(value || '').toLowerCase().replace(/\..*$/, '');
+        }
 
-            if (value.includes('portainer') || value.includes('docker')) return 'docker';
-            if (value.includes('grafana') || value.includes('dashboard')) return 'chart';
-            if (value.includes('prometheus') || value.includes('metrics')) return 'pulse';
-            if (value.includes('kibana') || value.includes('elastic') || value.includes('search')) return 'search';
-            if (value.includes('jenkins') || value.includes('ci') || value.includes('pipeline')) return 'automation';
-            if (value.includes('keycloak') || value.includes('auth') || value.includes('oauth') || value.includes('sso')) return 'shield';
-            if (value.includes('postgres') || value.includes('mysql') || value.includes('mongo') || value.includes('redis') || value.includes('db')) return 'database';
-            if (value.includes('rabbitmq') || value.includes('kafka') || value.includes('queue') || value.includes('broker')) return 'stream';
+        function resolveIconKey(service) {
+            const sourceKey = normalizeServiceKey(service.sourceFile || '');
+            const nameKey = normalizeServiceKey(service.name || '');
 
-            return fallback || 'app';
+            if (sourceKey.includes('alertmanager') || nameKey.includes('alertmanager')) return 'alertmanager';
+            if (sourceKey.includes('authentik') || nameKey.includes('authentik')) return 'authentik';
+            if (sourceKey.includes('grafana') || nameKey.includes('grafana') || nameKey.includes('dashboard')) return 'grafana';
+            if (sourceKey.includes('jenkins') || nameKey.includes('jenkins')) return 'jenkins';
+            if (sourceKey.includes('portainer') || nameKey.includes('portainer')) return 'portainer';
+            if (sourceKey.includes('prometheus') || nameKey.includes('prometheus') || nameKey.includes('metrics')) return 'prometheus';
+
+            return 'app';
+        }
+
+        function getServiceIconMeta(service) {
+            const key = resolveIconKey(service);
+            return serviceIcons[key] || serviceIcons.app;
+        }
+
+        function getFallbackIconLabel(service) {
+            const baseName = (service.sourceFile || service.name || 'service').replace(/\.locations$/i, '');
+            const compact = baseName
+                .split(/[^a-zA-Z0-9]+/)
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((part) => part.charAt(0).toUpperCase())
+                .join('');
+
+            return compact || 'S';
+        }
+
+        function getCardLabel(service) {
+            return (service.sourceFile || service.name || 'service').replace(/\.locations$/i, '');
+        }
+
+        function compareServicesByStatusAndName(left, right) {
+            const leftPriority = statusOrder[left.status] ?? statusOrder.checking;
+            const rightPriority = statusOrder[right.status] ?? statusOrder.checking;
+
+            if (leftPriority !== rightPriority) {
+                return leftPriority - rightPriority;
+            }
+
+            return getCardLabel(left).localeCompare(getCardLabel(right), undefined, { sensitivity: 'base' });
+        }
+
+        function reorderCatalogCards(services) {
+            const cards = new Map();
+
+            catalogEl.querySelectorAll('.card').forEach((card) => {
+                cards.set(card.dataset.serviceSlug, card);
+            });
+
+            const orderedCards = services
+                .slice()
+                .sort(compareServicesByStatusAndName)
+                .map((service) => cards.get((service.slug || service.name || 'service').replace(/[^a-zA-Z0-9_-]/g, '-')))
+                .filter(Boolean);
+
+            catalogEl.replaceChildren(...orderedCards);
         }
 
         function getSourceKey(sourceFile = '') {
@@ -360,6 +172,7 @@
                     route: primaryRoute,
                     proxyUrl: primaryRoute,
                     slug: (service.sourceFile || service.slug || service.name || 'service').toLowerCase().replace(/[^a-z0-9_-]/g, '-'),
+                    icon: resolveIconKey(service),
                     upstream: (service.upstreams && service.upstreams[0]) || service.upstream || 'N/A'
                 };
             });
@@ -367,9 +180,9 @@
 
         function cardTemplate(service) {
             const proxyUrl = buildProxyUrl(service.proxyUrl || service.route);
-            const cardName = (service.sourceFile || service.name || 'service').replace(/\.locations$/i, '');
-            const iconKey = resolveIconByName(cardName, service.icon);
-            const icon = iconMap[iconKey] || iconMap.app;
+            const cardName = getCardLabel(service);
+            const iconMeta = getServiceIconMeta(service);
+            const fallbackLabel = getFallbackIconLabel(service);
             const upstreams = Array.isArray(service.upstreams) && service.upstreams.length
                 ? service.upstreams
                 : [service.upstream || 'N/A'];
@@ -385,18 +198,30 @@
                 .join('');
 
             return `
-                <article class="card" data-service-slug="${safeSlug}" data-proxy-url="${proxyUrl}">
-                    <div class="top">
-                        <div class="icon" aria-hidden="true">${icon}</div>
-                        <div>
+                <article class="card status-checking" data-service-slug="${safeSlug}" data-proxy-url="${proxyUrl}">
+                    <div class="card-head">
+                        <div class="icon" aria-hidden="true">
+                            ${iconMeta.slug ? `<img class="service-icon" src="https://cdn.simpleicons.org/${iconMeta.slug}/0f172a" alt="${iconMeta.label} logo" loading="lazy" data-fallback="${fallbackLabel}">` : `<span class="service-icon-fallback">${fallbackLabel}</span>`}
+                        </div>
+                        <div class="card-heading">
                             <h2 class="title">${cardName}</h2>
                             <span class="tag">${service.sourceFile}</span>
                         </div>
                     </div>
+                    <div class="card-summary">
+                        <div class="summary-item">
+                            <span class="k">Routes</span>
+                            <span class="v">${routes.length}</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="k">Proxies</span>
+                            <span class="v">${upstreams.length}</span>
+                        </div>
+                    </div>
                     <div class="info">
-                        <div class="line"><span class="k">Routes</span><span class="v">${routes.length}</span></div>
+                        <div class="section-label">Routes</div>
                         <div class="routes">${routesHtml}</div>
-                        <div class="line"><span class="k">Proxies</span><span class="v">${upstreams.length}</span></div>
+                        <div class="section-label">Upstreams</div>
                         <div class="routes">${upstreamHtml}</div>
                         <div class="status-pill checking" data-health="${safeSlug}">Checking</div>
                     </div>
@@ -418,12 +243,18 @@
                     redirect: 'follow',
                     signal: controller.signal
                 });
+                const body = await response.text();
                 clearTimeout(timer);
 
-                if (response.ok || (response.status >= 300 && response.status < 400)) {
+                const unavailablePattern = /unavailable|currently not accessible/i;
+
+                if ((response.ok || (response.status >= 300 && response.status < 400)) && !unavailablePattern.test(body)) {
                     return { state: 'online', label: 'Online' };
                 }
-                return { state: 'offline', label: `Offline (${response.status})` };
+
+                const titleMatch = body.match(/<title>([^<]+)<\/title>/i);
+                const bodyLabel = titleMatch ? titleMatch[1].trim() : `Offline (${response.status})`;
+                return { state: 'offline', label: bodyLabel };
             } catch (error) {
                 clearTimeout(timer);
                 return { state: 'offline', label: 'Offline' };
@@ -441,9 +272,30 @@
                 el.classList.remove('checking');
                 el.classList.add(result.state);
                 el.textContent = result.label;
+
+                const card = el.closest('.card');
+                if (card) {
+                    card.classList.remove('status-checking', 'status-online', 'status-offline');
+                    card.classList.add(`status-${result.state}`);
+                }
+
+                service.status = result.state;
             });
 
             await Promise.all(checks);
+            reorderCatalogCards(services);
+        }
+
+        function wireIconFallbacks() {
+            document.querySelectorAll('.service-icon').forEach((icon) => {
+                icon.addEventListener('error', () => {
+                    const fallback = icon.dataset.fallback || 'S';
+                    const container = icon.closest('.icon');
+                    if (container) {
+                        container.innerHTML = `<span class="service-icon-fallback">${fallback}</span>`;
+                    }
+                });
+            });
         }
 
         async function loadCatalog() {
@@ -470,6 +322,7 @@
 
                 statusEl.textContent = 'Catalog loaded successfully.';
                 catalogEl.innerHTML = services.map(cardTemplate).join('');
+                wireIconFallbacks();
                 paintHealthStatuses(services);
             } catch (error) {
                 statusEl.textContent = 'Could not load the automatic catalog.';

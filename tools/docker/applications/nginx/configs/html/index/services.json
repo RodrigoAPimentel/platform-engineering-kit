@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-23T13:33:30Z",
+  "generatedAt": "2026-04-23T14:51:18Z",
   "serviceCount": 11,
   "services": [
     {
@@ -84,11 +84,11 @@
       "proxyUrl": "/grafana/",
       "sourceFile": "grafana.locations",
       "icon": "chart",
-      "upstream": "http://$grafana_upstream",
+      "upstream": "http://grafana:3000",
       "direct": {
         "protocol": "http",
-        "host": "$grafana_upstream",
-        "port": "80",
+        "host": "grafana",
+        "port": "3000",
         "path": "/grafana/"
       }
     },
