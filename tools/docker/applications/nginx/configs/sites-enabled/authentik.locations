@@ -25,7 +25,7 @@ location ^~ /authentik/ {
     proxy_redirect off;
     
     proxy_intercept_errors on;
-    error_page 500 502 503 504 = /authentik-unavailable.html;
+    error_page 500 502 503 504 = /service-unavailable.html;
 }
 
 # Authentik serves frontend assets from absolute /static paths.
@@ -76,9 +76,4 @@ location ^~ /ws/ {
     proxy_set_header Connection "upgrade";
     proxy_read_timeout 900s;
     proxy_redirect off;
-}
-
-location = /authentik-unavailable.html {
-    default_type text/html;
-    return 200 '<!DOCTYPE html><html><head><title>Authentik Unavailable</title></head><body style="font-family:sans-serif;text-align:center;margin-top:10vh;"><h1>Authentik Unavailable</h1><p>The Authentik service is currently not accessible.<br>Please try again later.</p></body></html>';
 }

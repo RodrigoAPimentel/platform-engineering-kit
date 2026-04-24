@@ -1,0 +1,49 @@
+name: ${PROJECT_NAME}-stack
+
+services:
+  app:
+    image: ${IMAGE_NAME}:${IMAGE_VERSION}
+    container_name: ${CONTAINER_NAME}
+    restart: unless-stopped
+    platform: linux/amd64
+    env_file: .env
+    ports:
+      - "${APP_PORT}:6379"
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    user: "${APP_UID}:${APP_GID}"
+    ## Production defaults enabled below.
+    ## For development, comment read_only/tmpfs and use bind mounts.
+    # read_only: true
+    # tmpfs:
+    #   - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Optional resource guardrails.
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+
+volumes:
+  volume:
+    name: ${VOLUME_NAME}
+
+networks:
+  network:
+    driver: ${NETWORK_DRIVER}
+    driver_opts:
+      com.docker.network.driver.mtu: ${NETWORK_MTU}
+      com.docker.network.bridge.enable_ip_masquerade: "${NETWORK_ENABLE_IP_MASQUERADE}"
+      com.docker.network.bridge.enable_icc: "${NETWORK_ENABLE_ICC}"
+    name: ${NETWORK_NAME}

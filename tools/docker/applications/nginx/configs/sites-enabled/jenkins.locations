@@ -18,10 +18,5 @@ location /jenkins/ {
     proxy_set_header Connection "upgrade";
 
     proxy_intercept_errors on;
-    error_page 500 502 503 504 = /jenkins-unavailable.html;
-}
-
-location = /jenkins-unavailable.html {
-    default_type text/html;
-    return 200 '<!DOCTYPE html><html><head><title>Jenkins Unavailable</title></head><body style="font-family:sans-serif;text-align:center;margin-top:10vh;"><h1>Jenkins Unavailable</h1><p>The Jenkins service is currently not accessible.<br>Please try again later.</p></body></html>';
+    error_page 500 502 503 504 = /service-unavailable.html;
 }

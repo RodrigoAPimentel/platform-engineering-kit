@@ -17,14 +17,9 @@ location /prometheus {
     proxy_http_version 1.1;
     proxy_read_timeout 90s;
     proxy_intercept_errors on;
-    error_page 500 502 503 504 = /prometheus-unavailable.html;
+    error_page 500 502 503 504 = /service-unavailable.html;
 }
 
 location = /query {
     return 302 /prometheus/query;
-}
-
-location = /prometheus-unavailable.html {
-    default_type text/html;
-    return 200 '<!DOCTYPE html><html><head><title>Prometheus Unavailable</title></head><body style="font-family:sans-serif;text-align:center;margin-top:10vh;"><h1>Prometheus Unavailable</h1><p>The Prometheus service is currently not accessible.<br>Please try again later.</p></body></html>';
 }
