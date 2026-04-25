@@ -18,5 +18,5 @@ location /jenkins/ {
     proxy_set_header Connection "upgrade";
 
     proxy_intercept_errors on;
-    error_page 500 502 503 504 = /service-unavailable.html;
+    error_page 500 502 503 504 = /service-unavailable.html?service=Jenkins;
 }

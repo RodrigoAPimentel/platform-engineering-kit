@@ -26,6 +26,17 @@ body {
     min-height: 100vh;
 }
 
+#antigravity-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: -1;
+    display: block;
+}
+
 .shell {
     width: min(1280px, 94vw);
     margin: 0 auto;

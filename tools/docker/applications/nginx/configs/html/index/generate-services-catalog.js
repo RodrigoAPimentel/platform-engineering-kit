@@ -32,7 +32,11 @@ function parseServiceName(route) {
   return cleaned
     .split('/')
     .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .map((part) => part
+      .split(/[-_]+/)
+      .filter(Boolean)
+      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+      .join(' '))
     .join(' ');
 }
 
@@ -46,6 +50,7 @@ function iconForService(serviceName, sourceFile = '') {
   if (source.includes('jenkins') || lower.includes('jenkins')) return 'jenkins';
   if (source.includes('portainer') || lower.includes('portainer')) return 'portainer';
   if (source.includes('prometheus') || lower.includes('prometheus')) return 'prometheus';
+  if (source.includes('nginx-exporter') || lower.includes('exporter')) return 'prometheus';
 
   return 'app';
 }
@@ -55,10 +60,14 @@ function extractBlocks(content) {
   const lines = content.split(/\r?\n/);
 
   for (let i = 0; i < lines.length; i += 1) {
-    const locationMatch = lines[i].match(/^\s*location\s+(=\s+)?([^\s{]+)\s*\{/);
+    const locationMatch = lines[i].match(/^\s*location\s+(?:([=~^*])\s*)?(.+?)\s*\{/);
     if (!locationMatch) continue;
 
-    const route = locationMatch[2].trim();
+    const modifier = locationMatch[1] || '';
+    let route = locationMatch[2].trim();
+    if (modifier === '~') {
+      route = route.replace(/^\^/, '').replace(/\(\.\*\)\$$/, '');
+    }
     let depth = 0;
     const blockLines = [];
 

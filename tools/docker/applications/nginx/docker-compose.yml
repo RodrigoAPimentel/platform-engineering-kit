@@ -59,6 +59,8 @@ services:
       - "${EXPORTER_PORT}:9113"
     networks:
       - network
+    depends_on:
+      - app
     healthcheck:
       test: ["CMD", "nginx-prometheus-exporter", "--version"]
       interval: 30s

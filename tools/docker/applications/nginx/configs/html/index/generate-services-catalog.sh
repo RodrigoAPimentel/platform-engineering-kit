@@ -26,6 +26,11 @@ extract_records() {
           sub(/^[ \t]*location[ \t]+((=|\^~|~\*)[ \t]+|~[ \t]+)?/, "", raw)
           sub(/[ \t]*\{?$/, "", raw)
           route=trim(raw)
+          if (route ~ /^\^\/nginx-exporter\//) {
+            route="/nginx-exporter/"
+          } else if (route ~ /^\^/) {
+            sub(/^\^/, "", route)
+          }
           inloc=1
           depth=0
         }
@@ -108,19 +113,72 @@ service_name_from_route() {
     for (i=1; i<=NF; i++) {
       p=$i
       if (length(p) == 0) continue
-      p=toupper(substr(p,1,1)) tolower(substr(p,2))
+      gsub(/[-_]+/, " ", p)
+      split(p, parts, /[[:space:]]+/)
+      chunk=""
+      for (j=1; j<=length(parts); j++) {
+        if (length(parts[j]) == 0) continue
+        part=parts[j]
+        part=toupper(substr(part,1,1)) tolower(substr(part,2))
+        chunk = chunk (chunk=="" ? "" : " ") part
+      }
+      p=chunk
       out = out (out=="" ? "" : " ") p
     }
     print out
   }'
 }
 
+second_location_route() {
+  file="$1"
+  awk '
+    function trim(s) { gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
+    BEGIN { count=0 }
+    /^[ \t]*location[ \t]+/ {
+      if (match($0, /location[ \t]+((=|\^~|~\*)[ \t]+|~[ \t]+)?([^ \t{]+)/)) {
+        raw=substr($0, RSTART, RLENGTH)
+        sub(/^[ \t]*location[ \t]+((=|\^~|~\*)[ \t]+|~[ \t]+)?/, "", raw)
+        sub(/[ \t]*\{?$/, "", raw)
+        route=trim(raw)
+        if (route ~ /^\^/) sub(/^\^/, "", route)
+        count += 1
+        if (count == 2) {
+          if (route ~ /^\//) {
+            if (route !~ /\/$/) route = route "/"
+            print route
+          }
+          exit
+        }
+      }
+    }
+  ' "$file"
+}
+
+service_name_for_source() {
+  source_file="$1"
+  route="$2"
+
+  case "$source_file" in
+    *.locations)
+      second_route=$(second_location_route "$source_file")
+      if [ -n "$second_route" ]; then
+        service_name_from_route "$second_route"
+        return
+      fi
+      ;;
+  esac
+
+  service_name_from_route "$route"
+}
+
 icon_for_service() {
   s=$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')
   case "$s" in
+    *alertmanager*) printf 'prometheus' ;;
     *portainer*|*docker*) printf 'docker' ;;
     *grafana*|*dashboard*) printf 'chart' ;;
     *prometheus*|*metrics*) printf 'pulse' ;;
+    *nginx-exporter*|*exporter*) printf 'pulse' ;;
     *kibana*|*elastic*|*search*) printf 'search' ;;
     *jenkins*|*ci*|*pipeline*) printf 'automation' ;;
     *keycloak*|*auth*|*oauth*|*sso*) printf 'shield' ;;
@@ -145,7 +203,7 @@ while IFS='|' read -r route upstream source_file; do
   idx=$((idx + 1))
 
   route_norm=$(normalize_route "$route")
-  name=$(service_name_from_route "$route_norm")
+  name=$(service_name_for_source "$source_file" "$route_norm")
   slug=$(slugify "$route_norm")
   icon=$(icon_for_service "$name")
   source_base=$(basename "$source_file")

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Unavailable</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .shell {
+            width: min(760px, 94vw);
+            padding: 0;
+        }
+
+        .error-card {
+            background: linear-gradient(180deg, #ffffff 0%, var(--surface-soft) 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 18px 36px rgba(16, 24, 40, 0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            animation: rise .45s ease both;
+        }
+
+        .header-section {
+            border-bottom: 1px solid rgba(139, 92, 246, 0.14);
+            padding-bottom: 1.5rem;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.34rem 0.72rem;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.8rem;
+        }
+
+        .title {
+            font-size: clamp(26px, 3vw, 34px);
+            margin: 0 0 0.5rem;
+        }
+
+        .subtitle {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .service-box {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(148, 163, 184, 0.26);
+            border-radius: 14px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+        }
+
+        .service-icon-large {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .service-icon-large svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .service-details {
+            display: grid;
+            gap: 0.2rem;
+        }
+
+        .service-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin: 0;
+        }
+
+        .service-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0;
+            word-break: break-word;
+            line-height: 1.2;
+        }
+
+        .actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.76rem 1.4rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+            border: 0;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.02);
+        }
+
+        .btn.primary {
+            background: linear-gradient(120deg, var(--accent), var(--accent-2));
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+        }
+
+        .btn.secondary {
+            background: rgba(255, 255, 255, 0.7);
+            color: var(--text);
+            border: 1px solid rgba(148, 163, 184, 0.36);
+        }
+
+        @media (max-width: 640px) {
+            .actions {
+                flex-direction: column;
+            }
+
+            .error-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="antigravity-canvas"></canvas>
+    <main class="shell">
+        <div class="error-card">
+            <div class="header-section">
+                <span class="eyebrow"
+                    style="border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.08); color: var(--danger);">Proxy
+                    Error</span>
+                <h1 id="title" class="title">Service currently unavailable</h1>
+                <p class="subtitle">The reverse proxy could not reach the requested upstream at this moment.</p>
+            </div>
+
+            <div class="service-box">
+                <div class="service-icon-large">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+                <div class="service-details">
+                    <p class="service-label">Impacted service</p>
+                    <p id="serviceName" class="service-name">Unknown service</p>
+                </div>
+            </div>
+
+            <p class="subtitle" style="font-size: 0.95rem;">If the issue persists, check the container health and NGINX
+                logs for this service route.</p>
+
+            <div class="actions">
+                <button class="btn primary" type="button" onclick="window.location.reload()">Try again</button>
+                <a class="btn secondary" href="/">Back to catalog</a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function inferServiceFromPath(pathname = '') {
+            const normalized = (pathname || '').toLowerCase();
+
+            const pathMatchers = [
+                { test: (path) => path.startsWith('/alertmanager'), name: 'Alertmanager' },
+                { test: (path) => path.startsWith('/authentik') || path.startsWith('/api/v3') || path.startsWith('/static/') || path.startsWith('/ws/'), name: 'Authentik' },
+                { test: (path) => path.startsWith('/grafana'), name: 'Grafana' },
+                { test: (path) => path.startsWith('/jenkins'), name: 'Jenkins' },
+                { test: (path) => path.startsWith('/nginx-exporter'), name: 'Nginx Exporter' },
+                { test: (path) => path.startsWith('/pgadmin'), name: 'PgAdmin' },
+                { test: (path) => path.startsWith('/postgres.exporter'), name: 'Postgres Exporter' },
+                { test: (path) => path.startsWith('/portainer') || path.startsWith('/api/websocket'), name: 'Portainer' },
+                { test: (path) => path.startsWith('/prometheus') || path.startsWith('/query'), name: 'Prometheus' },
+                { test: (path) => path.startsWith('/redisinsight.exporter'), name: 'Redis Exporter' },
+                { test: (path) => path.startsWith('/redisinsight'), name: 'RedisInsight' }
+            ];
+
+            const match = pathMatchers.find((item) => item.test(normalized));
+            return match ? match.name : '';
+        }
+
+        function parseServiceName() {
+            const params = new URLSearchParams(window.location.search);
+            const raw = (params.get('service') || '').trim();
+            if (raw) return raw;
+
+            const byPath = inferServiceFromPath(window.location.pathname || '');
+            if (byPath) return byPath;
+
+            return 'Unknown service';
+        }
+
+        document.getElementById('serviceName').textContent = parseServiceName();
+
+        /* ── Antigravity Confetti Engine ── */
+        const canvas = document.getElementById('antigravity-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Smooth mouse tracking
+        let mouseNormX = 0; // -1 to 1 (left to right)
+        let mouseNormY = 0; // -1 to 1 (top to bottom)
+        let smoothMouseX = 0;
+        let smoothMouseY = 0;
+
+        const GOOGLE_COLORS = ['#EA4335', '#4285F4', '#FBBC05', '#34A853'];
+        const SHAPE_TYPES = ['circle', 'square', 'triangle', 'plus'];
+        const PARTICLE_COUNT = 80;
+        const PARALLAX_STRENGTH = 60; // max px shift at depth 1.0
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', () => { resizeCanvas(); seedParticles(); });
+        resizeCanvas();
+
+        // Poisson-ish distribution: divide viewport into a grid and jitter
+        function poissonSeed(count, w, h) {
+            const cols = Math.ceil(Math.sqrt(count * (w / h)));
+            const rows = Math.ceil(count / cols);
+            const cellW = w / cols;
+            const cellH = h / rows;
+            const pts = [];
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (pts.length >= count) break;
+                    pts.push({
+                        x: (c + Math.random()) * cellW,
+                        y: (r + Math.random()) * cellH
+                    });
+                }
+            }
+            return pts;
+        }
+
+        class Confetti {
+            constructor(x, y) {
+                this.baseX = x;
+                this.baseY = y;
+                this.depth = Math.random() * 0.8 + 0.2;     // 0.2 – 1.0 (far – near)
+                this.size  = (4 + Math.random() * 8) * this.depth; // 1–9 px effective
+                this.color = GOOGLE_COLORS[Math.floor(Math.random() * 4)];
+                this.shape = SHAPE_TYPES[Math.floor(Math.random() * 4)];
+                this.angle = Math.random() * Math.PI * 2;
+                this.angleV = (Math.random() - 0.5) * 0.02;  // slow self-rotation
+                this.floatSpeed = (0.15 + Math.random() * 0.35) * this.depth;
+                this.driftX = (Math.random() - 0.5) * 0.2;
+                this.opacity = 0.55 + this.depth * 0.35;     // far = faint, near = vivid
+                this.y = this.baseY;
+                this.x = this.baseX;
+            }
+            update() {
+                // Gentle upward float
+                this.y -= this.floatSpeed;
+                this.x += this.driftX;
+                this.angle += this.angleV;
+                // Wrap when off screen
+                if (this.y < -40) this.y = canvas.height + 40;
+                if (this.x < -40) this.x = canvas.width + 40;
+                if (this.x > canvas.width + 40) this.x = -40;
+            }
+            draw(ctx, px, py) {
+                // Parallax offset: deeper particles move less
+                const offX = px * this.depth;
+                const offY = py * this.depth;
+                const drawX = this.x + offX;
+                const drawY = this.y + offY;
+
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                ctx.translate(drawX, drawY);
+                ctx.rotate(this.angle);
+                ctx.fillStyle = this.color;
+                const s = this.size;
+                const hs = s / 2;
+
+                switch (this.shape) {
+                    case 'circle':
+                        ctx.beginPath();
+                        ctx.arc(0, 0, hs, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                    case 'square':
+                        ctx.fillRect(-hs, -hs, s, s);
+                        break;
+                    case 'triangle':
+                        ctx.beginPath();
+                        ctx.moveTo(0, -hs);
+                        ctx.lineTo(hs, hs);
+                        ctx.lineTo(-hs, hs);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                    case 'plus': {
+                        const t = s * 0.28;
+                        ctx.fillRect(-t / 2, -hs, t, s);
+                        ctx.fillRect(-hs, -t / 2, s, t);
+                        break;
+                    }
+                }
+                ctx.restore();
+            }
+        }
+
+        let confetti = [];
+
+        function seedParticles() {
+            confetti = [];
+            const positions = poissonSeed(PARTICLE_COUNT, canvas.width, canvas.height);
+            positions.forEach(p => confetti.push(new Confetti(p.x, p.y)));
+        }
+        seedParticles();
+
+        document.addEventListener('mousemove', (e) => {
+            mouseNormX = (e.clientX / window.innerWidth  - 0.5) * 2; // -1 … 1
+            mouseNormY = (e.clientY / window.innerHeight - 0.5) * 2;
+        });
+
+        function tick() {
+            // Smooth interpolation toward target mouse position
+            smoothMouseX += (mouseNormX - smoothMouseX) * 0.08;
+            smoothMouseY += (mouseNormY - smoothMouseY) * 0.08;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Global parallax offset (opposite direction of mouse)
+            const px = -smoothMouseX * PARALLAX_STRENGTH;
+            const py = -smoothMouseY * PARALLAX_STRENGTH;
+
+            confetti.forEach(c => {
+                c.update();
+                c.draw(ctx, px, py);
+            });
+            
+            requestAnimationFrame(tick);
+        }
+        tick();
+    </script>
+</body>
+
+</html>

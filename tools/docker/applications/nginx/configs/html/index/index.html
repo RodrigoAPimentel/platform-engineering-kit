@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
+    <canvas id="antigravity-canvas"></canvas>
     <main class="shell">
         <section class="hero">
             <div class="hero-copy">
@@ -21,29 +22,42 @@
         </section>
 
         <div id="status" class="status">Reading service configuration...</div>
-        <section id="catalog" class="grid" aria-live="polite"></section>
+        <div id="catalog-container" aria-live="polite"></div>
     </main>
 
     <script>
         const serviceIcons = {
-            alertmanager: { slug: "alertmanager", label: "Alertmanager" },
+            alertmanager: { slug: "prometheus", label: "Alertmanager" },
             authentik: { slug: "authentik", label: "Authentik" },
             grafana: { slug: "grafana", label: "Grafana" },
             jenkins: { slug: "jenkins", label: "Jenkins" },
+            nginxExporter: { slug: "nginx", label: "Nginx Exporter" },
+            postgres: { slug: "postgresql", label: "PostgreSQL" },
             portainer: { slug: "portainer", label: "Portainer" },
             prometheus: { slug: "prometheus", label: "Prometheus" },
+            redisinsight: { slug: "redis", label: "Redis Insight" },
             app: { slug: null, label: "Service" }
         };
 
         const countEl = document.getElementById('count');
         const generatedAtEl = document.getElementById('generatedAt');
         const statusEl = document.getElementById('status');
-        const catalogEl = document.getElementById('catalog');
+        const catalogEl = document.getElementById('catalog-container');
         const statusOrder = {
             online: 0,
             offline: 1,
             checking: 2
         };
+
+        function getServiceCategory(service) {
+            const src = (service.sourceFile || '').toLowerCase();
+            const name = (service.name || '').toLowerCase();
+            const combined = src + name;
+            if (combined.includes('prometheus') || combined.includes('grafana') || combined.includes('alertmanager') || combined.includes('exporter') || combined.includes('metrics')) return 'Observabilidade';
+            if (combined.includes('postgres') || combined.includes('pgadmin') || combined.includes('redis')) return 'Banco de Dados';
+            if (combined.includes('portainer') || combined.includes('authentik') || combined.includes('jenkins')) return 'Infraestrutura';
+            return 'Outros';
+        }
 
         function safeHostname() {
             const host = window.location.hostname || 'localhost';
@@ -66,8 +80,11 @@
             if (sourceKey.includes('authentik') || nameKey.includes('authentik')) return 'authentik';
             if (sourceKey.includes('grafana') || nameKey.includes('grafana') || nameKey.includes('dashboard')) return 'grafana';
             if (sourceKey.includes('jenkins') || nameKey.includes('jenkins')) return 'jenkins';
+            if (sourceKey.includes('nginx-exporter') || nameKey.includes('nginx exporter') || nameKey.includes('exporter')) return 'nginxExporter';
+            if (sourceKey.includes('postgres') || nameKey.includes('postgres') || nameKey.includes('postgresql')) return 'postgres';
             if (sourceKey.includes('portainer') || nameKey.includes('portainer')) return 'portainer';
             if (sourceKey.includes('prometheus') || nameKey.includes('prometheus') || nameKey.includes('metrics')) return 'prometheus';
+            if (sourceKey.includes('redis') || nameKey.includes('redis') || nameKey.includes('insight')) return 'redisinsight';
 
             return 'app';
         }
@@ -77,8 +94,44 @@
             return serviceIcons[key] || serviceIcons.app;
         }
 
+        function normalizeCardName(value = '') {
+            return String(value || '')
+                .replace(/\.locations$/i, '')
+                .replace(/\.conf$/i, '')
+                .replace(/\.exporter$/i, '')
+                .trim();
+        }
+
+        function formatServiceDisplayName(rawName = '') {
+            const normalized = normalizeCardName(rawName).toLowerCase();
+            const knownNames = {
+                index: 'Nginx Exporter',
+                pgadmin: 'PgAdmin',
+                redisinsight: 'RedisInsight'
+            };
+
+            if (knownNames[normalized]) {
+                return knownNames[normalized];
+            }
+
+            return normalizeCardName(rawName)
+                .split(/[^a-zA-Z0-9]+/)
+                .filter(Boolean)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+                .join(' ');
+        }
+
+        function getServiceBaseName(service) {
+            const sourceBase = normalizeCardName(service.sourceFile || '');
+            if (sourceBase) {
+                return sourceBase;
+            }
+
+            return normalizeCardName(service.name || 'service');
+        }
+
         function getFallbackIconLabel(service) {
-            const baseName = (service.sourceFile || service.name || 'service').replace(/\.locations$/i, '');
+            const baseName = getServiceBaseName(service);
             const compact = baseName
                 .split(/[^a-zA-Z0-9]+/)
                 .filter(Boolean)
@@ -90,7 +143,7 @@
         }
 
         function getCardLabel(service) {
-            return (service.sourceFile || service.name || 'service').replace(/\.locations$/i, '');
+            return formatServiceDisplayName(getServiceBaseName(service)) || 'Service';
         }
 
         function compareServicesByStatusAndName(left, right) {
@@ -104,24 +157,50 @@
             return getCardLabel(left).localeCompare(getCardLabel(right), undefined, { sensitivity: 'base' });
         }
 
-        function reorderCatalogCards(services) {
-            const cards = new Map();
-
-            catalogEl.querySelectorAll('.card').forEach((card) => {
-                cards.set(card.dataset.serviceSlug, card);
-            });
-
-            const orderedCards = services
-                .slice()
-                .sort(compareServicesByStatusAndName)
-                .map((service) => cards.get((service.slug || service.name || 'service').replace(/[^a-zA-Z0-9_-]/g, '-')))
-                .filter(Boolean);
-
-            catalogEl.replaceChildren(...orderedCards);
+        function getCategoryIcon(catName) {
+            const icons = {
+                'Observabilidade': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-9 5 18 3-9h5"/></svg>',
+                'Banco de Dados': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>',
+                'Infraestrutura': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>',
+                'Outros': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>'
+            };
+            return icons[catName] || icons['Outros'];
         }
 
-        function getSourceKey(sourceFile = '') {
-            return sourceFile.toLowerCase().replace(/\..*$/, '');
+        function renderCategories(services) {
+            const categories = { 'Observabilidade': [], 'Banco de Dados': [], 'Infraestrutura': [], 'Outros': [] };
+            const sortedServices = services.slice().sort(compareServicesByStatusAndName);
+            for (const service of sortedServices) {
+                categories[getServiceCategory(service)].push(service);
+            }
+            let html = '';
+            for (const [catName, catServices] of Object.entries(categories)) {
+                if (catServices.length === 0) continue;
+                html += `<div class="category-block" data-category="${catName}">`;
+                html += `<h2 class="category-header">${getCategoryIcon(catName)} <span>${catName}</span></h2>`;
+                html += `<section class="grid" aria-live="polite">`;
+                html += catServices.map(cardTemplate).join('');
+                html += `</section></div>`;
+            }
+            catalogEl.innerHTML = html;
+            wireIconFallbacks();
+        }
+
+        function reorderCatalogCards() {
+            const grids = document.querySelectorAll('.grid');
+            grids.forEach(grid => {
+                const cards = Array.from(grid.querySelectorAll('.card'));
+                cards.sort((a, b) => {
+                    const statusA = Array.from(a.classList).find(c => c.startsWith('status-')) || 'status-checking';
+                    const statusB = Array.from(b.classList).find(c => c.startsWith('status-')) || 'status-checking';
+                    const stateOrder = { 'status-online': 0, 'status-offline': 1, 'status-checking': 2 };
+                    const pA = stateOrder[statusA] ?? 2;
+                    const pB = stateOrder[statusB] ?? 2;
+                    if (pA !== pB) return pA - pB;
+                    return a.querySelector('.title').textContent.localeCompare(b.querySelector('.title').textContent, undefined, { sensitivity: 'base' });
+                });
+                grid.replaceChildren(...cards);
+            });
         }
 
         function choosePrimaryRoute(service) {
@@ -133,9 +212,12 @@
                 return '/';
             }
 
-            const sourceKey = getSourceKey(service.sourceFile || '');
-            const preferred = routes.find((route) => sourceKey && route.toLowerCase().includes(`/${sourceKey}`));
-            return preferred || routes[0];
+            const firstNonExporter = routes.find((route) => !String(route || '').toLowerCase().includes('.exporter'));
+            return firstNonExporter || routes[0];
+        }
+
+        function chooseExporterRoute(routes = []) {
+            return routes.find((route) => String(route || '').toLowerCase().includes('.exporter')) || null;
         }
 
         function groupServicesByCard(services) {
@@ -167,10 +249,12 @@
 
             return Array.from(grouped.values()).map((service) => {
                 const primaryRoute = choosePrimaryRoute(service);
+                const exporterRoute = chooseExporterRoute(service.routes);
                 return {
                     ...service,
                     route: primaryRoute,
                     proxyUrl: primaryRoute,
+                    exporterRoute,
                     slug: (service.sourceFile || service.slug || service.name || 'service').toLowerCase().replace(/[^a-z0-9_-]/g, '-'),
                     icon: resolveIconKey(service),
                     upstream: (service.upstreams && service.upstreams[0]) || service.upstream || 'N/A'
@@ -180,6 +264,7 @@
 
         function cardTemplate(service) {
             const proxyUrl = buildProxyUrl(service.proxyUrl || service.route);
+            const exporterUrl = service.exporterRoute ? buildProxyUrl(service.exporterRoute) : null;
             const cardName = getCardLabel(service);
             const iconMeta = getServiceIconMeta(service);
             const fallbackLabel = getFallbackIconLabel(service);
@@ -191,10 +276,10 @@
                 ? service.routes
                 : [service.route].filter(Boolean);
             const routesHtml = routes
-                .map((route) => `<div class="route-item">${route}</div>`)
+                .map((route) => `<span class="resource-link">${route} <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span>`)
                 .join('');
             const upstreamHtml = upstreams
-                .map((upstream) => `<div class="route-item">${upstream}</div>`)
+                .map((upstream) => `<span class="resource-link">${upstream} <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span>`)
                 .join('');
 
             return `
@@ -208,25 +293,25 @@
                             <span class="tag">${service.sourceFile}</span>
                         </div>
                     </div>
-                    <div class="card-summary">
-                        <div class="summary-item">
-                            <span class="k">Routes</span>
-                            <span class="v">${routes.length}</span>
-                        </div>
-                        <div class="summary-item">
-                            <span class="k">Proxies</span>
-                            <span class="v">${upstreams.length}</span>
-                        </div>
-                    </div>
                     <div class="info">
-                        <div class="section-label">Routes</div>
-                        <div class="routes">${routesHtml}</div>
-                        <div class="section-label">Upstreams</div>
-                        <div class="routes">${upstreamHtml}</div>
+                        <details class="clean-details">
+                            <summary>Details</summary>
+                            <div class="resources-list">
+                                <div class="resource-group">
+                                    <span class="resource-label">Routes (${routes.length})</span>
+                                    ${routesHtml}
+                                </div>
+                                <div class="resource-group">
+                                    <span class="resource-label">Proxies (${upstreams.length})</span>
+                                    ${upstreamHtml}
+                                </div>
+                            </div>
+                        </details>
                         <div class="status-pill checking" data-health="${safeSlug}">Checking</div>
                     </div>
                     <div class="actions">
-                        <a class="btn proxy" href="${proxyUrl}" target="_blank" rel="noopener noreferrer">Access via Proxy</a>
+                        <a class="btn proxy" href="${proxyUrl}" target="_blank" rel="noopener noreferrer">Access Service</a>
+                        ${exporterUrl ? `<a class="btn proxy" href="${exporterUrl}" target="_blank" rel="noopener noreferrer">Access Exporter</a>` : ''}
                     </div>
                 </article>
             `;
@@ -263,12 +348,14 @@
 
         async function paintHealthStatuses(services) {
             const checks = services.map(async (service) => {
+                const proxyUrl = buildProxyUrl(service.proxyUrl || service.route);
+                const result = await checkServiceHealth(proxyUrl);
+                service.status = result.state;
+
                 const slug = (service.slug || service.name || 'service').replace(/[^a-zA-Z0-9_-]/g, '-');
                 const el = document.querySelector(`[data-health="${slug}"]`);
                 if (!el) return;
 
-                const proxyUrl = buildProxyUrl(service.proxyUrl || service.route);
-                const result = await checkServiceHealth(proxyUrl);
                 el.classList.remove('checking');
                 el.classList.add(result.state);
                 el.textContent = result.label;
@@ -278,12 +365,10 @@
                     card.classList.remove('status-checking', 'status-online', 'status-offline');
                     card.classList.add(`status-${result.state}`);
                 }
-
-                service.status = result.state;
             });
 
             await Promise.all(checks);
-            reorderCatalogCards(services);
+            reorderCatalogCards();
         }
 
         function wireIconFallbacks() {
@@ -321,8 +406,7 @@
                 }
 
                 statusEl.textContent = 'Catalog loaded successfully.';
-                catalogEl.innerHTML = services.map(cardTemplate).join('');
-                wireIconFallbacks();
+                renderCategories(services);
                 paintHealthStatuses(services);
             } catch (error) {
                 statusEl.textContent = 'Could not load the automatic catalog.';
@@ -336,6 +420,150 @@
         }
 
         loadCatalog();
+
+        /* ── Antigravity Confetti Engine ── */
+        const canvas = document.getElementById('antigravity-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Smooth mouse tracking
+        let mouseNormX = 0; // -1 to 1 (left to right)
+        let mouseNormY = 0; // -1 to 1 (top to bottom)
+        let smoothMouseX = 0;
+        let smoothMouseY = 0;
+
+        const GOOGLE_COLORS = ['#EA4335', '#4285F4', '#FBBC05', '#34A853'];
+        const SHAPE_TYPES = ['circle', 'square', 'triangle', 'plus'];
+        const PARTICLE_COUNT = 80;
+        const PARALLAX_STRENGTH = 60; // max px shift at depth 1.0
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', () => { resizeCanvas(); seedParticles(); });
+        resizeCanvas();
+
+        // Poisson-ish distribution: divide viewport into a grid and jitter
+        function poissonSeed(count, w, h) {
+            const cols = Math.ceil(Math.sqrt(count * (w / h)));
+            const rows = Math.ceil(count / cols);
+            const cellW = w / cols;
+            const cellH = h / rows;
+            const pts = [];
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (pts.length >= count) break;
+                    pts.push({
+                        x: (c + Math.random()) * cellW,
+                        y: (r + Math.random()) * cellH
+                    });
+                }
+            }
+            return pts;
+        }
+
+        class Confetti {
+            constructor(x, y) {
+                this.baseX = x;
+                this.baseY = y;
+                this.depth = Math.random() * 0.8 + 0.2;     // 0.2 – 1.0 (far – near)
+                this.size  = (4 + Math.random() * 8) * this.depth; // 1–9 px effective
+                this.color = GOOGLE_COLORS[Math.floor(Math.random() * 4)];
+                this.shape = SHAPE_TYPES[Math.floor(Math.random() * 4)];
+                this.angle = Math.random() * Math.PI * 2;
+                this.angleV = (Math.random() - 0.5) * 0.02;  // slow self-rotation
+                this.floatSpeed = (0.15 + Math.random() * 0.35) * this.depth;
+                this.driftX = (Math.random() - 0.5) * 0.2;
+                this.opacity = 0.55 + this.depth * 0.35;     // far = faint, near = vivid
+                this.y = this.baseY;
+                this.x = this.baseX;
+            }
+            update() {
+                // Gentle upward float
+                this.y -= this.floatSpeed;
+                this.x += this.driftX;
+                this.angle += this.angleV;
+                // Wrap when off screen
+                if (this.y < -40) this.y = canvas.height + 40;
+                if (this.x < -40) this.x = canvas.width + 40;
+                if (this.x > canvas.width + 40) this.x = -40;
+            }
+            draw(ctx, px, py) {
+                // Parallax offset: deeper particles move less
+                const offX = px * this.depth;
+                const offY = py * this.depth;
+                const drawX = this.x + offX;
+                const drawY = this.y + offY;
+
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                ctx.translate(drawX, drawY);
+                ctx.rotate(this.angle);
+                ctx.fillStyle = this.color;
+                const s = this.size;
+                const hs = s / 2;
+
+                switch (this.shape) {
+                    case 'circle':
+                        ctx.beginPath();
+                        ctx.arc(0, 0, hs, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                    case 'square':
+                        ctx.fillRect(-hs, -hs, s, s);
+                        break;
+                    case 'triangle':
+                        ctx.beginPath();
+                        ctx.moveTo(0, -hs);
+                        ctx.lineTo(hs, hs);
+                        ctx.lineTo(-hs, hs);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                    case 'plus': {
+                        const t = s * 0.28;
+                        ctx.fillRect(-t / 2, -hs, t, s);
+                        ctx.fillRect(-hs, -t / 2, s, t);
+                        break;
+                    }
+                }
+                ctx.restore();
+            }
+        }
+
+        let confetti = [];
+
+        function seedParticles() {
+            confetti = [];
+            const positions = poissonSeed(PARTICLE_COUNT, canvas.width, canvas.height);
+            positions.forEach(p => confetti.push(new Confetti(p.x, p.y)));
+        }
+        seedParticles();
+
+        document.addEventListener('mousemove', (e) => {
+            mouseNormX = (e.clientX / window.innerWidth  - 0.5) * 2; // -1 … 1
+            mouseNormY = (e.clientY / window.innerHeight - 0.5) * 2;
+        });
+
+        function tick() {
+            // Smooth interpolation toward target mouse position
+            smoothMouseX += (mouseNormX - smoothMouseX) * 0.08;
+            smoothMouseY += (mouseNormY - smoothMouseY) * 0.08;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Global parallax offset (opposite direction of mouse)
+            const px = -smoothMouseX * PARALLAX_STRENGTH;
+            const py = -smoothMouseY * PARALLAX_STRENGTH;
+
+            confetti.forEach(c => {
+                c.update();
+                c.draw(ctx, px, py);
+            });
+            
+            requestAnimationFrame(tick);
+        }
+        tick();
     </script>
 </body>
 </html>
