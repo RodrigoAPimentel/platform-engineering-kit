@@ -9,6 +9,14 @@
     --accent-2: #5ecdc4;
     --danger: #dc2626;
     --ok: #16a34a;
+    
+    /* Category Colors */
+    --cat-obs: rgba(139, 92, 246, 0.05);
+    --cat-db: rgba(234, 67, 53, 0.05);
+    --cat-infra: rgba(52, 168, 83, 0.05);
+    --cat-sec: rgba(244, 63, 94, 0.05);
+    --cat-net: rgba(14, 165, 233, 0.05);
+    --cat-other: rgba(100, 116, 139, 0.05);
 }
 
 * { box-sizing: border-box; }
@@ -362,4 +370,141 @@ h1 {
         min-height: 0;
         padding: 1rem;
     }
+}
+
+/* ── Category Sections ── */
+.category-block {
+    margin-bottom: 3rem;
+    padding: 1.5rem;
+    border-radius: 24px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    background: var(--surface);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+    transition: transform 0.2s ease;
+}
+
+.category-block:hover {
+    transform: translateY(-2px);
+}
+
+.category-block[data-category="Observability"] { background: var(--cat-obs); border-color: rgba(139, 92, 246, 0.15); }
+.category-block[data-category="Databases"] { background: var(--cat-db); border-color: rgba(234, 67, 53, 0.15); }
+.category-block[data-category="Infrastructure & DevOps"] { background: var(--cat-infra); border-color: rgba(52, 168, 83, 0.15); }
+.category-block[data-category="Security"] { background: var(--cat-sec); border-color: rgba(244, 63, 94, 0.15); }
+.category-block[data-category="Networking & Proxy"] { background: var(--cat-net); border-color: rgba(14, 165, 233, 0.15); }
+.category-block[data-category="Others"] { background: var(--cat-other); border-color: rgba(100, 116, 139, 0.15); }
+
+.category-block {
+    position: relative;
+    overflow: hidden;
+}
+
+.category-watermark {
+    position: absolute;
+    bottom: -20px;
+    right: -20px;
+    width: 200px;
+    height: 200px;
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 0;
+    transform: rotate(-15deg);
+}
+
+.category-watermark svg {
+    width: 100%;
+    height: 100%;
+}
+
+.category-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 1.5rem 0.5rem;
+    color: var(--text);
+}
+
+.category-header svg {
+    opacity: 0.8;
+}
+
+/* ── Details Refinement ── */
+.clean-details {
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.clean-details[open] {
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+}
+
+.clean-details summary {
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.clean-details summary::after {
+    content: "+";
+    font-size: 1.2rem;
+    color: var(--muted);
+    transition: transform 0.2s ease;
+}
+
+.clean-details[open] summary::after {
+    transform: rotate(45deg);
+}
+
+.resources-list {
+    padding: 0 1rem 1rem;
+    display: grid;
+    gap: 1rem;
+}
+
+.resource-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.resource-group + .resource-group {
+    border-top: 1px solid rgba(226, 232, 240, 0.6);
+    padding-top: 0.8rem;
+}
+
+.resource-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.resource-link {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.78rem;
+    background: var(--surface-soft);
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid rgba(226, 232, 240, 0.4);
+}
+
+.resource-link svg {
+    opacity: 0.4;
 }

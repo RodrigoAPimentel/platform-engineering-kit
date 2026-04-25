@@ -52,11 +52,23 @@
         function getServiceCategory(service) {
             const src = (service.sourceFile || '').toLowerCase();
             const name = (service.name || '').toLowerCase();
-            const combined = src + name;
-            if (combined.includes('prometheus') || combined.includes('grafana') || combined.includes('alertmanager') || combined.includes('exporter') || combined.includes('metrics')) return 'Observabilidade';
-            if (combined.includes('postgres') || combined.includes('pgadmin') || combined.includes('redis')) return 'Banco de Dados';
-            if (combined.includes('portainer') || combined.includes('authentik') || combined.includes('jenkins')) return 'Infraestrutura';
-            return 'Outros';
+            const combined = src + ' ' + name;
+            
+            const keywords = {
+                'Databases': ['postgres', 'pgadmin', 'mysql', 'mariadb', 'redis', 'mongo', 'mssql', 'oracle', 'sqlite', 'rabbitmq', 'kafka', 'nats', 'pulsar', 'clickhouse', 'cassandra', 'scylla', 'surrealdb', 'db', 'database', 'sql', 'nosql', 'broker', 'queue'],
+                'Security': ['vault', 'snyk', 'trivy', 'falco', 'aqua', 'checkov', 'sonarqube', 'security', 'auth', 'oauth', 'identity', 'cert', 'keycloak', 'authentik'],
+                'Networking & Proxy': ['nginx', 'traefik', 'haproxy', 'istio', 'linkerd', 'cilium', 'envoy', 'caddy', 'proxy', 'gateway', 'loadbalancer', 'network', 'vpn', 'dns'],
+                'Infrastructure & DevOps': ['portainer', 'jenkins', 'gitlab', 'github', 'argocd', 'flux', 'harbor', 'rancher', 'nomad', 'consul', 'terraform', 'ansible', 'container', 'orchestration', 'deploy', 'pipeline', 'cicd', 'infra'],
+                'Observability': ['prometheus', 'grafana', 'alertmanager', 'vmalert', 'loki', 'tempo', 'jaeger', 'zabbix', 'netdata', 'exporter', 'metrics', 'dashboard', 'tracing', 'logging', 'kibana', 'elasticsearch', 'fluentd', 'logstash', 'monitoring', 'stats']
+            };
+
+            for (const [category, words] of Object.entries(keywords)) {
+                if (words.some(word => combined.includes(word))) {
+                    return category;
+                }
+            }
+
+            return 'Others';
         }
 
         function safeHostname() {
@@ -159,16 +171,25 @@
 
         function getCategoryIcon(catName) {
             const icons = {
-                'Observabilidade': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-9 5 18 3-9h5"/></svg>',
-                'Banco de Dados': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>',
-                'Infraestrutura': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>',
-                'Outros': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>'
+                'Observability': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-9 5 18 3-9h5"/></svg>',
+                'Databases': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>',
+                'Infrastructure & DevOps': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>',
+                'Security': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+                'Networking & Proxy': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>',
+                'Others': '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>'
             };
-            return icons[catName] || icons['Outros'];
+            return icons[catName] || icons['Others'];
         }
 
         function renderCategories(services) {
-            const categories = { 'Observabilidade': [], 'Banco de Dados': [], 'Infraestrutura': [], 'Outros': [] };
+            const categories = { 
+                'Observability': [], 
+                'Databases': [], 
+                'Security': [],
+                'Networking & Proxy': [],
+                'Infrastructure & DevOps': [], 
+                'Others': [] 
+            };
             const sortedServices = services.slice().sort(compareServicesByStatusAndName);
             for (const service of sortedServices) {
                 categories[getServiceCategory(service)].push(service);
@@ -177,6 +198,7 @@
             for (const [catName, catServices] of Object.entries(categories)) {
                 if (catServices.length === 0) continue;
                 html += `<div class="category-block" data-category="${catName}">`;
+                html += `<div class="category-watermark">${getCategoryIcon(catName)}</div>`;
                 html += `<h2 class="category-header">${getCategoryIcon(catName)} <span>${catName}</span></h2>`;
                 html += `<section class="grid" aria-live="polite">`;
                 html += catServices.map(cardTemplate).join('');
