@@ -123,7 +123,8 @@ h1 {
     display: flex;
     flex-direction: column;
     gap: 0.95rem;
-    min-height: 332px;
+    min-height: 300px;
+    height: 100%;
     animation: rise .45s ease both;
 }
 
@@ -158,6 +159,15 @@ h1 {
 
 .card-heading {
     min-width: 0;
+    flex: 1;
+}
+
+.title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.25rem;
 }
 
 .icon {
@@ -252,7 +262,7 @@ h1 {
     padding: 0.22rem 0.6rem;
     font-size: 0.75rem;
     border: 1px solid transparent;
-    margin-top: 0.35rem;
+    flex-shrink: 0;
 }
 
 .status-pill::before {

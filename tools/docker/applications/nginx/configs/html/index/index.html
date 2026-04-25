@@ -311,7 +311,10 @@
                             ${iconMeta.slug ? `<img class="service-icon" src="https://cdn.simpleicons.org/${iconMeta.slug}/0f172a" alt="${iconMeta.label} logo" loading="lazy" data-fallback="${fallbackLabel}">` : `<span class="service-icon-fallback">${fallbackLabel}</span>`}
                         </div>
                         <div class="card-heading">
-                            <h2 class="title">${cardName}</h2>
+                            <div class="title-row">
+                                <h2 class="title">${cardName}</h2>
+                                <div class="status-pill checking" data-health="${safeSlug}">Checking</div>
+                            </div>
                             <span class="tag">${service.sourceFile}</span>
                         </div>
                     </div>
@@ -329,7 +332,6 @@
                                 </div>
                             </div>
                         </details>
-                        <div class="status-pill checking" data-health="${safeSlug}">Checking</div>
                     </div>
                     <div class="actions">
                         <a class="btn proxy" href="${proxyUrl}" target="_blank" rel="noopener noreferrer">Access Service</a>
