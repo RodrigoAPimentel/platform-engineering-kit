@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-04-26T22:10:53Z",
-  "serviceCount": 19,
+  "generatedAt": "2026-04-26T22:34:46Z",
+  "serviceCount": 20,
   "services": [
     {
       "name": "Alertmanager",
@@ -90,6 +90,21 @@
         "host": "",
         "port": "",
         "path": "/jenkins/"
+      }
+    },
+    {
+      "name": "N8n",
+      "slug": "n8n",
+      "route": "/n8n/",
+      "proxyUrl": "/n8n/",
+      "sourceFile": "n8n.locations",
+      "icon": "app",
+      "upstream": "http://n8n:5678",
+      "direct": {
+        "protocol": "http",
+        "host": "n8n",
+        "port": "5678",
+        "path": "/n8n/"
       }
     },
     {
@@ -234,11 +249,11 @@
       "proxyUrl": "/waha.health/",
       "sourceFile": "waha.locations",
       "icon": "app",
-      "upstream": "http://waha:3002/ping",
+      "upstream": "$waha_upstream/ping",
       "direct": {
-        "protocol": "http",
-        "host": "waha",
-        "port": "3002",
+        "protocol": "",
+        "host": "",
+        "port": "",
         "path": "/waha.health/"
       }
     },
@@ -249,11 +264,11 @@
       "proxyUrl": "/waha/api/",
       "sourceFile": "waha.locations",
       "icon": "app",
-      "upstream": "http://$waha_upstream",
+      "upstream": "http://waha:3002",
       "direct": {
         "protocol": "http",
-        "host": "$waha_upstream",
-        "port": "80",
+        "host": "waha",
+        "port": "3002",
         "path": "/waha/api/"
       }
     },
@@ -264,11 +279,11 @@
       "proxyUrl": "/waha/",
       "sourceFile": "waha.locations",
       "icon": "app",
-      "upstream": "http://$waha_upstream",
+      "upstream": "http://waha:3002",
       "direct": {
         "protocol": "http",
-        "host": "$waha_upstream",
-        "port": "80",
+        "host": "waha",
+        "port": "3002",
         "path": "/waha/"
       }
     },

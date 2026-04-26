@@ -29,11 +29,11 @@ location /dashboard/ {
 # ==========================================================
 location /waha/ {
 
-    set $waha_upstream waha:3002;
+    set $waha_upstream http://waha:3002;
 
     rewrite ^/waha/(.*)$ /$1 break;
 
-    proxy_pass http://$waha_upstream;
+    proxy_pass $waha_upstream;
     proxy_http_version 1.1;
 
     proxy_set_header Host $host;
@@ -76,14 +76,14 @@ location /waha/ {
 # ==========================================================
 location /waha/api/ {
 
-    set $waha_upstream waha:3002;
+    set $waha_upstream http://waha:3002;
 
     limit_req zone=waha_api_limit burst=20 nodelay;
     limit_req_status 429;
 
     rewrite ^/waha/(.*)$ /$1 break;
 
-    proxy_pass http://$waha_upstream;
+    proxy_pass $waha_upstream;
 
     proxy_http_version 1.1;
 
@@ -118,7 +118,9 @@ location /api/ {
 # ==========================================================
 location @waha_api {
 
-    proxy_pass http://waha:3002;
+    set $waha_upstream http://waha:3002;
+
+    proxy_pass $waha_upstream;
 
     proxy_http_version 1.1;
 
@@ -133,7 +135,9 @@ location @waha_api {
 # ==========================================================
 location /waha.health/ {
 
-    proxy_pass http://waha:3002/ping;
+    set $waha_upstream http://waha:3002;
+
+    proxy_pass $waha_upstream/ping;
 
     proxy_http_version 1.1;
 
