@@ -20,9 +20,11 @@ location /portainer {
     error_page 500 502 503 504 = /service-unavailable.html?service=Portainer;
 }
 
-location /api/ {
-    set $portainer_upstream http://portainer:9000/api/;
-    rewrite ^/portainer/(.*)$ /$1 break;
+# Portainer API — scoped under /portainer/ to avoid collisions with other services.
+# The rewrite strips /portainer before forwarding to the upstream.
+location /portainer/api/ {
+    set $portainer_upstream http://portainer:9000;
+    rewrite ^/portainer(/.*)$ $1 break;
     proxy_pass $portainer_upstream;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;

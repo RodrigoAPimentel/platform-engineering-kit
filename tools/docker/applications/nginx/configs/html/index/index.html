@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Service Catalog</title>
     <link rel="stylesheet" href="./styles.css">
 </head>
+
 <body>
     <canvas id="antigravity-canvas"></canvas>
     <main class="shell">
@@ -13,7 +15,8 @@
             <div class="hero-copy">
                 <div class="eyebrow">NGINX Service Catalog</div>
                 <h1>Service Catalog</h1>
-                <p class="subtitle">Catalog of services published by Nginx. Each card is generated from files in sites-enabled with proxy routes.</p>
+                <p class="subtitle">Catalog of services published by Nginx. Each card is generated from files in
+                    sites-enabled with proxy routes.</p>
             </div>
             <div class="meta hero-meta">
                 <div id="count">Loading services...</div>
@@ -53,7 +56,7 @@
             const src = (service.sourceFile || '').toLowerCase();
             const name = (service.name || '').toLowerCase();
             const combined = src + ' ' + name;
-            
+
             const keywords = {
                 'Databases': ['postgres', 'pgadmin', 'mysql', 'mariadb', 'redis', 'mongo', 'mssql', 'oracle', 'sqlite', 'rabbitmq', 'kafka', 'nats', 'pulsar', 'clickhouse', 'cassandra', 'scylla', 'surrealdb', 'db', 'database', 'sql', 'nosql', 'broker', 'queue'],
                 'Security': ['vault', 'snyk', 'trivy', 'falco', 'aqua', 'checkov', 'sonarqube', 'security', 'auth', 'oauth', 'identity', 'cert', 'keycloak', 'authentik'],
@@ -182,13 +185,13 @@
         }
 
         function renderCategories(services) {
-            const categories = { 
-                'Observability': [], 
-                'Databases': [], 
+            const categories = {
+                'Observability': [],
+                'Databases': [],
                 'Security': [],
                 'Networking & Proxy': [],
-                'Infrastructure & DevOps': [], 
-                'Others': [] 
+                'Infrastructure & DevOps': [],
+                'Others': []
             };
             const sortedServices = services.slice().sort(compareServicesByStatusAndName);
             for (const service of sortedServices) {
@@ -234,12 +237,30 @@
                 return '/';
             }
 
-            const firstNonExporter = routes.find((route) => !String(route || '').toLowerCase().includes('.exporter'));
-            return firstNonExporter || routes[0];
+            const primaryRoutes = routes.filter((route) => {
+                const r = String(route || '').toLowerCase();
+                return !r.includes('.exporter') && !r.includes('health') && !r.includes('api');
+            });
+
+            if (primaryRoutes.length > 0) {
+                primaryRoutes.sort((a, b) => a.length - b.length);
+                return primaryRoutes[0];
+            }
+
+            const anyPrimary = routes.filter((route) => {
+                const r = String(route || '').toLowerCase();
+                return !r.includes('.exporter') && !r.includes('health');
+            });
+            anyPrimary.sort((a, b) => a.length - b.length);
+            return anyPrimary[0] || routes.find((r) => !r.toLowerCase().includes('.exporter')) || routes[0];
         }
 
         function chooseExporterRoute(routes = []) {
             return routes.find((route) => String(route || '').toLowerCase().includes('.exporter')) || null;
+        }
+
+        function chooseHealthCheckRoute(routes = []) {
+            return routes.find((route) => String(route || '').toLowerCase().includes('health')) || null;
         }
 
         function groupServicesByCard(services) {
@@ -272,11 +293,14 @@
             return Array.from(grouped.values()).map((service) => {
                 const primaryRoute = choosePrimaryRoute(service);
                 const exporterRoute = chooseExporterRoute(service.routes);
+                const healthCheckRoute = chooseHealthCheckRoute(service.routes);
+
                 return {
                     ...service,
                     route: primaryRoute,
                     proxyUrl: primaryRoute,
                     exporterRoute,
+                    healthCheckUrl: healthCheckRoute,
                     slug: (service.sourceFile || service.slug || service.name || 'service').toLowerCase().replace(/[^a-z0-9_-]/g, '-'),
                     icon: resolveIconKey(service),
                     upstream: (service.upstreams && service.upstreams[0]) || service.upstream || 'N/A'
@@ -350,7 +374,11 @@
                     method: 'GET',
                     cache: 'no-store',
                     redirect: 'follow',
-                    signal: controller.signal
+                    signal: controller.signal,
+                    headers: {
+                        // Suppress browser basic auth prompt by providing a dummy header
+                        'Authorization': 'Basic dW5kZWZpbmVkOnVuZGVmaW5lZA=='
+                    }
                 });
                 const body = await response.text();
                 clearTimeout(timer);
@@ -359,6 +387,10 @@
 
                 if ((response.ok || (response.status >= 300 && response.status < 400)) && !unavailablePattern.test(body)) {
                     return { state: 'online', label: 'Online' };
+                }
+
+                if (response.status === 401 || response.status === 403) {
+                    return { state: 'online', label: 'Protected' };
                 }
 
                 const titleMatch = body.match(/<title>([^<]+)<\/title>/i);
@@ -372,7 +404,8 @@
 
         async function paintHealthStatuses(services) {
             const checks = services.map(async (service) => {
-                const proxyUrl = buildProxyUrl(service.proxyUrl || service.route);
+                const healthUrl = service.healthCheckUrl || service.proxyUrl || service.route;
+                const proxyUrl = buildProxyUrl(healthUrl);
                 const result = await checkServiceHealth(proxyUrl);
                 service.status = result.state;
 
@@ -491,7 +524,7 @@
                 this.baseX = x;
                 this.baseY = y;
                 this.depth = Math.random() * 0.8 + 0.2;     // 0.2 – 1.0 (far – near)
-                this.size  = (4 + Math.random() * 8) * this.depth; // 1–9 px effective
+                this.size = (4 + Math.random() * 8) * this.depth; // 1–9 px effective
                 this.color = GOOGLE_COLORS[Math.floor(Math.random() * 4)];
                 this.shape = SHAPE_TYPES[Math.floor(Math.random() * 4)];
                 this.angle = Math.random() * Math.PI * 2;
@@ -565,7 +598,7 @@
         seedParticles();
 
         document.addEventListener('mousemove', (e) => {
-            mouseNormX = (e.clientX / window.innerWidth  - 0.5) * 2; // -1 … 1
+            mouseNormX = (e.clientX / window.innerWidth - 0.5) * 2; // -1 … 1
             mouseNormY = (e.clientY / window.innerHeight - 0.5) * 2;
         });
 
@@ -584,10 +617,11 @@
                 c.update();
                 c.draw(ctx, px, py);
             });
-            
+
             requestAnimationFrame(tick);
         }
         tick();
     </script>
 </body>
+
 </html>

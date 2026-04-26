@@ -1,0 +1,148 @@
+# ==========================================================
+# WAHA Reverse Proxy (Subpath /waha)
+# FIXED VERSION
+# Compatible with nginx restrictions
+# Does NOT break other /api routes
+# ==========================================================
+
+# ----------------------------------------------------------
+# Redirects
+# ----------------------------------------------------------
+location = /waha {
+    return 301 /waha/;
+}
+
+location = /waha/ {
+    return 301 /waha/dashboard/;
+}
+
+location = /dashboard {
+    return 301 /waha/dashboard/;
+}
+
+location /dashboard/ {
+    return 301 /waha/dashboard/;
+}
+
+# ==========================================================
+# WAHA FRONTEND
+# ==========================================================
+location /waha/ {
+
+    set $waha_upstream waha:3002;
+
+    rewrite ^/waha/(.*)$ /$1 break;
+
+    proxy_pass http://$waha_upstream;
+    proxy_http_version 1.1;
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Port $server_port;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Prefix /waha;
+
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+
+    proxy_redirect off;
+
+    proxy_set_header Accept-Encoding "";
+
+    sub_filter_types *;
+    sub_filter_once off;
+
+    sub_filter 'href="/' 'href="/waha/';
+    sub_filter 'src="/' 'src="/waha/';
+    sub_filter 'action="/' 'action="/waha/';
+
+    sub_filter '"/api/' '"/waha/api/';
+    sub_filter "'/api/" "'/waha/api/";
+
+    sub_filter '"/assets/' '"/waha/assets/';
+    sub_filter '"/dashboard/' '"/waha/dashboard/';
+
+    sub_filter '"/ws' '"/waha/ws';
+    sub_filter "'/ws" "'/waha/ws";
+
+    proxy_intercept_errors on;
+    error_page 500 502 503 504 = /service-unavailable.html?service=Waha;
+}
+
+# ==========================================================
+# WAHA API OFFICIAL
+# ==========================================================
+location /waha/api/ {
+
+    set $waha_upstream waha:3002;
+
+    limit_req zone=waha_api_limit burst=20 nodelay;
+    limit_req_status 429;
+
+    rewrite ^/waha/(.*)$ /$1 break;
+
+    proxy_pass http://$waha_upstream;
+
+    proxy_http_version 1.1;
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Prefix /waha;
+
+    proxy_redirect off;
+}
+
+# ==========================================================
+# SAFE INTERCEPTOR
+# Only /api calls coming from WAHA referer
+# ==========================================================
+location /api/ {
+
+    # If came from /waha -> send to internal named location
+    error_page 418 = @waha_api;
+
+    if ($http_referer ~* /waha/) {
+        return 418;
+    }
+
+    # If not WAHA, continue to your normal API stack
+    try_files $uri $uri/ =404;
+}
+
+# ==========================================================
+# INTERNAL WAHA API TARGET
+# ==========================================================
+location @waha_api {
+
+    proxy_pass http://waha:3002;
+
+    proxy_http_version 1.1;
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+# ==========================================================
+# HEALTHCHECK
+# ==========================================================
+location /waha.health/ {
+
+    proxy_pass http://waha:3002/ping;
+
+    proxy_http_version 1.1;
+
+    proxy_hide_header WWW-Authenticate;
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    proxy_redirect off;
+}

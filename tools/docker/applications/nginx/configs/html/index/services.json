@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-04-25T15:09:10Z",
-  "serviceCount": 16,
+  "generatedAt": "2026-04-26T22:10:53Z",
+  "serviceCount": 19,
   "services": [
     {
       "name": "Alertmanager",
@@ -45,21 +45,6 @@
         "host": "portainer",
         "port": "9000",
         "path": "/api/websocket/"
-      }
-    },
-    {
-      "name": "Portainer",
-      "slug": "api",
-      "route": "/api/",
-      "proxyUrl": "/api/",
-      "sourceFile": "portainer.locations",
-      "icon": "docker",
-      "upstream": "http://portainer:9000/api/",
-      "direct": {
-        "protocol": "http",
-        "host": "portainer",
-        "port": "9000",
-        "path": "/api/"
       }
     },
     {
@@ -135,6 +120,21 @@
         "host": "pgadmin",
         "port": "8090",
         "path": "/pgadmin/"
+      }
+    },
+    {
+      "name": "Portainer",
+      "slug": "portainer-api",
+      "route": "/portainer/api/",
+      "proxyUrl": "/portainer/api/",
+      "sourceFile": "portainer.locations",
+      "icon": "docker",
+      "upstream": "http://portainer:9000",
+      "direct": {
+        "protocol": "http",
+        "host": "portainer",
+        "port": "9000",
+        "path": "/portainer/api/"
       }
     },
     {
@@ -225,6 +225,51 @@
         "host": "authentik_server",
         "port": "9000",
         "path": "/static/"
+      }
+    },
+    {
+      "name": "Waha",
+      "slug": "waha.health",
+      "route": "/waha.health/",
+      "proxyUrl": "/waha.health/",
+      "sourceFile": "waha.locations",
+      "icon": "app",
+      "upstream": "http://waha:3002/ping",
+      "direct": {
+        "protocol": "http",
+        "host": "waha",
+        "port": "3002",
+        "path": "/waha.health/"
+      }
+    },
+    {
+      "name": "Waha",
+      "slug": "waha-api",
+      "route": "/waha/api/",
+      "proxyUrl": "/waha/api/",
+      "sourceFile": "waha.locations",
+      "icon": "app",
+      "upstream": "http://$waha_upstream",
+      "direct": {
+        "protocol": "http",
+        "host": "$waha_upstream",
+        "port": "80",
+        "path": "/waha/api/"
+      }
+    },
+    {
+      "name": "Waha",
+      "slug": "waha",
+      "route": "/waha/",
+      "proxyUrl": "/waha/",
+      "sourceFile": "waha.locations",
+      "icon": "app",
+      "upstream": "http://$waha_upstream",
+      "direct": {
+        "protocol": "http",
+        "host": "$waha_upstream",
+        "port": "80",
+        "path": "/waha/"
       }
     },
     {

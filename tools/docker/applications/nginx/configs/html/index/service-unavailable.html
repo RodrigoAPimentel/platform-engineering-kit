@@ -182,7 +182,7 @@
                 </div>
                 <div class="service-details">
                     <p class="service-label">Impacted service</p>
-                    <p id="serviceName" class="service-name">Unknown service</p>
+                    <p id="serviceName" class="service-name">[[SERVICE_NAME]]</p>
                 </div>
             </div>
 
@@ -200,31 +200,36 @@
         function inferServiceFromPath(pathname = '') {
             const normalized = (pathname || '').toLowerCase();
 
-            const pathMatchers = [
-                { test: (path) => path.startsWith('/alertmanager'), name: 'Alertmanager' },
-                { test: (path) => path.startsWith('/authentik') || path.startsWith('/api/v3') || path.startsWith('/static/') || path.startsWith('/ws/'), name: 'Authentik' },
-                { test: (path) => path.startsWith('/grafana'), name: 'Grafana' },
-                { test: (path) => path.startsWith('/jenkins'), name: 'Jenkins' },
-                { test: (path) => path.startsWith('/nginx-exporter'), name: 'Nginx Exporter' },
-                { test: (path) => path.startsWith('/pgadmin'), name: 'PgAdmin' },
-                { test: (path) => path.startsWith('/postgres.exporter'), name: 'Postgres Exporter' },
-                { test: (path) => path.startsWith('/portainer') || path.startsWith('/api/websocket'), name: 'Portainer' },
-                { test: (path) => path.startsWith('/prometheus') || path.startsWith('/query'), name: 'Prometheus' },
-                { test: (path) => path.startsWith('/redisinsight.exporter'), name: 'Redis Exporter' },
-                { test: (path) => path.startsWith('/redisinsight'), name: 'RedisInsight' }
-            ];
+            const pathMatchers = [];
 
             const match = pathMatchers.find((item) => item.test(normalized));
             return match ? match.name : '';
         }
 
         function parseServiceName() {
+            // 0. Check if Nginx injected a name via sub_filter
+            const el = document.getElementById('serviceName');
+            const placeholder = '[[SERVICE_NAME]]';
+            const current = el.textContent.trim();
+            if (current && current !== placeholder && current !== 'Unknown service') {
+                return current;
+            }
+
+            // 1. Try to get from ?service= parameter
             const params = new URLSearchParams(window.location.search);
             const raw = (params.get('service') || '').trim();
             if (raw) return raw;
 
+            // 2. Try to infer from path mapping
             const byPath = inferServiceFromPath(window.location.pathname || '');
             if (byPath) return byPath;
+
+            // 3. Dynamic fallback: Use the first part of the path (e.g., /waha/ -> Waha)
+            const pathParts = window.location.pathname.split('/').filter(Boolean);
+            if (pathParts.length > 0) {
+                const first = pathParts[0];
+                return first.charAt(0).toUpperCase() + first.slice(1);
+            }
 
             return 'Unknown service';
         }
@@ -277,7 +282,7 @@
                 this.baseX = x;
                 this.baseY = y;
                 this.depth = Math.random() * 0.8 + 0.2;     // 0.2 – 1.0 (far – near)
-                this.size  = (4 + Math.random() * 8) * this.depth; // 1–9 px effective
+                this.size = (4 + Math.random() * 8) * this.depth; // 1–9 px effective
                 this.color = GOOGLE_COLORS[Math.floor(Math.random() * 4)];
                 this.shape = SHAPE_TYPES[Math.floor(Math.random() * 4)];
                 this.angle = Math.random() * Math.PI * 2;
@@ -351,7 +356,7 @@
         seedParticles();
 
         document.addEventListener('mousemove', (e) => {
-            mouseNormX = (e.clientX / window.innerWidth  - 0.5) * 2; // -1 … 1
+            mouseNormX = (e.clientX / window.innerWidth - 0.5) * 2; // -1 … 1
             mouseNormY = (e.clientY / window.innerHeight - 0.5) * 2;
         });
 
@@ -370,7 +375,7 @@
                 c.update();
                 c.draw(ctx, px, py);
             });
-            
+
             requestAnimationFrame(tick);
         }
         tick();
