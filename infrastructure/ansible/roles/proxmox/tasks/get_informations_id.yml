@@ -1,0 +1,39 @@
+---
+- name: Get Informations of {{ _vmid }} 
+  register: _info
+  community.general.proxmox_vm_info:
+    api_host: "{{ api_host }}"
+    api_user: "{{ api_user }}"
+    api_password: "{{ hostvars['proxmox'].ansible_password }}"
+    node: "{{ node }}"
+    vmid: "{{ _vmid }}"
+
+- name: Set VM/container metadata
+  ansible.builtin.set_fact:
+    id_type: "{{ _info.proxmox_vms | map(attribute='type') | list | first }}"
+    proxmox_vmid_name: "{{ _info.proxmox_vms | map(attribute='name') | list | first }}"
+
+- block:
+    - name: Get the IP of qemu {{ _vmid }}
+      ansible.builtin.shell: set pipefail && awk -v IGNORECASE=1 '$1 == "ipconfig0:" { print }' /etc/pve/qemu-server/{{ _vmid }}.conf | cut -d'=' -f2 | cut -d'/' -f1
+      register: qemu_result_ip
+      retries: 10
+      delay: 10      
+    - name: Set qemu VM IP fact
+      ansible.builtin.set_fact:
+        proxmox_vmid_ip: "{{ qemu_result_ip.stdout }}"
+  when: id_type == 'qemu'
+
+- block:
+    - name: Get the IP of lxc {{ _vmid }}
+      ansible.builtin.shell: set pipefail && awk -v IGNORECASE=1 '$1 == "net0:" { print }' /etc/pve/lxc/{{ _vmid }}.conf | cut -d',' -f5 | cut -d'=' -f2 | cut -d'/' -f1
+      register: lxc_result_ip
+      retries: 10
+      delay: 10
+    - name: Set LXC container IP fact
+      ansible.builtin.set_fact:
+        proxmox_vmid_ip: "{{ lxc_result_ip.stdout }}"
+  when: id_type == 'lxc'
+
+- ansible.builtin.debug: 
+    msg: "Type:{{ id_type }} <> Id:{{ _vmid }} <> Name:[{{ proxmox_vmid_name }}] <> Ip:{{ proxmox_vmid_ip }}"

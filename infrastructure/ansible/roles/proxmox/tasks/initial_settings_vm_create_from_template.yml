@@ -1,0 +1,11 @@
+- name: Change the hostname
+  become: true
+  hostname:
+    name: "{{ _hostname }}"
+
+- name: Set new IP adress
+    ip: "{{ _network_ip }}"
+    interface: ens18
+
+- name: Restart machine
+  reboot:

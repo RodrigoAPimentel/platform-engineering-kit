@@ -1,0 +1,6 @@
+- name: Delete host in known_hosts file
+  ansible.builtin.command: |
+    docker exec awx_task /bin/bash -c 'sed -i "/{{ proxmox_vmid_ip }}/d" /root/.ssh/known_hosts'
+  retries: 10
+  delay: 10
+  changed_when: false

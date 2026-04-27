@@ -1,0 +1,53 @@
+- name: Installing Dependencies
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ packages_dependencies_create_container }}"
+
+# - name: Install proxmoxer and requests packages
+#   pip:
+#     name:
+#       - proxmoxer
+#       - requests
+
+- name: Create Container
+  community.general.proxmox:
+    vmid: "{{ proxmox_next_container_id }}"
+    node: "{{ node }}"
+    api_user: "{{ api_user }}"
+    # api_password: "{{ hostvars[host].ansible_password }}"
+    api_password: "{{ api_password }}"
+    api_host: "{{ api_host }}"
+    state: present
+    hostname: "{{ _hostname }}"
+    password: "{{ container_root_password }}"
+    ostemplate: "{{ _ostemplate }}"
+    cores: "{{ _cores }}"
+    disk: "{{ _disk }}"
+    memory: "{{ _memory }}"
+    swap: "{{ _memory }}"
+    storage: "externalbay"
+    netif: '{"net0":"name=eth0,gw={{ proxmox_next_container_gw }},ip={{ proxmox_next_container_ip }}/24,bridge=vmbr0"}'
+    unprivileged: "{{ unprivileged }}"
+    onboot: "{{ onboot }}"
+    description: "
+      ## **{{ _hostname }}:**\n
+        - **ID:** _{{ proxmox_next_container_id }}_\n
+        - **hostname:** _{{ _hostname }}_\n
+        - **OS:** _{{ _ostemplate }}_\n
+        - **IP:** _{{ proxmox_next_container_ip }}_\n
+        - **User:** _root_\n
+    "
+    features:
+      - nesting={{ nesting }}
+      - keyctl={{ keyctl }}
+  no_log: true
+
+- name: Start Container
+  community.general.proxmox:
+    vmid: "{{ proxmox_next_container_id }}"
+    api_user: "{{ api_user }}"
+    # api_password: "{{ hostvars[host].ansible_password }}"
+    api_password: "{{ api_password }}"
+    api_host: "{{ api_host }}"
+    state: started

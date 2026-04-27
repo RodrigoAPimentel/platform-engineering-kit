@@ -1,0 +1,83 @@
+---
+# - name: Gather facts
+#   ansible.builtin.setup:
+
+
+# - name: Add EPEL repository
+#   become: true
+#   # become_method: sudo
+#   # become_user: "{{ _vm_default_user }}"
+#   # become_user: "user"
+#   vars:
+#     ansible_become_password: "toor"
+#   package:
+#     name: epel-release
+#     state: latest
+#     # apply:
+#     #   delegate_to: "{{ _hostname }}"
+
+
+
+
+
+
+
+
+
+
+- name: Update the system packages
+  ansible.builtin.package:
+    name: "*"
+    state: present
+
+# - name: Upgrade the system
+#   package:
+#     upgrade: yes
+
+# - name: Clean the local repository
+#   package:
+#     autoclean: yes
+
+- name: Remove packages not needed anymore
+  ansible.builtin.package:
+    autoremove: yes
+
+- name: Install common packages
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ install_os_packages }}"
+  register: installPackageResult
+
+- name: Print Install common packages
+  ansible.builtin.debug:
+    var: installPackageResult
+
+- name: set system timezone
+  register: modify_timezone
+  community.general.timezone:
+      name: America/Recife
+
+- name: Get Time Zone
+  register: timezone
+  ansible.builtin.command: timedatectl
+  changed_when: false
+
+- name: Show Time Zone
+  ansible.builtin.debug:
+    var: timezone.stdout
+  notify: Reboot System
+
+- name: Wait for "{{ _hostname }}" to become reachable
+  ansible.builtin.wait_for:
+    host: "{{ _hostname }}"
+    port: 22
+    delay: 10
+    timeout: 120
+
+- name: Start qemu-guest-agent Service
+  ansible.builtin.service:
+    name: qemu-guest-agent
+    state: started
+    enabled: yes
+  notify: Reboot System

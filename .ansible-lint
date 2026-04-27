@@ -1,0 +1,7 @@
+---
+exclude_paths:
+  - .git/
+  - .cursor/
+mock_modules: []
+profile: basic
+verbosity: 1

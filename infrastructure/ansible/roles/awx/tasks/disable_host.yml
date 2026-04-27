@@ -1,0 +1,9 @@
+- name: Disable host in inventory {{ inventory }}
+  awx.awx.host:
+    name: "{{ _hostname }}"
+    inventory: "{{ inventory }}"
+    enabled: false
+    controller_host: "http://{{ controller_host }}"
+    controller_oauthtoken: "{{ awx_token }}"
+    validate_certs: false
+  no_log: true

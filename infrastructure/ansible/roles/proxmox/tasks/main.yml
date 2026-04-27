@@ -1,0 +1,16 @@
+---
+# - name: Get Informations 
+#   include_tasks: get_informations.yml
+
+# - name: Destroy Container 
+#   include_tasks: destroy_container.yml
+#   when: proxmox_execution_mode == "ct_destroy"
+
+# # - name: Install Jenkins
+# #   include_tasks: install.yml
+
+# # - name: Configure Jenkins
+# #   include_tasks: configure.yml
+
+# # - name: Install Plugins
+# #   include_tasks: plugins.yml

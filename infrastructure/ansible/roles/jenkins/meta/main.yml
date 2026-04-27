@@ -1,0 +1,8 @@
+---
+galaxy_info:
+  role_name: jenkins
+  author: platform-engineering-kit
+  description: Install and configure Jenkins and plugins.
+  min_ansible_version: "2.14"
+  license: MIT
+dependencies: []

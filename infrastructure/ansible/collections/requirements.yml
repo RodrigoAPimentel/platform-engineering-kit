@@ -1,0 +1,8 @@
+---
+collections:
+- name: community.general
+  source: https://galaxy.ansible.com
+- name: awx.awx
+  source: https://galaxy.ansible.com
+# - community.docker
+# - ansible.posix

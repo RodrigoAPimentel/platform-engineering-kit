@@ -1,0 +1,7 @@
+# ---
+# - name: Pre-tasks 
+#   include_tasks: pre_tasks.yml
+
+# - name: Disable Host 
+#   include_tasks: disable_host.yml
+#   when: awx_execution_mode == "disable_host"

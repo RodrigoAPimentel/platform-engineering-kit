@@ -1,0 +1,47 @@
+---
+- name: Destroy Container with VMID {{ _vmid }}
+  become: true
+  become_method: sudo
+  gather_facts: true
+  hosts: "{{ host }}"
+  roles:
+    - role: common
+
+  pre_tasks:
+    - ansible.builtin.include_role:
+        name: awx
+        tasks_from: "collect_awx_token.yml"
+        apply:
+          delegate_to: ct-awx
+
+    - ansible.builtin.include_role:
+        name: proxmox
+        tasks_from: "get_informations_id.yml"
+        
+    - ansible.builtin.set_fact: 
+        _hostname: "{{ proxmox_vmid_name }}"
+
+  tasks:
+    - ansible.builtin.include_role:
+        name: proxmox
+        tasks_from: "destroy_container.yml"
+
+    - name: Waiting 15 Seconds ...
+      ansible.builtin.pause:
+        seconds: 15
+
+    - ansible.builtin.include_role:
+        name: awx
+        tasks_from: "delete_host_known_hosts_file.yml"
+        apply:
+          delegate_to: ct-awx
+      vars:
+        external_call_host: "ct-awx"
+
+    - ansible.builtin.include_role:
+        name: awx
+        tasks_from: "disable_host.yml"
+        apply:
+          delegate_to: ct-awx
+      vars:
+        external_call_host: "ct-awx"

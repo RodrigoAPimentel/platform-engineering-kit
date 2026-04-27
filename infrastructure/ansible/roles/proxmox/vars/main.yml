@@ -1,0 +1,18 @@
+api_host: jabuti
+api_user: root@pam
+api_password: "{{ vault_proxmox_api_password }}"
+node: jabuti
+container_root_password: "{{ vault_proxmox_container_root_password }}"
+unprivileged: true
+onboot: false
+nesting: 1
+keyctl: 1
+
+vm_default_disk: scsi0
+vm_default_user: user
+vm_default_password: "{{ vault_proxmox_vm_default_password }}"
+vm_default_os: ubuntu-24.04
+
+packages_dependencies_create_container:
+  - python3
+  - python3-pip

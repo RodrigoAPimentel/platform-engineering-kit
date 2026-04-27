@@ -1,0 +1,18 @@
+---
+- name: Disable Host in Ansible AWX
+  become: true
+  become_method: sudo
+  gather_facts: true
+  hosts: "{{ host }}"  
+  roles:
+    - role: common
+
+  pre_tasks:
+    - ansible.builtin.include_role:
+        name: awx
+        tasks_from: "collect_awx_token.yml"
+        
+  tasks:
+    - ansible.builtin.include_role:
+        name: awx
+        tasks_from: "disable_host.yml"

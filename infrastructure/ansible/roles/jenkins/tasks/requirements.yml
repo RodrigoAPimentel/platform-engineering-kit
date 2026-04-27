@@ -1,0 +1,15 @@
+---
+- name: Installing Java-11
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ java_packages }}"
+    
+- name: "Check if Java installed properly"
+  ansible.builtin.command: java -version
+  register: javaversion
+  changed_when: false
+
+- ansible.builtin.fail:
+      msg: "Java should have been installed by now"
+  when: javaversion.rc == 127

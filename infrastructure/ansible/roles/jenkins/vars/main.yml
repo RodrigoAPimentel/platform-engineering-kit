@@ -1,0 +1,27 @@
+---
+jenkins_custom_plugins:
+  - script-security
+  - command-launcher
+  - blueocean-git-pipeline
+  - blueocean-display-url
+  - blueocean-github-pipeline
+  - blueocean-personalization
+  - blueocean-rest-impl
+  - blueocean-config
+  - blueocean-events
+  - blueocean-i18n
+  - blueocean-pipeline-editor
+  - blueocean-dashboard
+  - blueocean-bitbucket-pipeline
+  - blueocean-pipeline-api-impl
+  - blueocean
+
+java_packages:
+  - java-11-openjdk
+  - java-11-openjdk-devel
+
+jenkins_root_userName: root
+jenkins_root_password: "{{ vault_jenkins_root_password }}"
+
+jenkins_version: "2.426.1-1.1"
+jenkins_port: "8080"

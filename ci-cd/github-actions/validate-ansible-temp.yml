@@ -1,0 +1,61 @@
+name: Validate Ansible Temp
+
+on:
+  pull_request:
+    paths:
+      - "infrastructure/ansible/**"
+      - ".github/workflows/validate-ansible-temp.yml"
+      - "ci-cd/github-actions/validate-ansible-temp.yml"
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "infrastructure/ansible/**"
+      - ".github/workflows/validate-ansible-temp.yml"
+      - "ci-cd/github-actions/validate-ansible-temp.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  ansible-quality:
+    name: Ansible Lint and Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible-core ansible-lint yamllint
+          ansible-galaxy collection install -r infrastructure/ansible/collections/requirements.yml
+
+      - name: Run yamllint
+        run: |
+          yamllint infrastructure/ansible
+
+      - name: Run ansible-lint
+        run: |
+          ansible-lint infrastructure/ansible
+
+      - name: Syntax check playbooks
+        run: |
+          python - <<'PY'
+          import pathlib
+          import subprocess
+
+          playbooks = sorted(pathlib.Path("infrastructure/ansible/playbooks").rglob("*.yml"))
+          for playbook in playbooks:
+            print(f"Checking {playbook}")
+            subprocess.run(
+              ["ansible-playbook", "--syntax-check", str(playbook)],
+              check=True,
+            )
+          PY

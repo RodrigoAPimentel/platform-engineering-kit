@@ -1,0 +1,10 @@
+- name: Start and Enable Jenkins Service
+  ansible.builtin.service:
+    name: jenkins
+    state: started
+    enabled: true
+
+- name: Restart Jenkins Service
+  ansible.builtin.service:
+    name: jenkins
+    state: restarted

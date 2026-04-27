@@ -1,0 +1,19 @@
+---
+- name: Download jenkins.repo
+  ansible.builtin.get_url:
+    url: http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
+    dest: /etc/yum.repos.d/jenkins.repo
+
+- name: Import Jenkins Key
+  ansible.builtin.rpm_key:
+    state: present
+    key: https://pkg.jenkins.io/redhat/jenkins.io-2023.key
+
+- name: Install Jenkins
+  ansible.builtin.package:
+    name: jenkins-{{ jenkins_version }}
+    state: present
+  notify: 
+  - Start and Enable Jenkins Service
+
+- ansible.builtin.meta: flush_handlers

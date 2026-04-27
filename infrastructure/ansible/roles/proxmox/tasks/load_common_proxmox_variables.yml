@@ -1,0 +1,11 @@
+---
+- name: Load default VM credentials
+  ansible.builtin.set_fact: 
+    _vm_default_user: "{{ vm_default_user }}"
+    _vm_default_password: "{{ vm_default_password }}"
+  no_log: true
+
+- ansible.builtin.debug: 
+    msg: 
+      - "Virtual Machine default user: {{ _vm_default_user }}"
+      - "Virtual Machine default password: {{ _vm_default_password | regex_replace('.+', '******') }}"

@@ -1,0 +1,3 @@
+---
+- name: Machine Informations
+  ansible.builtin.include_tasks: check.yml

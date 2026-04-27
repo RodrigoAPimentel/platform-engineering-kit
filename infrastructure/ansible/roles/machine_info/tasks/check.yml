@@ -1,0 +1,12 @@
+---
+- name: Machine Processor Model
+  ansible.builtin.debug:
+    msg: "{{ ansible_processor[2] }}"
+
+- name: Machine Processor Cores
+  ansible.builtin.debug:
+    msg: "{{ ansible_processor_cores }}"
+
+- name: Machine Memory RAM
+  ansible.builtin.debug:
+    msg: "{{ ansible_memtotal_mb }} Mb"

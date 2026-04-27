@@ -1,0 +1,92 @@
+- name: Cloning virtual machine from Template "{{ _vmid_template }}" with name "{{proxmox_next_vm_id}}-{{ _hostname }}"
+  community.general.proxmox_kvm:
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    api_host: "{{ api_host }}"
+    name: "{{ _hostname }}"
+    node: "{{ node }}"
+    clone: "{{ _vmid_template }}"
+    vmid: "{{ _vmid_template }}"
+    newid: "{{ proxmox_next_vm_id }}"
+    timeout: 500
+    format: unspecified
+    full: false
+  tags: provission,test
+
+- name: Configuring IP ...
+  ansible.builtin.shell: A=$(qm list |grep "{{ _hostname }}" | awk '{print $1}'); qm set $A --ipconfig0 'ip={{ proxmox_next_vm_ip }}/24,gw={{ proxmox_next_container_gw }}'
+  tags: provission
+
+- name: Increasing disk ...
+  ansible.builtin.shell: A=$(qm list | grep "{{ _hostname }}" | awk '{print $1}'); B=$(qm list | grep "{{ _hostname }}" | awk '{print $5}'); qm resize $A {{ vm_default_disk }} {{ _disk }}G
+  when: '{{ _disk }} != "0"'
+  tags: provission
+
+- name: Configuring Memory ...
+  ansible.builtin.shell: A=$(qm list |grep "{{ _hostname }}" | awk '{print $1}'); qm set $A --memory '{{ _memory }}'
+  tags: provission
+
+- name: Configuring CPU Cores ...
+  ansible.builtin.shell: A=$(qm list |grep "{{ _hostname }}" | awk '{print $1}'); qm set $A --cores '{{ _cores }}'
+  tags: provission
+
+- name: Configuring Description ...
+  ansible.builtin.shell: A=$(qm list |grep "{{ _hostname }}" | awk '{print $1}'); qm set $A --description '<b>{{ _hostname }}:</b><br>- <b>ID:</b> _{{ proxmox_next_vm_id }}_<br>- <b>hostname:</b> _{{ _hostname }}_<br>- <b>IP:</b> _{{ proxmox_next_vm_ip }}_<br>- <b>OS:</b> _{{ vm_default_os }}_<br>- <b>User:</b> _{{ vm_default_user }}_'
+  tags: provission
+
+- name: Create cloud-init config file ...
+  ansible.builtin.copy:
+    dest: "/var/lib/vz/snippets/cloud_init_conf_{{ proxmox_next_vm_id }}.yml"
+    mode: "0644"
+    content: |
+      #cloud-config
+      runcmd:
+        - hostnamectl set-hostname {{ _hostname }}
+      ssh_pwauth: true
+  tags: provission
+
+- name: Configuring cloud-init ...
+  ansible.builtin.shell: A=$(qm list |grep "{{ _hostname }}" | awk '{print $1}'); qm set $A --cicustom 'user=local:snippets/cloud_init_conf_{{ proxmox_next_vm_id }}.yml'
+  tags: provission
+
+- name: Starting new Virtual Machine in current proxmox node
+  community.general.proxmox_kvm:
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    api_host: "{{ api_host }}"
+    name: "{{ _hostname }}"
+    node: "{{ node }}"
+    state: started
+    timeout: 60
+  tags: provission
+  register: start_vm_result
+  failed_when: start_vm_result.failed and ('already running' not in (start_vm_result.msg | default('')))
+
+- name: Waiting 60 Seconds ...
+  ansible.builtin.pause:
+    seconds: 60    
+
+- name: Update packages in "{{proxmox_next_vm_id}}-{{ _hostname }}"
+  become: true
+  ansible.builtin.command: qm guest exec {{ _vmid }} --timeout 150 -- bash -c "sudo apt update"
+  register: update_packages
+  retries: 3
+  delay: 20
+  until: update_packages.rc == 0
+  changed_when: false
+
+- name: Install OpenSSH in "{{proxmox_next_vm_id}}-{{ _hostname }}"
+  become: true
+  ansible.builtin.command: qm guest exec {{ _vmid }} --timeout 150 -- bash -c "sudo /home/user/install_openssh-server {{ vm_default_password }}"
+  register: install_openssh
+  failed_when: >
+    not ('QEMU guest agent is not running' in install_openssh.stderr or install_openssh.rc == 0)
+  no_log: true
+
+- name: Wait for SSH to become available on "{{proxmox_next_vm_id}}-{{ _hostname }}"
+  ansible.builtin.wait_for:
+    host: "{{ proxmox_next_vm_ip }}"
+    port: 22
+    timeout: 400
+    state: started
+  tags: provission

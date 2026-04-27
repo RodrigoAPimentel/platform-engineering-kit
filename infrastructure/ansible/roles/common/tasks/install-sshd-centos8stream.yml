@@ -1,0 +1,38 @@
+---
+- name: Install SSHD
+  become: true
+  ansible.builtin.command: lxc-attach --name {{ _vmid }} -e -- dnf install -y openssh-server
+  register: install_sshd
+  changed_when: "'Nothing to do' not in install_sshd.stdout"
+- ansible.builtin.debug:
+    msg: SSHD install status - {{ install_sshd.stdout }}
+
+- name: Start SSHD
+  ansible.builtin.command: lxc-attach --name {{ _vmid }} -e -- systemctl start sshd
+  changed_when: false
+
+- name: Enable SSHD
+  ansible.builtin.command: lxc-attach --name {{ _vmid }} -e -- systemctl enable sshd
+  changed_when: false
+
+- name: Status SSHD
+  ansible.builtin.command: lxc-attach --name {{ _vmid }} -e -- systemctl status sshd
+  register: status_sshd
+  changed_when: false
+- ansible.builtin.debug:
+    msg: SSHD status - {{ status_sshd.stdout }}
+
+- name: Configurar sshd_config para permitir root login no LXC
+  become: true
+  ansible.builtin.command: lxc-attach --name {{ _vmid }} -e -- sed -i 's/^#\?\(PermitRootLogin\).*/\1 yes/' /etc/ssh/sshd_config
+  changed_when: true
+
+- name: Configurar sshd_config para permitir autenticação por senha
+  become: true
+  ansible.builtin.command: lxc-attach --name {{ _vmid }} -e -- sed -i 's/^#\?\(PasswordAuthentication\).*/\1 yes/' /etc/ssh/sshd_config
+  changed_when: true
+
+- name: Reiniciar serviço SSH dentro do LXC
+  become: true
+  ansible.builtin.command: lxc-attach --name {{ _vmid }} -e -- systemctl restart sshd
+  register: restart_ssh

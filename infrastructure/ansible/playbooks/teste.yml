@@ -1,0 +1,124 @@
+---
+- name: Playbook de Testes
+  become: true
+  become_method: sudo
+  gather_facts: true
+  hosts: "{{ host }}"
+  # vars:
+  #   ansible_python_interpreter: /usr/bin/python3
+  # collections:
+  #   - awx.awx
+  roles:
+    - role: common
+    # - role: "package_installed"
+    # - role: "machine_info"
+    # - { role: package_installed, packages: [proxmoxer] }
+    # - { role: package_installed, packages: "{{pkgss}}" }
+    # - role: os_release
+    #   # tasks_from: "verify_os.yml"
+    #   tasks_from: "check.yml"
+    #   vars:
+    #     os_requirement_distribution: 'CentOS'
+    #     os_requirement_version: "8"
+      # tags: [ os_verify ]
+    # - role: proxmox
+    #   vars:
+    #     proxmox_execution_mode: "ct_destroy"
+    # - role: awx
+    #   vars:
+    #     awx_execution_mode: "disable_host"
+
+    #     _inventory: pimentel-inventory
+    #     _id: 204
+
+  tasks:
+    - include_role:
+        name: proxmox
+        # tasks_from: "get_informations.yml"
+        # tasks_from: "retrieve_ct_last_id.yml"
+        # tasks_from: "retrieve_last_ct_vm_info.yml"
+        tasks_from: "get_informations_id.yml"
+        apply:
+          delegate_to: proxmox
+      # vars:
+      #   os_requirement_distribution: 'CentOS'
+      #   os_requirement_version: "8"
+    
+    # - include_role:
+    #     name: jenkins
+
+
+
+    # - name: XXXXXXXXXXXXXXXXXXXXXXX
+    #   ansible.builtin.debug:
+    #     msg:
+    #     - "YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY"
+
+    # - name: UUUUUUUUUUUUUUUUUUUUU
+    #   debug: msg="ZZZZ:{{ teste_rap }}"
+
+    # - name: vmid/ctid hostname and ip
+    #   debug: msg="Hostname:{{ proxmox_vm_ct__hostname.stdout }} | Ip:{{ proxmox_vm_ct__id.stdout }}"
+
+    # - name: List all existing virtual machines on node
+    #   delegate_to: proxmox
+    #   register: all_vm_ct
+    #   community.general.proxmox_vm_info:
+    #     api_host: pimentel-homelab
+    #     api_user: root@pam
+    #     node: pimentel-homelab
+    #     api_password: "{{ hostvars['proxmox'].ansible_password }}"
+
+    # - name: List all existing CONTAINERS on node
+    #   delegate_to: proxmox
+    #   register: all_ct
+    #   community.general.proxmox_vm_info:
+    #     api_host: pimentel-homelab
+    #     api_user: root@pam
+    #     node: pimentel-homelab
+    #     api_password: "{{ hostvars['proxmox'].ansible_password }}"
+    #     type: lxc
+
+    # - name: All CT and VMS
+    #   debug: msg="{{ all_vm_ct }}"
+
+    # - name: All CTs
+    #   debug: msg="{{ all_ct }}"
+
+    # - name: Last CTs
+    #   debug: msg="{{ all_ct.proxmox_vms | last }}"
+
+    # - name: "Set variables"
+    #   set_fact:
+    #     # last_container: "{{ all_ct.proxmox_vms | last }}"
+    #     last_container_id: "{{ all_ct.proxmox_vms | map(attribute='vmid') | list | last }}"
+    #     last_vm_id: "{{ all_ct.proxmox_vms | map(attribute='vmid') | list | last }}"
+    # - name: Last CTs Informations
+    #   debug: msg="Name:{{ last_container }}"
+    
+    # - name: "Set variables 22"
+    #   set_fact:
+    #     last_container_id: "{{ last_container.vmid }}"
+    #     last_container_name: "{{ last_container.name }}"
+
+    # - name: Last CTs Informations
+    #   debug: msg="Name:{{ last_container_name }} ID:{{ last_container_id }}"
+
+    # - set_fact:
+    #     next_vm_ip: "{{ last_vm_ip }}"
+    #     next_container_ip: "{{ result_last_container_ip.stdout }}"
+
+    # - set_fact: 
+    #     next_vm_ip: "{{ last_vm_ip | regex_replace('(^.*\\.).*$', '\\1') }}{{last_vm_ip.split('.')[3] | int + 1 }}"
+    #     next_vm_id: "{{ last_vm_id | int + 1 }}"
+    #     next_container_ip: "{{ last_container_ip | regex_replace('(^.*\\.).*$', '\\1') }}{{last_container_ip.split('.')[3] | int + 1 }}"
+    #     next_container_id: "{{ last_container_id | int + 1 }}"
+
+    # - debug: 
+    #     msg: 
+    #       # - "Last Virtual Machine: Id:{{ last_vm_id }} <> Name:{{ last_vm_name }} <> Ip:{{ last_vm_ip }}"
+    #       - "Next Virtual Machine: Id:{{ next_vm_id }} <> Ip:{{ next_vm_ip }}"
+    #       - "Next Container Id:{{ next_container_id }} <> Ip:{{ next_container_ip }}"
+
+    
+

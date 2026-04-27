@@ -1,0 +1,32 @@
+---
+- name: Install Requirements
+  ansible.builtin.include_tasks: requirements.yml
+
+- name: Sleep for 5 seconds and continue with play ...
+  ansible.builtin.wait_for:
+    timeout: 5
+  delegate_to: localhost
+
+- name: Install Jenkins
+  ansible.builtin.include_tasks: install.yml
+
+- name: Sleep for 5 seconds and continue with play ...
+  ansible.builtin.wait_for:
+    timeout: 5
+  delegate_to: localhost
+
+- name: Configure Jenkins
+  ansible.builtin.include_tasks: configure.yml
+
+- name: Sleep for 5 seconds and continue with play ...
+  ansible.builtin.wait_for:
+    timeout: 5
+  delegate_to: localhost
+
+- name: Install Plugins
+  ansible.builtin.include_tasks: plugins.yml
+
+- name: Sleep for 5 seconds and continue with play ...
+  ansible.builtin.wait_for:
+    timeout: 5
+  delegate_to: localhost

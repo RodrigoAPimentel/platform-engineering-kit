@@ -1,0 +1,74 @@
+---
+- name: Get Init Admin Password
+  ansible.builtin.command: cat /var/lib/jenkins/secrets/initialAdminPassword
+  changed_when: false
+  register: adminPasswordResult
+  no_log: true
+
+- name: Unlock and add root user
+  community.general.jenkins_script:
+    script: |
+      import jenkins.model.*
+      import hudson.security.*
+      def instance = Jenkins.getInstance()
+      def hudsonRealm = new HudsonPrivateSecurityRealm(false)
+      hudsonRealm.createAccount('${user_name}', '${user_pwd}')
+      instance.setSecurityRealm(hudsonRealm)
+
+      def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
+      strategy.setAllowAnonymousRead(false)
+      instance.setAuthorizationStrategy(strategy)
+      instance.save()
+    args:
+      user_name: "{{ jenkins_root_userName }}"
+      user_pwd: "{{ jenkins_root_password }}"
+    user: admin
+    password: "{{ adminPasswordResult.stdout }}"
+  no_log: true
+
+- name: Complete Setup Wizard
+  community.general.jenkins_script:
+    script: |
+      import static jenkins.model.Jenkins.instance as jenkins
+      import jenkins.install.InstallState
+      if (!jenkins.installState.isSetupComplete()) {
+        InstallState.INITIAL_SETUP_COMPLETED.initializeState()
+      }
+    user: admin
+    password: "{{ adminPasswordResult.stdout }}"
+  notify: Restart Jenkins Service
+  no_log: true
+
+- ansible.builtin.meta: flush_handlers
+
+# - name: Modify Jenkins Port to {{ jenkins_port }}
+#   jenkins_script:
+#     script: |
+#       import jenkins.model.*
+#       import hudson.security.*
+      
+#       def instance=jenkins.model.Jenkins.instance
+#       instance.setSlaveAgentPort('${_port}')
+#       instance.save()
+#     args:
+#       _port: "{{ jenkins_port }}"
+#     user: admin
+#     password: "{{ adminPasswordResult.stdout }}"
+#   notify: Restart Jenkins Service
+
+# - meta: flush_handlers
+
+
+# - name: Configure Jenkins Launch Settings
+#   lineinfile:
+#     path: /etc/sysconfig/jenkins
+#     regexp: "{{ item.regexp }}"
+#     line: "{{ item.line }}"
+#     mode: u=rw,g=,o=r
+#   become: true
+#   with_items:
+#     - regexp: '^JENKINS_PORT='
+#       line: "JENKINS_PORT={{ jenkins_port }}"
+#   notify: Restart Jenkins Service
+
+# - meta: flush_handlers

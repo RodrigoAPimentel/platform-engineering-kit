@@ -1,0 +1,30 @@
+- name: Resolve AWX controller host from external caller
+  ansible.builtin.set_fact:
+    _controller_host: "http://{{ hostvars[external_call_host].ansible_host }}"
+  when: external_call_host is defined
+- name: Resolve AWX controller host from target host
+  ansible.builtin.set_fact:
+    _controller_host: "http://{{ hostvars[host].ansible_host }}"
+  when: external_call_host is undefined
+
+- name: Create host in inventory {{ inventory }}
+  awx.awx.host:
+    name: "{{ _hostname }}"
+    description: "{{ _description }}"
+    inventory: "{{ inventory }}"
+    state: present
+    enabled: true
+    controller_host: "{{ _controller_host }}"
+    controller_oauthtoken: "{{ awx_token }}"
+    validate_certs: false
+    variables: >
+      {
+        "ansible_host": "{{ _network_ip }}",
+        {% if _vm_default_user is defined and _vm_default_user | length > 0 %}
+        "ansible_user": "{{ _vm_default_user }}",
+        {% endif %}
+        {% if _vm_default_password is defined and _vm_default_password | length > 0 %}
+        "ansible_password": "{{ _vm_default_password }}"
+        {% endif %}
+  no_log: true
+      }

@@ -1,0 +1,8 @@
+---
+galaxy_info:
+  role_name: common
+  author: platform-engineering-kit
+  description: Common operating system baseline and utilities.
+  min_ansible_version: "2.14"
+  license: MIT
+dependencies: []

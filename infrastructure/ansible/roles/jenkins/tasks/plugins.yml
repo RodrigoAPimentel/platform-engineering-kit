@@ -1,0 +1,24 @@
+---
+- name: Wait for Jenkins to start up
+  ansible.builtin.uri:
+    url: http://{{ hostvars[host].ansible_host }}:{{ jenkins_port }}/login?from=%2F
+    status_code: 200
+    timeout: 5
+  register: jenkins_service_status
+  # Keep trying for 5 mins in 5 sec intervals
+  retries: 10
+  delay: 5
+  until: >
+     'status' in jenkins_service_status and
+     jenkins_service_status['status'] == 200
+
+- name: Install Plugins
+  community.general.jenkins_plugin:
+    name: "{{ item }}"
+    url_username: admin
+    url_password: "{{ adminPasswordResult.stdout }}"
+  loop: "{{ jenkins_default_plugins + jenkins_custom_plugins }}"
+  notify: Restart Jenkins Service
+  no_log: true
+
+- ansible.builtin.meta: flush_handlers

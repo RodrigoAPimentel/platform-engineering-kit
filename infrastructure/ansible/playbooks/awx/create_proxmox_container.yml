@@ -1,0 +1,82 @@
+---
+- name: Create Container in Proxmox and Host in AWX
+  become: true
+  become_method: sudo
+  gather_facts: true
+  hosts: "{{ host }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  collections:
+    - community.general
+  roles:
+    - role: common
+
+  pre_tasks:
+    - ansible.builtin.include_role:
+        name: awx
+        tasks_from: "collect_awx_token.yml"
+        apply:
+          delegate_to: ct-awx
+
+    - ansible.builtin.include_role:
+        name: proxmox
+        tasks_from: "retrieve_last_ct_vm_info.yml"
+
+    - ansible.builtin.set_fact: 
+        _network_ip: "{{ proxmox_next_container_ip }}"
+        _vmid: "{{ proxmox_next_container_id }}"
+        
+  tasks:
+    - ansible.builtin.include_role:
+        name: proxmox
+        tasks_from: "create_container.yml"
+
+    - ansible.builtin.include_role:
+        name: awx
+        tasks_from: "create_host.yml"
+        apply:
+          delegate_to: ct-awx
+      vars:
+        external_call_host: "ct-awx"
+
+    - name: Waiting-1 15 Seconds ...
+      ansible.builtin.pause:
+        seconds: 15
+    
+    - ansible.builtin.include_role:
+        name: common
+        tasks_from: "install-sshd-centos8stream.yml"
+    
+    - name: Waiting-2 15 Seconds ...
+      ansible.builtin.pause:
+        seconds: 15
+    
+    - ansible.builtin.set_fact: 
+        _container: awx_task
+        _key_delete: "{{ _network_ip }}"
+
+    - ansible.builtin.include_role:
+        name: common
+        tasks_from: "remove_ssh_key_know_hosts.yml"
+        apply:
+          delegate_to: ct-awx
+    
+    - name: Waiting-3 15 Seconds ...
+      ansible.builtin.pause:
+        seconds: 15
+
+    - ansible.builtin.include_role:
+        name: common
+        tasks_from: "update_operation-system.yml"
+        apply:
+          delegate_to: "{{ _network_ip }}"
+
+    - name: Waiting-4 15 Seconds ...
+      ansible.builtin.pause:
+        seconds: 15
+    
+    - ansible.builtin.include_role:
+        name: common
+        tasks_from: "install_oh-my-zsh.yml"
+        apply:
+          delegate_to: "{{ _network_ip }}"

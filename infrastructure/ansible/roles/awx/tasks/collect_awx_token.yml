@@ -1,0 +1,10 @@
+- name: Collect AWX root token
+  ansible.builtin.command: docker exec awx_task /bin/bash -c 'awx-manage create_oauth2_token --user root'
+  register: result_awx_token
+  changed_when: false
+  no_log: true
+
+- name: Store AWX token in fact
+  ansible.builtin.set_fact:
+    awx_token: "{{ result_awx_token.stdout }}"
+  no_log: true

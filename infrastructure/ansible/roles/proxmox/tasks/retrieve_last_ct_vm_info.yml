@@ -1,0 +1,72 @@
+---
+- name: Get all existing Virtual Machines in Proxmox [{{ node }}]
+  register: all_vm
+  community.general.proxmox_vm_info:
+    api_host: "{{ api_host }}"
+    api_user: "{{ api_user }}"
+    node: "{{ node }}"
+    api_password: "{{ hostvars['proxmox'].ansible_password }}"
+    type: qemu
+
+- name: Get all existing Containers in Proxmox [{{ node }}]
+  register: all_ct
+  community.general.proxmox_vm_info:
+    api_host: "{{ api_host }}"
+    api_user: "{{ api_user }}"
+    node: "{{ node }}"
+    api_password: "{{ hostvars['proxmox'].ansible_password }}"
+    type: lxc
+
+- name: Set latest VM/container identifiers
+  ansible.builtin.set_fact:
+    proxmox_last_vm_name: "{{ all_vm.proxmox_vms | map(attribute='name') | list | last }}"
+    proxmox_last_vm_id: "{{ all_vm.proxmox_vms | map(attribute='vmid') | list | last }}"
+    proxmox_last_container_name: "{{ all_ct.proxmox_vms | map(attribute='name') | list | last }}"
+    proxmox_last_container_id: "{{ all_ct.proxmox_vms | map(attribute='vmid') | list | last }}"
+
+- name: Get IP for Last Virtual Machine [{{ proxmox_last_vm_id }} <> {{ proxmox_last_vm_name }}]
+  ansible.builtin.shell: set pipefail && awk -v IGNORECASE=1 '$1 == "ipconfig0:" { print }' /etc/pve/qemu-server/{{ proxmox_last_vm_id }}.conf | cut -d'=' -f2 | cut -d'/' -f1
+  register: result_last_vm_ip
+  retries: 10
+  delay: 10
+
+- name: Get IP for Last Virtual Container [{{ proxmox_last_container_id }} <> {{ proxmox_last_container_name }}]
+  ansible.builtin.shell: |
+    set pipefail && \
+    awk -v IGNORECASE=1 '$1 == "net0:" { print }' /etc/pve/lxc/{{ proxmox_last_container_id }}.conf | \
+    cut -d',' -f5 | cut -d'=' -f2 | cut -d'/' -f1
+  register: result_last_container_ip
+  retries: 10
+  delay: 10
+
+- name: Retry Get IP for Last Virtual Container with adjusted field if no valid IP is found
+  ansible.builtin.shell: |
+    set pipefail && \
+    awk -v IGNORECASE=1 '$1 == "net0:" { print }' /etc/pve/lxc/{{ proxmox_last_container_id }}.conf | \
+    cut -d',' -f5 | cut -d'=' -f2 | cut -d'/' -f1
+  when: not result_last_container_ip.stdout | regex_search('^\\d\\.\\d\\.\\d\\.\\d$')
+  register: result_last_container_ip
+  retries: 10
+  delay: 10
+
+- name: Set latest VM/container IP addresses
+  ansible.builtin.set_fact:
+    proxmox_last_vm_ip: "{{ result_last_vm_ip.stdout }}"
+    proxmox_last_container_ip: "{{ result_last_container_ip.stdout }}"
+
+- name: Calculate next VM/container network settings
+  ansible.builtin.set_fact: 
+    proxmox_next_vm_ip: "{{ proxmox_last_vm_ip | regex_replace('(^.*\\.).*$', '\\1') }}{{proxmox_last_vm_ip.split('.')[3] | int + 1 }}"
+    proxmox_next_vm_id: "{{ proxmox_last_vm_id | int + 1 }}"
+    proxmox_next_vm_gw: "{{proxmox_last_vm_ip.split('.')[0]}}.{{proxmox_last_vm_ip.split('.')[1]}}.{{proxmox_last_vm_ip.split('.')[2]}}.1"
+    proxmox_next_container_ip: "{{ proxmox_last_container_ip | regex_replace('(^.*\\.).*$', '\\1') }}{{proxmox_last_container_ip.split('.')[3] | int + 1 }}"
+    proxmox_next_container_gw: "{{proxmox_last_container_ip.split('.')[0]}}.{{proxmox_last_container_ip.split('.')[1]}}.{{proxmox_last_container_ip.split('.')[2]}}.1"
+    proxmox_next_container_id: "{{ proxmox_last_container_id | int + 1 }}"
+
+- ansible.builtin.debug: 
+    msg: 
+      - "Last Virtual Machine: Id:{{ proxmox_last_vm_id }} <> Name:{{ proxmox_last_vm_name }} <> Ip:{{ proxmox_last_vm_ip }}"
+      - "Next Virtual Machine: Id:{{ proxmox_next_vm_id }} <> Ip:{{ proxmox_next_vm_ip }}"
+      - "Last Container Id:{{ proxmox_last_container_id }} <> Name:{{ proxmox_last_container_name }} <> Ip:{{ proxmox_last_container_ip }}"
+      - "Next Container Id:{{ proxmox_next_container_id }} <> Ip:{{ proxmox_next_container_ip }} <> Gateway:{{ proxmox_next_container_gw }}"
+

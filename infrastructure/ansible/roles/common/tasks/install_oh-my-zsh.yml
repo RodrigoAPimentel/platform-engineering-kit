@@ -1,0 +1,91 @@
+---
+- name: Installing oh-my-zsh and dependencies
+  ansible.builtin.package:
+    name:
+      - zsh
+      - go
+      - fontconfig
+    state: present
+  register: output_install
+- ansible.builtin.debug:
+    msg: Installing oh-my-zsh and dependencies - {{ output_install }}
+
+- name: Configuring oh-my-zsh
+  ansible.builtin.shell: |
+    chsh -s /bin/zsh root
+    wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh
+    /bin/cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc
+  register: output_setting
+  args:
+    creates: /root/.oh-my-zsh
+- ansible.builtin.debug:
+    msg: Setting oh-my-zsh - {{ output_setting.stdout }}
+  notify: Reboot System
+
+# - name: Reboot System
+#   reboot:
+
+- name: Installing and configuring plugins
+  ansible.builtin.shell: |
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+    git clone https://github.com/supercrabtree/k ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/k
+    git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+    git clone https://github.com/zsh-users/zsh-completions ${ZSH_CUSTOM:=~/.oh-my-zsh/custom}/plugins/zsh-completions && autoload -U compinit && compinit
+    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf && sed -i '/ask ".*/s/^/#/g' ~/.fzf/install && ~/.fzf/install
+    sed -i "s|^plugins=(git)|plugins=(git zsh-syntax-highlighting fzf zsh-autosuggestions k zsh-completions)|g" ~/.zshrc
+  args:
+    creates: /root/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting
+  register: output_plugins
+- ansible.builtin.debug:
+    msg: Installing and configuring plugins - {{ output_plugins.stdout }}
+
+- name: Installing Powerline Fonts
+  ansible.builtin.shell: |
+    git clone https://github.com/powerline/fonts.git --depth=1
+    cd fonts
+    ./install.sh
+    cd ..
+    rm -rf fonts
+  args:
+    creates: /root/.local/share/fonts
+  register: output_powerline
+- ansible.builtin.debug:
+    msg: Installing Powerline Fonts - {{ output_powerline.stdout }}
+
+- name: Installing PowerLevel10K Theme
+  ansible.builtin.shell: |
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+  args:
+    creates: /root/.oh-my-zsh/custom/themes/powerlevel10k
+  register: output_powerlevel10k
+- ansible.builtin.debug:
+    msg: Installing PowerLevel10K Theme - {{ output_powerlevel10k.stdout }}
+
+- name: Configuring Theme
+  ansible.builtin.shell: |
+    # sed -i 's|^ZSH_THEME=.*|ZSH_THEME="af-magic"|g' ~/.zshrc
+    # sed -i 's|^ZSH_THEME=.*|ZSH_THEME="jonathan"|g' ~/.zshrc
+    sed -i 's|^ZSH_THEME=.*|ZSH_THEME="powerlevel10k/powerlevel10k"|g' ~/.zshrc
+  args:
+    executable: /bin/bash
+  register: output_theme
+- ansible.builtin.debug:
+    msg: Configuring theme - {{ output_theme.stdout }}
+
+- name: Copy Powerlevel10k configuration file
+  ansible.builtin.copy:
+    src: files/p10k_zsh_plugin_configuration
+    dest: ~/.p10k.zsh
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Configuring Powerlevel10k in .zshrc
+  ansible.builtin.lineinfile:
+    path: /root/.zshrc
+    line: '[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh'
+    state: present
+  notify: Reboot System
+
+# - name: Reboot System
+#   reboot:

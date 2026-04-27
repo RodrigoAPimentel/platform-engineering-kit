@@ -10,6 +10,7 @@ CI/CD workflows using GitHub Actions.
 - `validate-script-naming.yml` → Enforces kebab-case naming for shell scripts under `scripts/`.
 - `validate-docker-compose-config.yml` → Recursively validates all Docker Compose files with `docker compose config`.
 - `test-install-awx.yml` → Validates Ansible AWX installation script across multiple Linux distributions (CentOS 7, Rocky Linux 8/9, Ubuntu 20.04/22.04) with syntax checks, dry-run tests, and code quality analysis.
+- `validate-ansible-temp.yml` → Validates Ansible assets under `infrastructure/ansible/` with `yamllint`, `ansible-lint`, and syntax checks.
 
 ## Purpose
 

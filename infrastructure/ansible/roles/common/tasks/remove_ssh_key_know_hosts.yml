@@ -1,0 +1,4 @@
+---
+- name: Remove old key from known_hosts in "{{ _container }}"
+  ansible.builtin.command: docker exec {{ _container }} /bin/bash -c 'ssh-keygen -R {{ _key_delete }}'
+  changed_when: false

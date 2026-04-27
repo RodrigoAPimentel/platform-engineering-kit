@@ -1,0 +1,13 @@
+---
+- name: Destroy the Container with VMID {{ _vmid }}
+  become: true
+  become_method: sudo
+  gather_facts: true
+  hosts: "{{ host }}"  
+  roles:
+    - role: common
+        
+  tasks:
+    - ansible.builtin.include_role:
+        name: proxmox
+        tasks_from: "destroy_container.yml"

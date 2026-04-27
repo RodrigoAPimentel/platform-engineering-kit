@@ -1,0 +1,9 @@
+---
+- name: Operation System Informations
+  ansible.builtin.include_tasks: check.yml
+  # when: os_requirement_distribution is undefined and os_requirement_version is undefined
+
+# To check the OS requirement, add the variables os_requirement_distribution with the OS and os_requirement_version with the OS version. Example: - { role: os_release, os_requirement_distribution: 'CentOS', os_requirement_version: "8" }
+- name: Operation System Verification
+  ansible.builtin.include_tasks: verify_os.yml
+  # when: os_requirement_distribution is defined and os_requirement_version is defined
