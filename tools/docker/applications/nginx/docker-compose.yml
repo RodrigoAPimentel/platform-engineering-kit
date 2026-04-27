@@ -47,6 +47,42 @@ services:
         limits:
           cpus: "1.0"
           memory: 1024M
+  
+  exporter:
+    image: ${EXPORTER_IMAGE}:${EXPORTER_VERSION}
+    container_name: ${EXPORTER_CONTAINER_NAME}
+    restart: unless-stopped
+    env_file: .env
+    command:
+      - --nginx.scrape-uri=http://nginx:80/stub_status
+    ports:
+      - "${EXPORTER_PORT}:9113"
+    networks:
+      - network
+    depends_on:
+      - app
+    healthcheck:
+      test: ["CMD", "nginx-prometheus-exporter", "--version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    user: "${EXPORTER_UID}:${EXPORTER_GID}"
+    ## Production defaults enabled below.
+    ## For development, comment read_only/tmpfs and use bind mounts.
+    # read_only: true
+    # tmpfs:
+    #   - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Optional resource guardrails.
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
 
 volumes:
   volume:

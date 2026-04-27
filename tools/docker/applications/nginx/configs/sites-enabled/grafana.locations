@@ -24,10 +24,5 @@ location /grafana {
     # proxy_intercept_errors on;
     proxy_set_header X-Forwarded-Prefix /grafana;
     proxy_intercept_errors on;
-    error_page 500 502 503 504 = /grafana-unavailable.html;
-}
-
-location = /grafana-unavailable.html {
-    default_type text/html;
-    return 200 '<!DOCTYPE html><html><head><title>Grafana Unavailable</title></head><body style="font-family:sans-serif;text-align:center;margin-top:10vh;"><h1>Grafana Unavailable</h1><p>The Grafana service is currently not accessible.<br>Please try again later.</p></body></html>';
+    error_page 500 502 503 504 = /service-unavailable.html?service=Grafana;
 }

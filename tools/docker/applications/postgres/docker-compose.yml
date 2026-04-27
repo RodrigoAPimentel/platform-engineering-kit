@@ -1,0 +1,118 @@
+name: ${PROJECT_NAME}-stack
+
+services:
+  app:
+    image: ${IMAGE_NAME}:${IMAGE_VERSION}
+    container_name: ${CONTAINER_NAME}
+    platform: linux/amd64
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${APP_PORT}:5432"
+    volumes:
+      - volume:/var/lib/postgresql/data
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    # user: "${APP_UID}:${APP_GID}"
+    ## Production defaults enabled below.
+    ## For development, comment read_only/tmpfs and use bind mounts.
+    # read_only: true
+    # tmpfs:
+    #   - /tmp
+    security_opt:
+      - no-new-privileges:true
+    # Postgres entrypoint needs privileges to chmod/chown data dirs and switch to user postgres.
+    # Keep default container capabilities for this service.
+    # Optional resource guardrails.
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+  
+  webui:
+    image: ${PGADMIN_IMAGE}:${PGADMIN_VERSION}
+    container_name: ${PGADMIN_CONTAINER_NAME}
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${PGADMIN_PORT}:8090"
+    volumes:
+      - pgadmin_volume:/var/lib/pgadmin
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD", "wget", "-O", "-", "http://localhost:8090/misc/ping"]
+      interval: 10s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+    # user: "${PGADMIN_UID}:${PGADMIN_GID}"
+    ## Production defaults enabled below.
+    ## For development, comment read_only/tmpfs and use bind mounts.
+    # read_only: true
+    # tmpfs:
+    #   - /tmp
+    # security_opt:
+    #   - no-new-privileges:true
+    # cap_drop:
+    #   - ALL
+    # # Optional resource guardrails.
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: "1.0"
+    #       memory: 1024M
+  
+  exporter:
+    image: ${POSTGRES_EXPORTER_IMAGE}:${POSTGRES_EXPORTER_VERSION}
+    container_name: ${POSTGRES_EXPORTER_CONTAINER_NAME}
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${POSTGRES_EXPORTER_PORT}:9187"
+    networks:
+      - network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:9187/metrics || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    user: "${POSTGRES_EXPORTER_UID}:${POSTGRES_EXPORTER_GID}"
+    ## Production defaults enabled below.
+    ## For development, comment read_only/tmpfs and use bind mounts.
+    # read_only: true
+    # tmpfs:
+    #   - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Optional resource guardrails.
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1024M
+
+volumes:
+  volume:
+    name: ${VOLUME_NAME}
+  pgadmin_volume:
+    name: ${PGADMIN_VOLUME}
+
+networks:
+  network:
+    driver: ${NETWORK_DRIVER}
+    driver_opts:
+      com.docker.network.driver.mtu: ${NETWORK_MTU}
+      com.docker.network.bridge.enable_ip_masquerade: "${NETWORK_ENABLE_IP_MASQUERADE}"
+      com.docker.network.bridge.enable_icc: "${NETWORK_ENABLE_ICC}"
+    name: ${NETWORK_NAME}

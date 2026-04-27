@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-04-23T14:51:18Z",
-  "serviceCount": 11,
+  "generatedAt": "2026-04-26T22:34:46Z",
+  "serviceCount": 20,
   "services": [
     {
       "name": "Alertmanager",
@@ -8,7 +8,7 @@
       "route": "/alertmanager/",
       "proxyUrl": "/alertmanager/",
       "sourceFile": "alertmanager.locations",
-      "icon": "app",
+      "icon": "prometheus",
       "upstream": "http://alertmanager:9093",
       "direct": {
         "protocol": "http",
@@ -18,12 +18,12 @@
       }
     },
     {
-      "name": "Api V3",
+      "name": "Authentik",
       "slug": "api-v3",
       "route": "/api/v3/",
       "proxyUrl": "/api/v3/",
       "sourceFile": "authentik.locations",
-      "icon": "app",
+      "icon": "shield",
       "upstream": "http://authentik_server:9000",
       "direct": {
         "protocol": "http",
@@ -33,33 +33,18 @@
       }
     },
     {
-      "name": "Api Websocket",
+      "name": "Portainer",
       "slug": "api-websocket",
       "route": "/api/websocket/",
       "proxyUrl": "/api/websocket/",
       "sourceFile": "portainer.locations",
-      "icon": "app",
+      "icon": "docker",
       "upstream": "http://portainer:9000/api/websocket/",
       "direct": {
         "protocol": "http",
         "host": "portainer",
         "port": "9000",
         "path": "/api/websocket/"
-      }
-    },
-    {
-      "name": "Api",
-      "slug": "api",
-      "route": "/api/",
-      "proxyUrl": "/api/",
-      "sourceFile": "portainer.locations",
-      "icon": "app",
-      "upstream": "http://portainer:9000/api/",
-      "direct": {
-        "protocol": "http",
-        "host": "portainer",
-        "port": "9000",
-        "path": "/api/"
       }
     },
     {
@@ -108,6 +93,66 @@
       }
     },
     {
+      "name": "N8n",
+      "slug": "n8n",
+      "route": "/n8n/",
+      "proxyUrl": "/n8n/",
+      "sourceFile": "n8n.locations",
+      "icon": "app",
+      "upstream": "http://n8n:5678",
+      "direct": {
+        "protocol": "http",
+        "host": "n8n",
+        "port": "5678",
+        "path": "/n8n/"
+      }
+    },
+    {
+      "name": "Nginx Exporter",
+      "slug": "nginx-exporter",
+      "route": "/nginx-exporter/",
+      "proxyUrl": "/nginx-exporter/",
+      "sourceFile": "index.conf",
+      "icon": "pulse",
+      "upstream": "$nginx_exporter_upstream/$1$is_args$args",
+      "direct": {
+        "protocol": "",
+        "host": "",
+        "port": "",
+        "path": "/nginx-exporter/"
+      }
+    },
+    {
+      "name": "Postgres.exporter",
+      "slug": "pgadmin",
+      "route": "/pgadmin/",
+      "proxyUrl": "/pgadmin/",
+      "sourceFile": "pgadmin.locations",
+      "icon": "pulse",
+      "upstream": "http://pgadmin:8090",
+      "direct": {
+        "protocol": "http",
+        "host": "pgadmin",
+        "port": "8090",
+        "path": "/pgadmin/"
+      }
+    },
+    {
+      "name": "Portainer",
+      "slug": "portainer-api",
+      "route": "/portainer/api/",
+      "proxyUrl": "/portainer/api/",
+      "sourceFile": "portainer.locations",
+      "icon": "docker",
+      "upstream": "http://portainer:9000",
+      "direct": {
+        "protocol": "http",
+        "host": "portainer",
+        "port": "9000",
+        "path": "/portainer/api/"
+      }
+    },
+    {
       "name": "Portainer",
       "slug": "portainer",
       "route": "/portainer/",
@@ -120,6 +165,21 @@
         "host": "portainer",
         "port": "9000",
         "path": "/portainer/"
+      }
+    },
+    {
+      "name": "Postgres.exporter",
+      "slug": "postgres.exporter",
+      "route": "/postgres.exporter/",
+      "proxyUrl": "/postgres.exporter/",
+      "sourceFile": "pgadmin.locations",
+      "icon": "pulse",
+      "upstream": "http://postgres-exporter:9187",
+      "direct": {
+        "protocol": "http",
+        "host": "postgres-exporter",
+        "port": "9187",
+        "path": "/postgres.exporter/"
       }
     },
     {
@@ -138,12 +198,42 @@
       }
     },
     {
-      "name": "Static",
+      "name": "Redisinsight",
+      "slug": "redisinsight.exporter",
+      "route": "/redisinsight.exporter/",
+      "proxyUrl": "/redisinsight.exporter/",
+      "sourceFile": "redisinsight.locations",
+      "icon": "database",
+      "upstream": "$redisinsight_exporter_upstream$request_uri",
+      "direct": {
+        "protocol": "",
+        "host": "",
+        "port": "",
+        "path": "/redisinsight.exporter/"
+      }
+    },
+    {
+      "name": "Redisinsight",
+      "slug": "redisinsight",
+      "route": "/redisinsight/",
+      "proxyUrl": "/redisinsight/",
+      "sourceFile": "redisinsight.locations",
+      "icon": "database",
+      "upstream": "$redisinsight_upstream$request_uri",
+      "direct": {
+        "protocol": "",
+        "host": "",
+        "port": "",
+        "path": "/redisinsight/"
+      }
+    },
+    {
+      "name": "Authentik",
       "slug": "static",
       "route": "/static/",
       "proxyUrl": "/static/",
       "sourceFile": "authentik.locations",
-      "icon": "app",
+      "icon": "shield",
       "upstream": "http://authentik_server:9000",
       "direct": {
         "protocol": "http",
@@ -153,12 +243,57 @@
       }
     },
     {
-      "name": "Ws",
+      "name": "Waha",
+      "slug": "waha.health",
+      "route": "/waha.health/",
+      "proxyUrl": "/waha.health/",
+      "sourceFile": "waha.locations",
+      "icon": "app",
+      "upstream": "$waha_upstream/ping",
+      "direct": {
+        "protocol": "",
+        "host": "",
+        "port": "",
+        "path": "/waha.health/"
+      }
+    },
+    {
+      "name": "Waha",
+      "slug": "waha-api",
+      "route": "/waha/api/",
+      "proxyUrl": "/waha/api/",
+      "sourceFile": "waha.locations",
+      "icon": "app",
+      "upstream": "http://waha:3002",
+      "direct": {
+        "protocol": "http",
+        "host": "waha",
+        "port": "3002",
+        "path": "/waha/api/"
+      }
+    },
+    {
+      "name": "Waha",
+      "slug": "waha",
+      "route": "/waha/",
+      "proxyUrl": "/waha/",
+      "sourceFile": "waha.locations",
+      "icon": "app",
+      "upstream": "http://waha:3002",
+      "direct": {
+        "protocol": "http",
+        "host": "waha",
+        "port": "3002",
+        "path": "/waha/"
+      }
+    },
+    {
+      "name": "Authentik",
       "slug": "ws",
       "route": "/ws/",
       "proxyUrl": "/ws/",
       "sourceFile": "authentik.locations",
-      "icon": "app",
+      "icon": "shield",
       "upstream": "http://authentik_server:9000",
       "direct": {
         "protocol": "http",
