@@ -29,6 +29,8 @@
 - Developer Experience (DevEx)
 - Governance & Standards
 - Getting Started
+- Local Validation
+- Troubleshooting
 - Value & Impact
 - Philosophy
 - Roadmap
@@ -158,15 +160,54 @@ Includes:
 ## 🚀 Getting Started
 
 ```bash
-git clone https://github.com/your-username/platform-engineering-kit.git
+git clone <repository-url>
 cd platform-engineering-kit
 ```
+
+Prerequisites:
+
+- Git
+- Bash (`bash --version`)
+- Ripgrep (`rg --version`) for local validators
 
 Start with:
 
 - bootstrap/local
 - infrastructure/terraform
 - ci-cd/templates
+
+Recommended onboarding flow:
+
+1. Read [`docs/README.md`](docs/README.md) for the documentation map.
+2. Read [`docs/standards/README.md`](docs/standards/README.md) for repository standards.
+3. Use operational procedures in [`docs/runbooks/README.md`](docs/runbooks/README.md).
+4. Follow CI guidance in [`ci-cd/ci-setup-and-usage.md`](ci-cd/ci-setup-and-usage.md).
+
+---
+
+## ✅ Local Validation
+
+Run these checks from repository root before opening a PR:
+
+```bash
+bash -n scripts/utils/lib/ci/validate-script-naming.sh
+bash -n scripts/utils/lib/ci/validate-english-content.sh
+bash -n scripts/utils/lib/ci/validate-docker-compose-config.sh
+bash scripts/utils/lib/ci/validate-script-naming.sh
+bash scripts/utils/lib/ci/validate-english-content.sh
+bash scripts/utils/lib/ci/validate-docker-compose-config.sh
+```
+
+If any validator script is missing in your branch, use the checks that are available and keep PR notes explicit about what could not be executed.
+
+---
+
+## 🛠 Troubleshooting
+
+- CI did not run: confirm changed files match workflow `paths` filters.
+- Mirror mismatch: if a workflow changes in `.github/workflows/`, apply the same change in `ci-cd/github-actions/`.
+- Validation error for script naming: align shell scripts to `kebab-case` under `scripts/`.
+- Validation error for language policy: keep governed docs, CI labels, and prompts in English.
 
 ---
 
@@ -207,9 +248,10 @@ Start with:
 
 Follow:
 
-- Standards in docs/standards
-- ADR process in docs/decisions
-- Keep documentation updated
+- Standards in [`docs/standards/README.md`](docs/standards/README.md)
+- Contribution guide in [`docs/standards/contribution-and-pr-guidelines.md`](docs/standards/contribution-and-pr-guidelines.md)
+- ADR process in [`docs/decisions/README.md`](docs/decisions/README.md)
+- Keep documentation updated in the same PR as code/script changes
 
 ---
 
